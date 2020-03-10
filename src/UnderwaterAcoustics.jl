@@ -1,13 +1,12 @@
 module UnderwaterAcoustics
 
 using DSP
-using Random
 using LinearAlgebra
 using SignalAnalysis
 
 include("basic.jl")
 include("sources.jl")
 include("pm_core.jl")
-include("pm_3ray.jl")
+include("pm_simpleray.jl")
 
 end # module

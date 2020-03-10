@@ -1,6 +1,6 @@
-export transmit, ThreeRayModel, BasicSeabed
+export transmit, SimpleRayModel, BasicSeabed
 
-Base.@kwdef mutable struct ThreeRayModel <: PropagationModel
+Base.@kwdef mutable struct SimpleRayModel <: PropagationModel
   sources::Vector{AcousticSource} = []
   receivers::Vector{AcousticReceiver} = []
   waterdepth = 25.0
@@ -20,7 +20,7 @@ Base.@kwdef struct BasicSeabed
   absorption = 0.1
 end
 
-function transmit(model::ThreeRayModel, x::AbstractVector, spos, rpos)
+function transmit(model::SimpleRayModel, x::AbstractVector, spos, rpos)
   rpos2 = copy(rpos)
   rpos2[end] = -rpos2[end]
   rpos3 = copy(rpos)

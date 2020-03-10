@@ -1,14 +1,14 @@
 export soundspeed, absorption, density, reflectioncoef, surfaceloss, doppler, bubbleresonance
 
-function soundspeed(temperature=27.0, salinity=35.0, depth=10.0; voidfrac=0.0, cgas=340.0, reldensity=1000.0)
+function soundspeed(temperature=27.0, salinity=35.0, depth=10.0; ν=0.0, cgas=340.0, reldensity=1000.0)
   # based on Mackenzie (1981)
   c = 1448.96 + 4.591*temperature - 5.304e-2*temperature^2 + 2.374e-4*temperature^3
   c += 1.340*(salinity-35) + 1.630e-2*depth + 1.675e-7*depth^2
   c += -1.025e-2*temperature*(salinity-35) - 7.139e-13*temperature*depth^3
-  if voidfrac > 0.0
+  if ν > 0.0
     # based on Wood (1964) or Buckingham (1997)
     m = √reldensity
-    c = 1.0/(1.0/c*√((voidfrac*(c/cgas)^2*m+(1.0-voidfrac)/m)*(voidfrac/m+(1-voidfrac)*m)))
+    c = 1.0/(1.0/c*√((ν*(c/cgas)^2*m+(1.0-ν)/m)*(ν/m+(1-ν)*m)))
   end
   return c
 end
@@ -20,7 +20,7 @@ function absorption(frequency, distance=1000.0, temperature=27.0, salinity=35.0,
   c = 1412.0 + 3.21*temperature + 1.19*salinity + 0.0167*depth
   A1 = 8.86/c * 10.0^(0.78*pH-5.0)
   P1 = 1.0
-  f1 = 2.8*_np.sqrt(salinity/35.0) * 10.0^(4.0-1245.0/(temperature+273.0))
+  f1 = 2.8*√(salinity/35.0) * 10.0^(4.0-1245.0/(temperature+273.0))
   A2 = 21.44*salinity/c*(1.0+0.025*temperature)
   P2 = 1.0 - 1.37e-4*depth + 6.2e-9*depth*depth
   f2 = 8.17 * 10^(8.0-1990.0/(temperature+273.0)) / (1.0+0.0018*(salinity-35.0))
@@ -43,7 +43,7 @@ function density(temperature=27, salinity=35)
   B = 0.824493 + t * (-4.0899e-03 + t * B)
   C = -5.72466e-03 + t * (1.0227e-04 - t * 1.6546e-06)
   D = 4.8314e-04
-  A + salinity * (B + C*_np.sqrt(salinity) + D*salinity)
+  A + salinity * (B + C*√(salinity) + D*salinity)
 end
 
 function reflectioncoef(θ, ρ1, c1, α, ρ=density(), c=soundspeed())

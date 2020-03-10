@@ -9,11 +9,12 @@ Base.@kwdef mutable struct ThreeRayModel <: PropagationModel
   seabed = BasicSeabed(1600.0, 1600.0, 0.1)
   surfaceloss = db2amp(1.0)
   bottomloss = db2amp(1.0)
-  noise = RedGaussianNoise(σ=3000)
+  noisemodel = RedGaussian
+  noiselevel = 3000
   fs = 96000.0
 end
 
-struct BasicSeabed
+Base.@kwdef struct BasicSeabed
   soundspeed = 1600.0
   density = 1600.0
   absorption = 0.1
@@ -30,13 +31,13 @@ function transmit(model::ThreeRayModel, x::AbstractVector, spos, rpos)
   t1 = round(Int, d1/model.soundspeed*model.fs)
   t2 = round(Int, d2/model.soundspeed*model.fs)
   t3 = round(Int, d3/model.soundspeed*model.fs)
-  breflect = reflectioncoef(
-    acos((rpos[end]+spos[end])/d2),
+  breflect = abs(reflectioncoef(
+    acos(-(rpos[end]+spos[end])/d2),
     model.seabed.density, model.seabed.soundspeed, model.seabed.absorption,
-    model.density, model.soundspeed)
+    model.density, model.soundspeed))
   y = zeros(length(x))
-  y[t1:end] .+= x[1:end-t1+1]/d1
-  y[t2:end] .+= x[1:end-t2+1]/d2 / model.surfaceloss
-  y[t3:end] .+= x[1:end-t3+1]/d3 / model.bottomloss * breflect
+  y[t1:end] .+=  x[1:end-t1+1]/d1
+  y[t2:end] .+= -x[1:end-t2+1]/d2 / model.surfaceloss
+  y[t3:end] .+=  x[1:end-t3+1]/d3 / model.bottomloss * breflect
   return y
 end

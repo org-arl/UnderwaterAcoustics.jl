@@ -2,3 +2,8 @@ name = "UnderwaterAcoustics"
 uuid = "0efb1f7a-1ce7-46d2-9f48-546a4c8fbb99"
 authors = ["Mandar Chitre <mandar@arl.nus.edu.sg>"]
 version = "0.1.0"
+
+[deps]
+DSP = "717857b8-e6f2-59f4-9121-6e50c889abd2"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+SignalAnalysis = "df1fea92-c066-49dd-8b36-eace3378ea47"

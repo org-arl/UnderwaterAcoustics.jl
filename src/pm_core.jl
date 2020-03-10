@@ -11,8 +11,8 @@ Base.@kwdef struct AcousticReceiver
   pos = []
 end
 
-source!(model::PropagationModel, pos, signal=nothing) = append!(model.sources, AcousticSource(pos, signal))
-receiver!(model::PropagationModel, pos) = append!(model.receivers, AcousticReceiver(pos))
+source!(model::PropagationModel, pos, signal=nothing) = push!(model.sources, AcousticSource(pos, signal))
+receiver!(model::PropagationModel, pos) = push!(model.receivers, AcousticReceiver(pos))
 
 function record(model::PropagationModel, duration)
   nsamples = round(Int, duration*model.fs)
@@ -24,7 +24,7 @@ function record(model::PropagationModel, duration)
     end
   end
   for k = 1:length(model.receivers)
-    x[:,k] .+= rand(model.noise, nsamples) * √model.fs
+    x[:,k] .+= rand(model.noisemodel(nsamples)) * model.noiselevel * √model.fs
   end
   return x
 end

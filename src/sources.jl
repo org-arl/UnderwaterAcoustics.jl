@@ -16,7 +16,7 @@ end
 
 function generate(pinger::Pinger, nsamples, fs)
   x = zeros(nsamples)
-  ping = real(cw(pinger.frequency, pinger.duration; fs=fs, window=pinger.window))
+  ping = real(cw(pinger.frequency, pinger.duration, fs; window=pinger.window).data)
   t = pinger.start
   while t < nsamples/fs
     ndx = round(Int, t*fs) + 1
@@ -37,7 +37,7 @@ function generate(ship::ShipNoise, nsamples, fs)
   x = rand(PinkGaussian(nsamples))
   y = copy(x)
   for s in ship.spec
-    y += s[2]*real(cw(s[1], nsamples/fs; fs=fs))[1:nsamples] .* x
+    y += s[2]*real(cw(s[1], nsamples/fs, fs).data)[1:nsamples] .* x
   end
   lpf = digitalfilter(Lowpass(3000.0, fs=fs), FIRWindow(hanning(15)))
   y = filtfilt(lpf, y)

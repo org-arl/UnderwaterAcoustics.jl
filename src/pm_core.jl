@@ -14,6 +14,9 @@ end
 source!(model::PropagationModel, pos, signal=nothing) = push!(model.sources, AcousticSource(pos, signal))
 receiver!(model::PropagationModel, pos) = push!(model.receivers, AcousticReceiver(pos))
 
+source!(model::PropagationModel, x::AcousticSource) = push!(model.sources, x)
+receiver!(model::PropagationModel, x::AcousticReceiver) = push!(model.receivers, x)
+
 function record(model::PropagationModel, duration; start=0.0)
   if start isa Symbol
     distances = [norm(model.sources[j].pos-model.receivers[k].pos)

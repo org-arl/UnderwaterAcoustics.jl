@@ -64,6 +64,9 @@ end
 
 ### fallbacks
 
+location(x::NTuple{3,T}) where T = x
+location(x::NTuple{2,T}) where T = (x[1], zero(T), x[2])
+
 checkenv(model, env) = env
 
 function transfercoef(model::PropagationModel, tx1::AcousticSource, rx::AbstractArray{AcousticReceiver}; mode=:coherent)

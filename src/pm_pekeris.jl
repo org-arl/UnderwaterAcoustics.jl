@@ -97,13 +97,13 @@ function eigenrays(model::PekerisRayModel, tx1::AcousticSource, rx1::AcousticRec
     raypath[1] = p1
     dx = p2[1] - p1[1]
     dy = p2[2] - p1[2]
-    z = -(1-upward) * h
+    z = (1-upward) * h
     r = abs(z-d1) * tan(θ)
-    raypath[2] = (p1[1] + r/R * dx, p1[2] + r/R * dy, z)
+    raypath[2] = (p1[1] + r/R * dx, p1[2] + r/R * dy, -z)
     for i ∈ 3:length(raypath)-1
       r += h * tan(θ)
-      z = -h - z
-      raypath[i] = (p1[1] + r/R * dx, p1[2] + r/R * dy, z)
+      z = h - z
+      raypath[i] = (p1[1] + r/R * dx, p1[2] + r/R * dy, -z)
     end
     raypath[end] = p2
     arr[j] = Arrival(t, A, s, b, raypath)
@@ -112,5 +112,5 @@ function eigenrays(model::PekerisRayModel, tx1::AcousticSource, rx1::AcousticRec
 end
 
 function record(model::PekerisRayModel, tx::AbstractArray{AcousticSource}, rx::AbstractArray{AcousticReceiver}, duration, fs; start=0.0)
-
+  # TODO
 end

@@ -4,7 +4,7 @@ export Altimetry, altitude
 export ReflectionModel, reflectioncoef
 export UnderwaterEnvironment, altimetry, bathymetry, ssp, salinity, seasurface, seabed
 export AcousticSource, AcousticReceiver, location, nominalfrequency, phasor, record
-export PropagationModel, arrivals, transfercoef, eigenrays
+export PropagationModel, arrivals, transfercoef, transmissionloss, eigenrays
 
 ### interfaces
 
@@ -38,19 +38,28 @@ abstract type AcousticReceiver end
 function location end
 
 abstract type PropagationModel{T<:UnderwaterEnvironment} end
-function checkenv end
+function environment end
+function checkenvironment end
 function arrivals end
 function transfercoef end
+function transmissionloss end
 function eigenrays end
 function record end
+
+struct Arrival{T1,T2}
+  time::T1
+  phasor::T2
+end
 
 ### fallbacks
 
 checkenv(model, env) = env
 
-function transfercoef(model::PropagationModel, tx1::AcousticSource, rx1::AcousticReceiver; mode=:coherent)
-  transfercoef(model, tx1, [rx1]; mode=mode)
+function transfercoef(model::PropagationModel, tx1::AcousticSource, rx::AbstractArray{AcousticReceiver}; mode=:coherent)
+  transfercoef.(model, tx1, rx; mode=mode)
 end
+
+transmissionloss(model, tx, rx; mode=:coherent) = -amp2db.(abs.(transfercoef(model, tx, rx; mode=mode)))
 
 function record(model::PropagationModel, tx1::AcousticSource, rx1::AcousticReceiver, duration, fs; start=0.0)
   record(model, [tx1], [rx1], duration, fs; start=start)
@@ -62,4 +71,23 @@ end
 
 function record(model::PropagationModel, tx::AbstractArray{AcousticSource}, rx1::AcousticReceiver, duration, fs; start=0.0)
   record(model, tx, [rx1], duration, fs; start=start)
+end
+
+function Base.show(io::IO, env::UnderwaterEnvironment)
+  println(io, split(string(typeof(env).name), ".")[end], ":")
+  println(io, "  altimetry = ", altimetry(env))
+  println(io, "  bathymetry = ", bathymetry(env))
+  println(io, "  ssp = ", ssp(env))
+  println(io, "  salinity = ", salinity(env))
+  println(io, "  seasurface = ", seasurface(env))
+  println(io, "  seabed = ", seabed(env))
+end
+
+function Base.show(io::IO, model::PropagationModel)
+  print(io, split(string(typeof(model).name), ".")[end], " with ")
+  show(io, environment(model))
+end
+
+function Base.show(io::IO, a::Arrival)
+  print(io, round(amp2db(abs(a.phasor)); digits=1), " dB ∠", round(rad2deg(angle(a.phasor))), "° @ ", round(1000*a.time; digits=2), " ms")
 end

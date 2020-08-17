@@ -3,21 +3,24 @@ export IsoRayModel
 struct IsoRayModel{T} <: PropagationModel{T}
   env::T
   rays::Int
-  IsoRayModel(env, rays) = new{typeof(env)}(checkenv(IsoRayModel, env), rays)
+  IsoRayModel(env, rays) = new{typeof(env)}(checkenvironment(IsoRayModel, env), rays)
 end
 
-function checkenv(::Type{IsoRayModel}, env::UnderwaterEnvironment)
+function checkenvironment(::Type{IsoRayModel}, env::UnderwaterEnvironment)
   altimetry(env) isa FlatSurface || throw(ArgumentError("IsoRayModel only supports environments with flat sea surface"))
   bathymetry(env) isa ConstantDepth || throw(ArgumentError("IsoRayModel only supports constant depth environments"))
   ssp(env) isa IsoSSP || throw(ArgumentError("IsoRayModel only supports isovelocity environments"))
   env
 end
 
+environment(model::IsoRayModel) = model.env
+
 function arrivals(model::IsoRayModel, tx1::AcousticSource, rx1::AcousticReceiver)
   # based on Chitre (2007)
   c = soundspeed(ssp(model.env), 0.0, 0.0, 0.0)
   h = depth(bathymetry(model.env), 0.0, 0.0)
   f = nominalfrequency(tx1)
+  k = c / (2π * f)
   p1 = location(tx1)
   p2 = location(rx1)
   R² = abs2(p1[1] - p2[1]) + abs2(p1[2] - p2[2])
@@ -25,9 +28,9 @@ function arrivals(model::IsoRayModel, tx1::AcousticSource, rx1::AcousticReceiver
   d2 = -p2[3]
   D = √(R² + abs2(d1 - d2))
   t = D/c
-  A = Complex(1/D) * absorption(f, D, salinity(model.env))
-  arr = Array{Tuple{typeof(t),typeof(A)}}(undef, model.rays)
-  arr[1] = (t, A)
+  A = cis(D/k) / D * absorption(f, D, salinity(model.env))
+  arr = Array{Arrival{typeof(t),typeof(A)}}(undef, model.rays)
+  arr[1] = Arrival(t, A)
   for j ∈ 2:model.rays
     je = iseven(j)
     s1 = 2*je - 1
@@ -39,16 +42,24 @@ function arrivals(model::IsoRayModel, tx1::AcousticSource, rx1::AcousticReceiver
     D = √(R² + abs2(dz))
     θ = atan(√R²/dz)
     t = D/c
-    A = 1/D * absorption(f, D, salinity(model.env))
+    A = cis(D/k) / D * absorption(f, D, salinity(model.env))
     s > 0 && (A *= reflectioncoef(seasurface(model.env), f, θ)^s)
     b > 0 && (A *= reflectioncoef(seabed(model.env), f, θ)^b)
-    arr[j] = (t, A)
+    arr[j] = Arrival(t, A)
   end
   arr
 end
 
-function transfercoef(model::IsoRayModel, tx1::AcousticSource, rx::AbstractArray{AcousticReceiver}; mode=:coherent)
-
+function transfercoef(model::IsoRayModel, tx1::AcousticSource, rx1::AcousticReceiver; mode=:coherent)
+  arr = arrivals(model, tx1, rx1)
+  if mode === :coherent
+    tc = sum(a.phasor for a ∈ arr)
+  elseif mode === :incoherent
+    tc = √sum(abs2(a.phasor) for a ∈ arr)
+  else
+    throw(ArgumentError("Unknown mode :" * string(mode)))
+  end
+  tc
 end
 
 function eigenrays(model::IsoRayModel, tx1::AcousticSource, rx1::AcousticReceiver)

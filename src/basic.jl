@@ -34,7 +34,7 @@ function absorption(frequency, distance=1000.0, salinity=35.0, temperature=27.0,
   10^(-a*d/20.0)
 end
 
-function density(temperature=27, salinity=35)
+function waterdensity(temperature=27, salinity=35)
   # based on Fofonoff (1985 - IES 80)
   t = temperature
   A = 1.001685e-04 + t * (-1.120083e-06 + t * 6.536332e-09)

@@ -110,7 +110,3 @@ function eigenrays(model::PekerisRayModel, tx1::AcousticSource, rx1::AcousticRec
   end
   arr
 end
-
-function record(model::PekerisRayModel, tx::AbstractArray{AcousticSource}, rx::AbstractArray{AcousticReceiver}, duration, fs; start=0.0)
-  # TODO
-end

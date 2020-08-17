@@ -2,12 +2,20 @@ using Plots
 using Colors
 
 @recipe function plot(env::UnderwaterEnvironment;
-    sources::Vector{AcousticSource}=[],
-    receivers::Vector{AcousticReceiver}=[],
-    eigenrays::Vector{Arrival}=[],
-    colors=range(colorant"darkred", colorant"deepskyblue"; length=256),
-    xmargin=5.0
+    sources=[], receivers=[], transmissionloss=[], eigenrays=[], xmargin=5.0, dynamicrange=42.0,
+    colors=range(colorant"darkred", colorant"deepskyblue"; length=256)
   )
+  if length(transmissionloss) > 0
+    size(transmissionloss) == size(receivers) || throw(ArgumentError("receivers and transmissionloss size mismatch"))
+    receivers isa AcousticReceiverGrid2D || throw(ArgumentError("receivers are not an instance of AcousticReceiverGrid2D"))
+    minloss = minimum(transmissionloss)
+    clims --> (minloss - dynamicrange, minloss)
+    colorbar --> true
+    @series begin
+      seriestype := :heatmap
+      receivers.xrange, receivers.zrange, -transmissionloss'
+    end
+  end
   xmin = Inf64
   xmax = -Inf64
   length(eigenrays) > 0 && (xmin = min(xmin, minimum(minimum(r1[1] for r1 ∈ r.raypath) for r ∈ eigenrays)))
@@ -35,21 +43,6 @@ using Colors
     linecolor := :brown
     xrange, [-depth(z, x, 0.0) for x ∈ xrange]
   end
-  if length(sources) > 0
-    @series begin
-      seriestype := :scatter
-      marker := :star
-      color := :red
-      [p[1] for p ∈ location.(sources)], [p[3] for p ∈ location.(sources)]
-    end
-  end
-  if length(receivers) > 0
-    @series begin
-      seriestype := :scatter
-      color := :blue
-      [p[1] for p ∈ location.(receivers)], [p[3] for p ∈ location.(receivers)]
-    end
-  end
   if length(eigenrays) > 0
     ampl = [amp2db(abs.(r.phasor)) for r ∈ eigenrays]
     ampl .-= minimum(ampl)
@@ -65,6 +58,21 @@ using Colors
         linecolor := colors[1+cndx[j]]
         [r[i][1] for i ∈ 1:length(r)], [r[i][3] for i ∈ 1:length(r)]
       end
+    end
+  end
+  if length(sources) > 0
+    @series begin
+      seriestype := :scatter
+      marker := :star
+      color := :red
+      [p[1] for p ∈ location.(sources)], [p[3] for p ∈ location.(sources)]
+    end
+  end
+  if length(receivers) > 0 && length(transmissionloss) == 0
+    @series begin
+      seriestype := :scatter
+      color := :blue
+      [p[1] for p ∈ location.(receivers)], [p[3] for p ∈ location.(receivers)]
     end
   end
 end

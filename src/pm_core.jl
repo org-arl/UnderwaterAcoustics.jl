@@ -69,8 +69,8 @@ location(x::NTuple{2,T}) where T = (x[1], zero(T), x[2])
 
 checkenv(model, env) = env
 
-function transfercoef(model::PropagationModel, tx1::AcousticSource, rx::AbstractArray{AcousticReceiver}; mode=:coherent)
-  transfercoef.(model, tx1, rx; mode=mode)
+function transfercoef(model::PropagationModel, tx1::AcousticSource, rx::AbstractArray{<:AcousticReceiver}; mode=:coherent)
+  [transfercoef(model, tx1, rx1; mode=mode) for rx1 ∈ rx]
 end
 
 transmissionloss(model, tx, rx; mode=:coherent) = -amp2db.(abs.(transfercoef(model, tx, rx; mode=mode)))
@@ -79,12 +79,16 @@ function record(model::PropagationModel, tx1::AcousticSource, rx1::AcousticRecei
   record(model, [tx1], [rx1], duration, fs; start=start)
 end
 
-function record(model::PropagationModel, tx1::AcousticSource, rx::AbstractArray{AcousticReceiver}, duration, fs; start=0.0)
+function record(model::PropagationModel, tx1::AcousticSource, rx::AbstractArray{<:AcousticReceiver}, duration, fs; start=0.0)
   record(model, [tx1], rx, duration, fs; start=start)
 end
 
-function record(model::PropagationModel, tx::AbstractArray{AcousticSource}, rx1::AcousticReceiver, duration, fs; start=0.0)
+function record(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx1::AcousticReceiver, duration, fs; start=0.0)
   record(model, tx, [rx1], duration, fs; start=start)
+end
+
+function record(model::PropagationModel, tx::AbstractArray{AcousticSource}, rx::AbstractArray{AcousticReceiver}, duration, fs; start=0.0)
+  # TODO
 end
 
 function Base.show(io::IO, env::UnderwaterEnvironment)

@@ -3,6 +3,7 @@ export Rock, Pebbles, SandyGravel, CoarseSand, MediumSand, FineSand, VeryFineSan
 export ClayeySand, CoarseSilt, SandySilt, Silt, FineSilt, SandyClay, SiltyClay, Clay
 export SeaState0, SeaState1, SeaState2, SeaState3, SeaState4
 export SeaState5, SeaState6, SeaState7, SeaState8, SeaState9
+export AcousticReceiverGrid2D, AcousticReceiverGrid3D
 
 ### sound speed profiles
 
@@ -129,3 +130,32 @@ AcousticReceiver(x::T, y::T, z::T) where T = BasicAcousticReceiver((x, y, z))
 AcousticReceiver(x::T, z::T) where T = BasicAcousticReceiver((x, zero(T), z))
 
 location(rx::BasicAcousticReceiver) = rx.pos
+
+### receiver grids for transmission loss computation
+
+struct AcousticReceiverGrid2D{T} <: AbstractArray{BasicAcousticReceiver{T},2}
+  xrange::StepRangeLen{T,T,T}
+  zrange::StepRangeLen{T,T,T}
+end
+
+function AcousticReceiverGrid2D(xmin, xstep, nx, zmin, zstep, nz)
+  AcousticReceiverGrid2D(StepRangeLen(xmin, xstep, nx), StepRangeLen(zmin, zstep, nz))
+end
+
+Base.size(g::AcousticReceiverGrid2D) = (g.xrange.len, g.zrange.len)
+Base.getindex(g::AcousticReceiverGrid2D, I::Vararg{Int,2}) = AcousticReceiver(g.xrange[I[1]], g.zrange[I[2]])
+Base.setindex!(g::AcousticReceiverGrid2D, v, I::Vararg{Int,2}) = throw(ArgumentError("AcousticReceiverGrid2D is readonly"))
+
+struct AcousticReceiverGrid3D{T} <: AbstractArray{BasicAcousticReceiver{T},3}
+  xrange::StepRangeLen{T,T,T}
+  yrange::StepRangeLen{T,T,T}
+  zrange::StepRangeLen{T,T,T}
+end
+
+function AcousticReceiverGrid3D(xmin, xstep, nx, ymin, ystep, ny, zmin, zstep, nz)
+  AcousticReceiverGrid3D(StepRangeLen(xmin, xstep, nx), StepRangeLen(ymin, ystep, ny), StepRangeLen(zmin, zstep, nz))
+end
+
+Base.size(g::AcousticReceiverGrid3D) = (g.xrange.len, g.yrange.len, g.zrange.len)
+Base.getindex(g::AcousticReceiverGrid3D, I::Vararg{Int,3}) = AcousticReceiver(g.xrange[I[1]], g.yrange[I[2]], g.zrange[I[3]])
+Base.setindex!(g::AcousticReceiverGrid3D, v, I::Vararg{Int,3}) = throw(ArgumentError("AcousticReceiverGrid3D is readonly"))

@@ -3,7 +3,7 @@ export IsoRayModel
 struct IsoRayModel{T} <: PropagationModel{T}
   env::T
   rays::Int
-  IsoRayModel(env, rays) = new(checkenv(IsoRayModel, env), rays)
+  IsoRayModel(env, rays) = new{typeof(env)}(checkenv(IsoRayModel, env), rays)
 end
 
 function checkenv(::Type{IsoRayModel}, env::UnderwaterEnvironment)
@@ -25,7 +25,7 @@ function arrivals(model::IsoRayModel, tx1::AcousticSource, rx1::AcousticReceiver
   d2 = -p2[3]
   D = √(R² + abs2(d1 - d2))
   t = D/c
-  A = 1/D * absorption(f, D, salinity(model.env))
+  A = Complex(1/D) * absorption(f, D, salinity(model.env))
   arr = Array{Tuple{typeof(t),typeof(A)}}(undef, model.rays)
   arr[1] = (t, A)
   for j ∈ 2:model.rays
@@ -37,7 +37,7 @@ function arrivals(model::IsoRayModel, tx1::AcousticSource, rx1::AcousticReceiver
     s2 = 2*iseven(n) - 1
     dz = 2*b*h + s1*d1 - s1*s2*d2
     D = √(R² + abs2(dz))
-    θ = atan(R/dz)
+    θ = atan(√R²/dz)
     t = D/c
     A = 1/D * absorption(f, D, salinity(model.env))
     s > 0 && (A *= reflectioncoef(seasurface(model.env), f, θ)^s)

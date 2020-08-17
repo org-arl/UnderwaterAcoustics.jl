@@ -4,9 +4,12 @@ using DSP
 using LinearAlgebra
 using SignalAnalysis
 
+# basic underwater acoustics
 include("basic.jl")
-include("sources.jl")
+
+# propagation modeling
 include("pm_core.jl")
-include("pm_simpleray.jl")
+include("pm_basic.jl")
+include("pm_isoray.jl")
 
 end # module

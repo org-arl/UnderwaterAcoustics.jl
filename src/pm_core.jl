@@ -1,44 +1,65 @@
-export PropagationModel, source!, receiver!, record
+export SoundSpeedProfile, soundspeed
+export Bathymetry, depth
+export Altimetry, altitude
+export ReflectionModel, reflectioncoef
+export UnderwaterEnvironment, altimetry, bathymetry, ssp, salinity, seasurface, seabed
+export AcousticSource, AcousticReceiver, location, nominalfrequency, phasor, record
+export PropagationModel, arrivals, transfercoef, eigenrays
 
-abstract type PropagationModel end
+### interfaces
 
-Base.@kwdef struct AcousticSource
-  pos = []
-  signal = nothing
+abstract type SoundSpeedProfile end
+function soundspeed end
+
+abstract type Bathymetry end
+function depth end
+
+abstract type Altimetry end
+function altitude end
+
+abstract type ReflectionModel end
+function reflectioncoef end
+
+abstract type UnderwaterEnvironment end
+function altimetry end
+function bathymetry end
+function ssp end
+function salinity end
+function seasurface end
+function seabed end
+
+abstract type AcousticSource end
+function location end
+function nominalfrequency end
+function phasor end
+function record end
+
+abstract type AcousticReceiver end
+function location end
+
+abstract type PropagationModel{T<:UnderwaterEnvironment} end
+function checkenv end
+function arrivals end
+function transfercoef end
+function eigenrays end
+function record end
+
+### fallbacks
+
+checkenv(model, env) = env
+
+function transfercoef(model::PropagationModel, tx1::AcousticSource, rx1::AcousticReceiver; mode=:coherent)
+  transfercoef(model, tx1, [rx1]; mode=mode)
 end
 
-Base.@kwdef struct AcousticReceiver
-  pos = []
+function record(model::PropagationModel, tx1::AcousticSource, rx1::AcousticReceiver, duration, fs; start=0.0)
+  record(model, [tx1], [rx1], duration, fs; start=start)
 end
 
-source!(model::PropagationModel, pos, signal=nothing) = push!(model.sources, AcousticSource(pos, signal))
-receiver!(model::PropagationModel, pos) = push!(model.receivers, AcousticReceiver(pos))
+function record(model::PropagationModel, tx1::AcousticSource, rx::AbstractArray{AcousticReceiver}, duration, fs; start=0.0)
+  record(model, [tx1], rx, duration, fs; start=start)
+end
 
-source!(model::PropagationModel, x::AcousticSource) = push!(model.sources, x)
-receiver!(model::PropagationModel, x::AcousticReceiver) = push!(model.receivers, x)
-
-function record(model::PropagationModel, duration; start=0.0)
-  if start isa Symbol
-    distances = [norm(model.sources[j].pos-model.receivers[k].pos)
-      for j in 1:length(model.sources), k in 1:length(model.receivers)]
-    if start == :first
-      start = minimum(distances)/minimum(model.soundspeed)
-    elseif start == :last
-      start = maximum(distances)/minimum(model.soundspeed)
-    else
-      throw(ArgumentError("Unknown start option"))
-    end
-  end
-  nsamples = round(Int, (start+duration)*model.fs)
-  x = zeros(nsamples, length(model.receivers))
-  for j = 1:length(model.sources)
-    sig = generate(model.sources[j].signal, nsamples, model.fs)
-    for k = 1:length(model.receivers)
-      x[:,k] .+= transmit(model, sig, model.sources[j].pos, model.receivers[k].pos)
-    end
-  end
-  for k = 1:length(model.receivers)
-    x[:,k] .+= rand(model.noisemodel(nsamples)) * model.noiselevel * √model.fs
-  end
-  x[end-round(Int,duration*model.fs)+1:end,:]
+function record(model::PropagationModel, tx::AbstractArray{AcousticSource}, rx1::AcousticReceiver, duration, fs; start=0.0)
+  record(model, tx, [rx1], duration, fs; start=start)
 end

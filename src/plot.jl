@@ -6,8 +6,8 @@ using Colors
     colors=range(colorant"darkred", colorant"deepskyblue"; length=256)
   )
   if length(transmissionloss) > 0
-    size(transmissionloss) == size(receivers) || throw(ArgumentError("receivers and transmissionloss size mismatch"))
-    receivers isa AcousticReceiverGrid2D || throw(ArgumentError("receivers are not an instance of AcousticReceiverGrid2D"))
+    size(transmissionloss) == size(receivers) || throw(ArgumentError("Mismatched receivers and transmissionloss"))
+    receivers isa AcousticReceiverGrid2D || throw(ArgumentError("Receivers must be an instance of AcousticReceiverGrid2D"))
     minloss = minimum(transmissionloss)
     clims --> (minloss - dynamicrange, minloss)
     colorbar --> true

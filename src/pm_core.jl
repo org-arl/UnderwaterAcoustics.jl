@@ -5,6 +5,7 @@ export ReflectionModel, reflectioncoef
 export UnderwaterEnvironment, altimetry, bathymetry, ssp, salinity, seasurface, seabed
 export AcousticSource, AcousticReceiver, location, nominalfrequency, phasor, record
 export PropagationModel, arrivals, transfercoef, transmissionloss, eigenrays
+export impulseresponse
 
 ### interfaces
 
@@ -87,9 +88,27 @@ function record(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx
   record(model, tx, [rx1], duration, fs; start=start)
 end
 
+### core implementation
+
 function record(model::PropagationModel, tx::AbstractArray{AcousticSource}, rx::AbstractArray{AcousticReceiver}, duration, fs; start=0.0)
   # TODO
 end
+
+function impulseresponse(arrivals::Vector{<:Arrival}, fs; reltime=true)
+  length(arrivals) == 0 && throw(ArgumentError("No arrivals"))
+  mintime, maxtime = extrema(a.time for a ∈ arrivals)
+  reltime || (mintime = zero(typeof(arrivals[1].time)))
+  ntaps = ceil(Int, (maxtime-mintime) * fs)
+  ir = zeros(typeof(arrivals[1].phasor), ntaps)
+  for a ∈ arrivals
+    # TODO: think about whether nearest point is the best approach
+    ndx = round(Int, (a.time - mintime) * fs) + 1
+    ir[ndx] = a.phasor
+  end
+  ir
+end
+
+### pretty printing
 
 function Base.show(io::IO, env::UnderwaterEnvironment)
   println(io, split(string(typeof(env).name), ".")[end], ":")

@@ -13,7 +13,7 @@ function soundspeed(temperature=27.0, salinity=35.0, depth=10.0; ν=0.0, cgas=34
   return c
 end
 
-function absorption(frequency, distance=1000.0, temperature=27.0, salinity=35.0, depth=10.0, pH=8.1)
+function absorption(frequency, distance=1000.0, salinity=35.0, temperature=27.0, depth=10.0, pH=8.1)
   # based on Francois-Garrison model
   f = frequency/1000.0
   d = distance/1000.0
@@ -46,14 +46,12 @@ function density(temperature=27, salinity=35)
   A + salinity * (B + C*√(salinity) + D*salinity)
 end
 
-function reflectioncoef(θ, ρ1, c1, α, ρ=density(), c=soundspeed())
+function reflectioncoef(θ, ρᵣ, cᵣ, δ=0.0)
   # based on Brekhovskikh & Lysanov
-  n = c/c1*(1.0+1.0im*α)
-  m = ρ1/ρ
-  t1 = m*cos(θ)
+  n = Complex(1.0, δ) / cᵣ
+  t1 = ρᵣ * cos(θ)
   t2 = √(n^2 - sin(θ)^2)
-  V = (t1-t2)/(t1+t2)
-  imag(V) ≈ 0.0 ? real(V) : V
+  (t1-t2)/(t1+t2)
 end
 
 function surfaceloss(windspeed, frequency, θ)

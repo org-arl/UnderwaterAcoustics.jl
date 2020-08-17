@@ -46,9 +46,20 @@ function transmissionloss end
 function eigenrays end
 function record end
 
-struct Arrival{T1,T2}
+struct Arrival{T1,T2,T3}
   time::T1
   phasor::T2
+  surface::Int
+  bottom::Int
+  raypath::Union{Vector{NTuple{3,T3}},Missing}
+end
+
+function Arrival(time::T1, phasor::T2, surface::Int, bottom::Int, raypath::Vector{NTuple{3,T3}}) where {T1, T2, T3}
+  Arrival{T1,T2,T3}(time, phasor, surface, bottom, raypath)
+end
+
+function Arrival(time::T1, phasor::T2, surface::Int, bottom::Int) where {T1, T2}
+  Arrival{T1,T2,Missing}(time, phasor, surface, bottom, missing)
 end
 
 ### fallbacks
@@ -89,5 +100,6 @@ function Base.show(io::IO, model::PropagationModel)
 end
 
 function Base.show(io::IO, a::Arrival)
-  print(io, round(amp2db(abs(a.phasor)); digits=1), " dB ∠", round(rad2deg(angle(a.phasor))), "° @ ", round(1000*a.time; digits=2), " ms")
+  print(io, "(", a.surface, "/", a.bottom, ") ", round(amp2db(abs(a.phasor)); digits=1),
+    " dB ∠", round(rad2deg(angle(a.phasor))), "° @ ", round(1000*a.time; digits=2), " ms")
 end

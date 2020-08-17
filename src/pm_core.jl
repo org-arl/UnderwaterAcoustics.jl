@@ -13,9 +13,7 @@ const allmodels = [
   PekerisRayModel
 ]
 
-models() = allmodels
-
-function models(env::UnderwaterEnvironment)
+function models(env::Union{<:UnderwaterEnvironment,Missing}=missing)
   mlist = []
   for m ∈ allmodels
     try
@@ -63,7 +61,7 @@ function location end
 
 abstract type PropagationModel{T<:UnderwaterEnvironment} end
 function environment end
-function checkenvironment end
+function checkenv end
 function arrivals end
 function transfercoef end
 function transmissionloss end

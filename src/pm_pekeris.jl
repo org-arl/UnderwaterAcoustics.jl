@@ -3,13 +3,15 @@ export PekerisRayModel
 struct PekerisRayModel{T} <: PropagationModel{T}
   env::T
   rays::Int
-  PekerisRayModel(env, rays) = new{typeof(env)}(checkenvironment(PekerisRayModel, env), rays)
+  PekerisRayModel(env, rays) = new{typeof(env)}(checkenv(PekerisRayModel, env), rays)
 end
 
-function checkenvironment(::Type{PekerisRayModel}, env::UnderwaterEnvironment)
-  altimetry(env) isa FlatSurface || throw(ArgumentError("PekerisRayModel only supports environments with flat sea surface"))
-  bathymetry(env) isa ConstantDepth || throw(ArgumentError("PekerisRayModel only supports constant depth environments"))
-  ssp(env) isa IsoSSP || throw(ArgumentError("PekerisRayModel only supports isovelocity environments"))
+function checkenv(::Type{PekerisRayModel}, env::Union{<:UnderwaterEnvironment,Missing})
+  if env !== missing
+    altimetry(env) isa FlatSurface || throw(ArgumentError("PekerisRayModel only supports environments with flat sea surface"))
+    bathymetry(env) isa ConstantDepth || throw(ArgumentError("PekerisRayModel only supports constant depth environments"))
+    ssp(env) isa IsoSSP || throw(ArgumentError("PekerisRayModel only supports isovelocity environments"))
+  end
   env
 end
 

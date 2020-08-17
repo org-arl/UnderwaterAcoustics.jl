@@ -2,7 +2,7 @@ using Plots
 using Colors
 
 @recipe function plot(env::UnderwaterEnvironment;
-    sources=[], receivers=[], transmissionloss=[], eigenrays=[], xmargin=5.0, dynamicrange=42.0,
+    sources=[], receivers=[], transmissionloss=[], eigenrays=[], xmargin=0.0, dynamicrange=42.0,
     colors=range(colorant"darkred", colorant"deepskyblue"; length=256)
   )
   if length(transmissionloss) > 0
@@ -11,6 +11,7 @@ using Colors
     minloss = minimum(transmissionloss)
     clims --> (minloss - dynamicrange, minloss)
     colorbar --> true
+    cguide --> "dB"
     @series begin
       seriestype := :heatmap
       receivers.xrange, receivers.zrange, -transmissionloss'
@@ -31,6 +32,8 @@ using Colors
   xrange = range(xmin, xmax; length=1000)
   ticks --> :native
   legend --> false
+  xguide --> "x (m)"
+  yguide --> "z (m) "
   z = altimetry(env)
   @series begin
     seriestype := :line

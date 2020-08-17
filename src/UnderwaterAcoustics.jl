@@ -5,6 +5,7 @@ using Requires
 using DSP
 using LinearAlgebra
 using SignalAnalysis
+using Interpolations
 
 # basic underwater acoustics
 include("basic.jl")

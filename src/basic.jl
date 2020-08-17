@@ -1,4 +1,4 @@
-export soundspeed, absorption, density, reflectioncoef, surfaceloss, doppler, bubbleresonance
+export soundspeed, absorption, waterdensity, reflectioncoef, surfaceloss, doppler, bubbleresonance
 
 function soundspeed(temperature=27.0, salinity=35.0, depth=10.0; ν=0.0, cgas=340.0, reldensity=1000.0)
   # based on Mackenzie (1981)

@@ -1,4 +1,5 @@
-export IsoSSP, ConstantDepth, ReflectionCoef, FlatSurface, Rayleigh, SurfaceLoss
+export IsoSSP, SampledSSP, ConstantDepth, SampledDepth
+export ReflectionCoef, FlatSurface, Rayleigh, SurfaceLoss
 export Rock, Pebbles, SandyGravel, CoarseSand, MediumSand, FineSand, VeryFineSand
 export ClayeySand, CoarseSilt, SandySilt, Silt, FineSilt, SandyClay, SiltyClay, Clay
 export SeaState0, SeaState1, SeaState2, SeaState3, SeaState4
@@ -13,6 +14,32 @@ end
 
 soundspeed(ssp::IsoSSP, x, y, z) = ssp.c
 
+struct SampledSSP{T1,T2,T3} <: SoundSpeedProfile
+  z::Vector{T1}
+  c::Vector{T2}
+  interp::Symbol
+  f::T3
+  function SampledSSP(depth, c, interp)
+    if interp === :cubic
+      # FIXME: Interpolations requires depth to be a AbstractRange (uniform spacing)
+      f = CubicSplineInterpolation(depth, c; extrapolation_bc=NaN)
+    elseif interp === :linear
+      f = LinearInterpolation(depth, c; extrapolation_bc=NaN)
+    else
+      throw(ArgumentError("Unknown interpolation"))
+    end
+    new{eltype(depth),eltype(c),typeof(f)}(-depth, c, interp, f)
+  end
+end
+
+SampledSSP(depth, c) = SampledSSP(depth, c, :linear)
+
+soundspeed(ssp::SampledSSP, x, y, z) = ssp.f(-z)
+
+function Base.show(io::IO, ssp::SampledSSP{T1,T2,T3}) where {T1,T2,T3}
+  print(io, "SampledSSP{", T1, ",", T2, ",", ssp.interp, "}(", length(ssp.z), " points)")
+end
+
 ### bathymetry models
 
 struct ConstantDepth{T} <: Bathymetry
@@ -20,6 +47,32 @@ struct ConstantDepth{T} <: Bathymetry
 end
 
 depth(bathy::ConstantDepth, x, y) = bathy.depth
+
+struct SampledDepth{T1,T2,T3} <: Bathymetry
+  x::Vector{T1}
+  depth::Vector{T2}
+  interp::Symbol
+  f::T3
+  function SampledDepth(x, depth, interp)
+    if interp === :cubic
+      # FIXME: Interpolations requires x to be a AbstractRange (uniform spacing)
+      f = CubicSplineInterpolation(x, depth; extrapolation_bc=NaN)
+    elseif interp === :linear
+      f = LinearInterpolation(x, depth; extrapolation_bc=NaN)
+    else
+      throw(ArgumentError("Unknown interpolation"))
+    end
+    new{eltype(x),eltype(depth),typeof(f)}(x, depth, interp, f)
+  end
+end
+
+SampledDepth(x, depth) = SampledDepth(x, depth, :linear)
+
+depth(b::SampledDepth, x, y) = b.f(x)
+
+function Base.show(io::IO, b::SampledDepth{T1,T2,T3}) where {T1,T2,T3}
+  print(io, "SampledDepth{", T1, ",", T2, ",", b.interp, "}(", length(b.x), " points)")
+end
 
 ### altimetry models
 

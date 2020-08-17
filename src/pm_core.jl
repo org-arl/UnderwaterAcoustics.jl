@@ -5,7 +5,30 @@ export ReflectionModel, reflectioncoef
 export UnderwaterEnvironment, altimetry, bathymetry, ssp, salinity, seasurface, seabed
 export AcousticSource, AcousticReceiver, location, nominalfrequency, phasor, record
 export PropagationModel, arrivals, transfercoef, transmissionloss, eigenrays
-export impulseresponse
+export models, impulseresponse
+
+### propagation models
+
+const allmodels = [
+  PekerisRayModel
+]
+
+models() = allmodels
+
+function models(env::UnderwaterEnvironment)
+  mlist = []
+  for m ∈ allmodels
+    try
+      checkenv(m, env)
+      push!(mlist, m)
+    catch ex
+      # don't add to list
+    end
+  end
+  mlist
+end
+
+addmodel!(mtype) = push!(allmodels, mtype)
 
 ### interfaces
 

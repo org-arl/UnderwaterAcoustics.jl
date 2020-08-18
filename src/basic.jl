@@ -31,7 +31,7 @@ function absorption(frequency, distance=1000.0, salinity=35.0, temperature=27.0,
     A3 = 3.964e-4 - 1.146e-5*temperature + 1.45e-7*temperature^2 - 6.5e-10*temperature^3
   end
   a = A1*P1*f1*f*f/(f1*f1+f*f) + A2*P2*f2*f*f/(f2*f2+f*f) + A3*P3*f*f
-  10^(-a*d/20.0)
+  db2amp(-a*d)
 end
 
 function waterdensity(temperature=27, salinity=35)

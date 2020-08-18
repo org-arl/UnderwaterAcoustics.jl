@@ -126,8 +126,8 @@ function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArra
     end
     printarray(io, [-location(tx1)[3] for tx1 ∈ tx])
     if length(rx) == 1
-      printarray(io, [-location(rx)[3]])
-      maxr = sqrt(sum(abs2, location(rx)[1:2])) / 1000.0
+      printarray(io, [-location(rx[1])[3]])
+      maxr = sqrt(sum(abs2, location(rx[1])[1:2])) / 1000.0
       printarray(io, [maxr])
     elseif rx isa AcousticReceiverGrid2D
       printarray(io, -rx.zrange)

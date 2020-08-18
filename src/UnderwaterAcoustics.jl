@@ -2,10 +2,9 @@ module UnderwaterAcoustics
 
 using Requires
 
-using DSP
-using LinearAlgebra
-using SignalAnalysis
-using Interpolations
+using DSP: amp2db, db2amp
+# using LinearAlgebra
+# using SignalAnalysis
 
 # basic underwater acoustics
 include("basic.jl")
@@ -14,6 +13,8 @@ include("basic.jl")
 include("pm_core.jl")
 include("pm_basic.jl")
 include("pm_pekeris.jl")
+include("pm_bellhop.jl")
+include("pm_all.jl")
 
 # plot recipes
 function __init__()

@@ -5,28 +5,7 @@ export ReflectionModel, reflectioncoef
 export UnderwaterEnvironment, altimetry, bathymetry, ssp, salinity, seasurface, seabed
 export AcousticSource, AcousticReceiver, location, nominalfrequency, phasor, record
 export PropagationModel, arrivals, transfercoef, transmissionloss, eigenrays
-export models, impulseresponse
-
-### propagation models
-
-const allmodels = [
-  PekerisRayModel
-]
-
-function models(env::Union{<:UnderwaterEnvironment,Missing}=missing)
-  mlist = []
-  for m ∈ allmodels
-    try
-      checkenv(m, env)
-      push!(mlist, m)
-    catch ex
-      # don't add to list
-    end
-  end
-  mlist
-end
-
-addmodel!(mtype) = push!(allmodels, mtype)
+export impulseresponse
 
 ### interfaces
 
@@ -35,6 +14,7 @@ function soundspeed end
 
 abstract type Bathymetry end
 function depth end
+function maxdepth end
 
 abstract type Altimetry end
 function altitude end
@@ -61,7 +41,7 @@ function location end
 
 abstract type PropagationModel{T<:UnderwaterEnvironment} end
 function environment end
-function checkenv end
+function check end
 function arrivals end
 function transfercoef end
 function transmissionloss end
@@ -89,7 +69,8 @@ end
 location(x::NTuple{3,T}) where T = x
 location(x::NTuple{2,T}) where T = (x[1], zero(T), x[2])
 
-checkenv(model, env) = env
+check(model::PropagationModel, env) = env
+environment(model::PropagationModel) = model.env
 
 function transfercoef(model::PropagationModel, tx1::AcousticSource, rx::AbstractArray{<:AcousticReceiver}; mode=:coherent)
   [transfercoef(model, tx1, rx1; mode=mode) for rx1 ∈ rx]
@@ -112,7 +93,7 @@ end
 ### core implementation
 
 function record(model::PropagationModel, tx::AbstractArray{AcousticSource}, rx::AbstractArray{AcousticReceiver}, duration, fs; start=0.0)
-  # TODO
+  # TODO implement record
 end
 
 function impulseresponse(arrivals::Vector{<:Arrival}, fs; reltime=true)

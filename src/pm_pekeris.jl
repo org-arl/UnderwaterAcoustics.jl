@@ -3,10 +3,15 @@ export PekerisRayModel
 struct PekerisRayModel{T} <: PropagationModel{T}
   env::T
   rays::Int
-  PekerisRayModel(env, rays) = new{typeof(env)}(checkenv(PekerisRayModel, env), rays)
+  function PekerisRayModel(env, rays)
+    rays > 0 || throw(ArgumentError("Number of rays should be more than 0"))
+    new{typeof(env)}(check(PekerisRayModel, env), rays)
+  end
 end
 
-function checkenv(::Type{PekerisRayModel}, env::Union{<:UnderwaterEnvironment,Missing})
+### interface functions
+
+function check(::Type{PekerisRayModel}, env::Union{<:UnderwaterEnvironment,Missing})
   if env !== missing
     altimetry(env) isa FlatSurface || throw(ArgumentError("PekerisRayModel only supports environments with flat sea surface"))
     bathymetry(env) isa ConstantDepth || throw(ArgumentError("PekerisRayModel only supports constant depth environments"))
@@ -14,8 +19,6 @@ function checkenv(::Type{PekerisRayModel}, env::Union{<:UnderwaterEnvironment,Mi
   end
   env
 end
-
-environment(model::PekerisRayModel) = model.env
 
 function arrivals(model::PekerisRayModel, tx1::AcousticSource, rx1::AcousticReceiver)
   # based on Chitre (2007)

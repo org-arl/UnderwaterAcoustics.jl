@@ -1,3 +1,5 @@
+using Interpolations
+
 export IsoSSP, SampledSSP, ConstantDepth, SampledDepth
 export ReflectionCoef, FlatSurface, Rayleigh, SurfaceLoss
 export Rock, Pebbles, SandyGravel, CoarseSand, MediumSand, FineSand, VeryFineSand
@@ -13,6 +15,8 @@ struct IsoSSP{T} <: SoundSpeedProfile
 end
 
 soundspeed(ssp::IsoSSP, x, y, z) = ssp.c
+
+# TODO: 2D and 3D sampled SSP
 
 struct SampledSSP{T1,T2,T3} <: SoundSpeedProfile
   z::Vector{T1}
@@ -47,6 +51,9 @@ struct ConstantDepth{T} <: Bathymetry
 end
 
 depth(bathy::ConstantDepth, x, y) = bathy.depth
+maxdepth(bathy::ConstantDepth) = bathy.depth
+
+# TODO: 2D sampled bathymetry
 
 struct SampledDepth{T1,T2,T3} <: Bathymetry
   x::Vector{T1}
@@ -68,7 +75,8 @@ end
 
 SampledDepth(x, depth) = SampledDepth(x, depth, :linear)
 
-depth(b::SampledDepth, x, y) = b.f(x)
+depth(bathy::SampledDepth, x, y) = bathy.f(x)
+maxdepth(bathy::SampledDepth) = maximum(bathy.depth)
 
 function Base.show(io::IO, b::SampledDepth{T1,T2,T3}) where {T1,T2,T3}
   print(io, "SampledDepth{", T1, ",", T2, ",", b.interp, "}(", length(b.x), " points)")

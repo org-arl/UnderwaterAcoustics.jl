@@ -47,18 +47,18 @@ using Colors
     xrange, [-depth(z, x, 0.0) for x ∈ xrange]
   end
   if length(eigenrays) > 0
-    ampl = [amp2db(abs.(r.phasor)) for r ∈ eigenrays]
+    ampl = [r.phasor === missing ? 0.0 : amp2db(abs.(r.phasor)) for r ∈ eigenrays]
     ampl .-= minimum(ampl)
     if maximum(ampl) > 0.0
-      cndx = round.(Int, (length(colors)-1) .* ampl ./ maximum(ampl))
+      cndx = round.(Int, 1 .+ (length(colors)-1) .* ampl ./ maximum(ampl))
     else
-      cndx = zeros(Int, length(ampl))
+      cndx = ones(Int, length(ampl)) .* length(colors)
     end
     for (j, eigenray) ∈ enumerate(eigenrays)
       r = eigenray.raypath
       @series begin
         seriestype := :line
-        linecolor := colors[1+cndx[j]]
+        linecolor := colors[cndx[j]]
         [r[i][1] for i ∈ 1:length(r)], [r[i][3] for i ∈ 1:length(r)]
       end
     end

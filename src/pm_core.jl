@@ -128,6 +128,10 @@ function Base.show(io::IO, model::PropagationModel)
 end
 
 function Base.show(io::IO, a::Arrival)
-  print(io, "(", a.surface, "/", a.bottom, ") ", round(amp2db(abs(a.phasor)); digits=1),
-    " dB ∠", round(rad2deg(angle(a.phasor))), "° @ ", round(1000*a.time; digits=2), " ms")
+  if a.time === missing || a.phasor === missing
+    print(io, "(", a.surface, "/", a.bottom, ")")
+  else
+    print(io, "(", a.surface, "/", a.bottom, ") ", round(amp2db(abs(a.phasor)); digits=1),
+      " dB ∠", round(rad2deg(angle(a.phasor))), "° @ ", round(1000*a.time; digits=2), " ms")
+  end
 end

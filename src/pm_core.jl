@@ -112,7 +112,6 @@ function impulseresponse(arrivals::Vector{<:Arrival}, fs; reltime=true)
   ntaps = ceil(Int, (maxtime-mintime) * fs) + 1
   ir = zeros(typeof(arrivals[1].phasor), ntaps)
   for a ∈ arrivals
-    # TODO: think about whether nearest point is the best approach
     ndx = round(Int, (a.time - mintime) * fs) + 1
     ir[ndx] = a.phasor
   end

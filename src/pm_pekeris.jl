@@ -1,7 +1,5 @@
 export PekerisRayModel
 
-# TODO: memoize absoption, reflectioncoef and surfaceloss for speed
-
 struct PekerisRayModel{T} <: PropagationModel{T}
   env::T
   rays::Int

@@ -52,9 +52,10 @@ end
 function transfercoef(model::PekerisRayModel, tx1::AcousticSource, rx1::AcousticReceiver; mode=:coherent)
   arr = arrivals(model, tx1, rx1)
   if mode === :coherent
-    tc = sum(a.phasor for a ∈ arr)
+    f = nominalfrequency(tx1)
+    tc = sum(a.phasor * cis(2π * a.time * f) for a ∈ arr)
   elseif mode === :incoherent
-    tc = √sum(abs2(a.phasor) for a ∈ arr)
+    tc = Complex(√sum(abs2(a.phasor) for a ∈ arr), 0)
   else
     throw(ArgumentError("Unknown mode :" * string(mode)))
   end
@@ -82,29 +83,24 @@ fast_absorption(f, D, S) = absorption(f, D, S)
 ipow(x, n::Int) = prod(x for _ ∈ 1:n)
 
 function arrival(j, model, R², d1, d2, h, c, f, p1=missing, p2=missing)
-  if j == 0
-    s = 0
-    b = 0
-    s1 = 1
-    s2 = -1
-  else
-    upward = iseven(j)
-    s1 = 2*upward - 1
-    n = div(j, 2)
-    s = div(n + upward, 2)
-    b = div(n + (1-upward), 2)
-    s2 = 2*iseven(n) - 1
-  end
+  upward = iseven(j)
+  s1 = 2*upward - 1
+  n = div(j, 2)
+  s = div(n + upward, 2)
+  b = div(n + (1-upward), 2)
+  s2 = 2*iseven(n) - 1
   dz = 2*b*h + s1*d1 - s1*s2*d2
   D = √(R² + abs2(dz))
   R = R² == 0 ? R² : √R²   # ForwardDiff compatible version of √R²
   θ = atan(R/dz)
   t = D/c
-  A = cis(2π*t*f) / D * fast_absorption(f, D, salinity(model.env))
+  A = Complex(1.0, 0.0) / D * fast_absorption(f, D, salinity(model.env))
+  #A = cis(2π*t*f) / D * fast_absorption(f, D, salinity(model.env))
   s > 0 && (A *= ipow(reflectioncoef(seasurface(model.env), f, θ), s))
   b > 0 && (A *= ipow(reflectioncoef(seabed(model.env), f, θ), b))
+  λ = π/2 - θ
   if typeof(p1) === Missing
-    Arrival(t, A, s, b)
+    Arrival(t, conj(A), s, b, s1*λ, -s1*s2*λ)    # conj(A) needed to match with Bellhop
   else
     raypath = Array{typeof(p1)}(undef, 2+s+b)
     raypath[1] = p1
@@ -121,6 +117,6 @@ function arrival(j, model, R², d1, d2, h, c, f, p1=missing, p2=missing)
       end
     end
     raypath[end] = p2
-    Arrival(t, A, s, b, raypath)
+    Arrival(t, conj(A), s, b, s1*λ, -s1*s2*λ, raypath)
   end
 end

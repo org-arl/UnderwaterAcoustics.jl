@@ -1,5 +1,4 @@
 using Statistics
-using Printf
 
 export Bellhop
 
@@ -29,6 +28,7 @@ function check(::Type{Bellhop}, env::Union{<:UnderwaterEnvironment,Missing})
   else
     altimetry(env) isa FlatSurface || throw(ArgumentError("Non-flat altimetry not yet supported"))
     seabed(env) isa Rayleigh || throw(ArgumentError("Seabed type not supported"))
+    seasurface(env) === Vacuum || throw(ArgumentError("Only vacuum seasurface supported"))
   end
   env
 end
@@ -118,8 +118,9 @@ function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArra
     # TODO: support bottom roughness
     println(io, "'A' 0.0")
     bed = seabed(env)
-    # FIXME: handle relative density / soundspeed better
-    @printf(io, "%0.6f %0.6f 0.0 %0.6f %0.6f /\n", depth, 1500 * bed.cᵣ, bed.ρᵣ, bed.δ)  # TODO: check units for absorption
+    c2 = soundspeed(ss, 0.0, 0.0, -depth) * bed.cᵣ
+    α = bed.δ / (c2/(f/1000)) * 40π / log(10)       # based on APL-UW TR 9407 (1994), IV-8 equation (4)
+    @printf(io, "%0.6f %0.6f 0.0 %0.6f %0.6f /\n", depth, c2, bed.ρᵣ, α)
     for i ∈ 1:length(tx)
       p = location(tx[i])
       (p[1] == 0.0 && p[2] == 0.0) || throw(ArgumentError("Transmitters must be located at (0, 0)"))
@@ -153,25 +154,27 @@ function printarray(io, a::AbstractVector)
 end
 
 function readrays(filename)
-  rays = Arrival{Missing,Missing,Float64}[]
+  rays = Arrival{Missing,Missing,Float64,Float64}[]
   open(filename, "r") do io
     [readline(io) for i ∈ 1:7]
     while !eof(io)
-      length(strip(readline(io))) == 0 && break
+      s = strip(readline(io))
+      length(s) == 0 && break
+      aod = parse(Float64, s)
       pts, sb, bb = parse.(Int, split(strip(readline(io)) ,r" +"))
       raypath = Array{NTuple{3,Float64}}(undef, pts)
       for k ∈ 1:pts
         x, d = parse.(Float64, split(strip(readline(io)) ,r" +"))
         raypath[k] = (x, 0.0, -d)
       end
-      push!(rays, Arrival(missing, missing, sb, bb, raypath))
+      push!(rays, Arrival(missing, missing, sb, bb, -deg2rad(aod), NaN64, raypath))
     end
   end
   rays
 end
 
 function readarrivals(filename)
-  arrivals = Arrival{Float64,ComplexF64,Missing}[]
+  arrivals = Arrival{Float64,ComplexF64,Float64,Missing}[]
   open(filename, "r") do io
     s = strip(readline(io))
     if occursin("2D", s)
@@ -209,7 +212,7 @@ function readarrivals(filename)
             length(v) == 8 || error("Wrong number of data entries in arrivals")
             A, ph, t, _, aod, aoa = parse.(Float64, v[1:6])
             sb, bb = parse.(Int, v[7:8])
-            push!(arrivals, Arrival(t, A * cis(deg2rad(ph)), sb, bb))
+            push!(arrivals, Arrival(t, A * cis(deg2rad(ph)), sb, bb, -deg2rad(aod), deg2rad(aoa)))
           end
         end
       end

@@ -48,20 +48,22 @@ function transmissionloss end
 function eigenrays end
 function record end
 
-struct Arrival{T1,T2,T3}
+struct Arrival{T1,T2,T3,T4}
   time::T1
   phasor::T2
   surface::Int
   bottom::Int
-  raypath::Union{Vector{NTuple{3,T3}},Missing}
+  launchangle::T3
+  arrivalangle::T3
+  raypath::Union{Vector{NTuple{3,T4}},Missing}
 end
 
-function Arrival(time::T1, phasor::T2, surface::Int, bottom::Int, raypath::Vector{NTuple{3,T3}}) where {T1, T2, T3}
-  Arrival{T1,T2,T3}(time, phasor, surface, bottom, raypath)
+function Arrival(time::T1, phasor::T2, surface::Int, bottom::Int, launchangle::T3, arrivalangle::T3, raypath::Vector{NTuple{3,T4}}) where {T1,T2,T3,T4}
+  Arrival{T1,T2,T3,T4}(time, phasor, surface, bottom, launchangle, arrivalangle, raypath)
 end
 
-function Arrival(time::T1, phasor::T2, surface::Int, bottom::Int) where {T1, T2}
-  Arrival{T1,T2,Missing}(time, phasor, surface, bottom, missing)
+function Arrival(time::T1, phasor::T2, surface::Int, bottom::Int, launchangle::T3, arrivalangle::T3, ) where {T1,T2,T3}
+  Arrival{T1,T2,T3,Missing}(time, phasor, surface, bottom, launchangle, arrivalangle, missing)
 end
 
 ### fallbacks
@@ -73,7 +75,14 @@ check(model::PropagationModel, env) = env
 environment(model::PropagationModel) = model.env
 
 function transfercoef(model::PropagationModel, tx1::AcousticSource, rx::AbstractArray{<:AcousticReceiver}; mode=:coherent)
-  [transfercoef(model, tx1, rx1; mode=mode) for rx1 ∈ rx]
+  # threaded version of [transfercoef(model, tx1, rx1; mode=mode) for rx1 ∈ rx]
+  rx1 = first(rx)
+  tc1 = transfercoef(model, tx1, rx1; mode=mode)  # just to check type
+  tc = Array{typeof(tc1)}(undef, size(rx))
+  Threads.@threads for i ∈ eachindex(rx)
+    tc[i] = rx1 === rx[i] ? tc1 : transfercoef(model, tx1, rx[i]; mode=mode)
+  end
+  tc
 end
 
 transmissionloss(model, tx, rx; mode=:coherent) = -amp2db.(abs.(transfercoef(model, tx, rx; mode=mode)))
@@ -100,7 +109,7 @@ function impulseresponse(arrivals::Vector{<:Arrival}, fs; reltime=true)
   length(arrivals) == 0 && throw(ArgumentError("No arrivals"))
   mintime, maxtime = extrema(a.time for a ∈ arrivals)
   reltime || (mintime = zero(typeof(arrivals[1].time)))
-  ntaps = ceil(Int, (maxtime-mintime) * fs)
+  ntaps = ceil(Int, (maxtime-mintime) * fs) + 1
   ir = zeros(typeof(arrivals[1].phasor), ntaps)
   for a ∈ arrivals
     # TODO: think about whether nearest point is the best approach
@@ -129,9 +138,11 @@ end
 
 function Base.show(io::IO, a::Arrival)
   if a.time === missing || a.phasor === missing
-    print(io, "(", a.surface, "/", a.bottom, ")")
+    @printf(io, "∠%5.1f° %2d↑ %2d↓",
+      rad2deg(a.launchangle), a.surface, a.bottom)
   else
-    print(io, "(", a.surface, "/", a.bottom, ") ", round(amp2db(abs(a.phasor)); digits=1),
-      " dB ∠", round(rad2deg(angle(a.phasor))), "° @ ", round(1000*a.time; digits=2), " ms")
+    @printf(io, "∠%5.1f° %2d↑ %2d↓ ∠%5.1f° | %6.2f ms | %5.1f dB ϕ%6.1f°",
+      rad2deg(a.launchangle), a.surface, a.bottom, rad2deg(a.arrivalangle),
+      1000*a.time, amp2db(abs(a.phasor)), rad2deg(angle(a.phasor)))
   end
 end

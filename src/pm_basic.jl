@@ -4,7 +4,7 @@ export IsoSSP, SampledSSP, ConstantDepth, SampledDepth
 export ReflectionCoef, FlatSurface, Rayleigh, SurfaceLoss
 export Rock, Pebbles, SandyGravel, CoarseSand, MediumSand, FineSand, VeryFineSand
 export ClayeySand, CoarseSilt, SandySilt, Silt, FineSilt, SandyClay, SiltyClay, Clay
-export SeaState0, SeaState1, SeaState2, SeaState3, SeaState4
+export Vacuum, SeaState0, SeaState1, SeaState2, SeaState3, SeaState4
 export SeaState5, SeaState6, SeaState7, SeaState8, SeaState9
 export AcousticReceiverGrid2D, AcousticReceiverGrid3D
 
@@ -128,6 +128,8 @@ struct SurfaceLoss{T} <: ReflectionModel
 end
 
 reflectioncoef(rm::SurfaceLoss, f, θ) = -surfaceloss(rm.windspeed, f, θ)
+
+const Vacuum = ReflectionCoef(-1.0)
 
 # WMO sea states
 # from APL-UW TR 9407 (1994), II-4 Table 2 (median windspeed)

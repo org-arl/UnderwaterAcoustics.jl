@@ -50,8 +50,9 @@ function reflectioncoef(θ, ρᵣ, cᵣ, δ=0.0)
   # based on Brekhovskikh & Lysanov
   n = Complex(1.0, δ) / cᵣ
   t1 = ρᵣ * cos(θ)
-  t2 = √(n^2 - sin(θ)^2)
-  (t1-t2)/(t1+t2)
+  t2 = n*n - sin(θ)^2
+  t3 = √abs(t2) * cis(angle(t2)/2)   # ForwardDiff friendly complex √
+  (t1 - t3) / (t1 + t3)
 end
 
 function surfaceloss(windspeed, frequency, θ)

@@ -171,10 +171,10 @@ struct NarrowbandAcousticSource{T1,T2,T3,T4} <: AcousticSource
   ϕ::T4
 end
 
-NarrowbandAcousticSource(x::T, y::T, z::T, f; sourcelevel=1.0, ϕ=0.0) where T = NarrowbandAcousticSource((x, y, z), f, sourcelevel, ϕ)
-NarrowbandAcousticSource(x::T, z::T, f; sourcelevel=1.0, ϕ=0.0) where T = NarrowbandAcousticSource((x, zero(T), z), f, sourcelevel, ϕ)
-AcousticSource(x::T, y::T, z::T, f; sourcelevel=1.0, ϕ=0.0) where T = NarrowbandAcousticSource((x, y, z), f, sourcelevel, ϕ)
-AcousticSource(x::T, z::T, f; sourcelevel=1.0, ϕ=0.0) where T = NarrowbandAcousticSource((x, zero(T), z), f, sourcelevel, ϕ)
+NarrowbandAcousticSource(x, y, z, f; sourcelevel=1.0, ϕ=0.0) = NarrowbandAcousticSource(promote(x, y, z), f, sourcelevel, ϕ)
+NarrowbandAcousticSource(x, z, f; sourcelevel=1.0, ϕ=0.0) = NarrowbandAcousticSource(promote(x, 0, z), f, sourcelevel, ϕ)
+AcousticSource(x, y, z, f; sourcelevel=1.0, ϕ=0.0) = NarrowbandAcousticSource(promote(x, y, z), f, sourcelevel, ϕ)
+AcousticSource(x, z, f; sourcelevel=1.0, ϕ=0.0) = NarrowbandAcousticSource(promote(x, 0, z), f, sourcelevel, ϕ)
 
 location(tx::NarrowbandAcousticSource) = tx.pos
 nominalfrequency(tx::NarrowbandAcousticSource) = tx.f
@@ -185,10 +185,10 @@ struct BasicAcousticReceiver{T} <: AcousticReceiver
   pos::NTuple{3,T}
 end
 
-BasicAcousticReceiver(x::T, y::T, z::T) where T = BasicAcousticReceiver((x, y, z))
-BasicAcousticReceiver(x::T, z::T) where T = BasicAcousticReceiver((x, zero(T), z))
-AcousticReceiver(x::T, y::T, z::T) where T = BasicAcousticReceiver((x, y, z))
-AcousticReceiver(x::T, z::T) where T = BasicAcousticReceiver((x, zero(T), z))
+BasicAcousticReceiver(x, y, z) = BasicAcousticReceiver(promote(x, y, z))
+BasicAcousticReceiver(x, z) = BasicAcousticReceiver(promote(x, 0, z))
+AcousticReceiver(x, y, z) = BasicAcousticReceiver(promote(x, y, z))
+AcousticReceiver(x, z) = BasicAcousticReceiver(promote(x, 0, z))
 
 location(rx::BasicAcousticReceiver) = rx.pos
 

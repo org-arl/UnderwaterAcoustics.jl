@@ -58,7 +58,7 @@ function transfercoef(model::Bellhop, tx1::AcousticSource, rx::AbstractArray{<:A
   end
 end
 
-transfercoef(model::Bellhop, tx1::AcousticSource, rx1::AcousticReceiver; mode=:coherent) = transfercoef(model, tx1, [rx1]; mode=mode)
+transfercoef(model::Bellhop, tx1::AcousticSource, rx1::AcousticReceiver; mode=:coherent) = transfercoef(model, tx1, [rx1]; mode=mode)[1]
 
 function eigenrays(model::Bellhop, tx1::AcousticSource, rx1::AcousticReceiver)
   mktempdir(prefix="bellhop_") do dirname

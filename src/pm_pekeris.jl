@@ -98,7 +98,7 @@ function arrival(j, model, R², d1, d2, h, c, f, p1=missing, p2=missing)
   b > 0 && (A *= ipow(reflectioncoef(seabed(model.env), f, θ), b))
   λ = π/2 - θ
   if typeof(p1) === Missing
-    Arrival(t, conj(A), s, b, s1*λ, -s1*s2*λ)    # conj(A) needed to match with Bellhop
+    RayArrival(t, conj(A), s, b, s1*λ, -s1*s2*λ)    # conj(A) needed to match with Bellhop
   else
     raypath = Array{typeof(p1)}(undef, 2+s+b)
     raypath[1] = p1
@@ -115,6 +115,6 @@ function arrival(j, model, R², d1, d2, h, c, f, p1=missing, p2=missing)
       end
     end
     raypath[end] = p2
-    Arrival(t, conj(A), s, b, s1*λ, -s1*s2*λ, raypath)
+    RayArrival(t, conj(A), s, b, s1*λ, -s1*s2*λ, raypath)
   end
 end

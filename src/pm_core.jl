@@ -48,7 +48,9 @@ function transmissionloss end
 function eigenrays end
 function record end
 
-struct Arrival{T1,T2,T3,T4}
+abstract type Arrival end
+
+struct RayArrival{T1,T2,T3,T4} <: Arrival
   time::T1
   phasor::T2
   surface::Int
@@ -58,12 +60,12 @@ struct Arrival{T1,T2,T3,T4}
   raypath::Union{Vector{NTuple{3,T4}},Missing}
 end
 
-function Arrival(time::T1, phasor::T2, surface::Int, bottom::Int, launchangle::T3, arrivalangle::T3, raypath::Vector{NTuple{3,T4}}) where {T1,T2,T3,T4}
-  Arrival{T1,T2,T3,T4}(time, phasor, surface, bottom, launchangle, arrivalangle, raypath)
+function RayArrival(time::T1, phasor::T2, surface::Int, bottom::Int, launchangle::T3, arrivalangle::T3, raypath::Vector{NTuple{3,T4}}) where {T1,T2,T3,T4}
+  RayArrival{T1,T2,T3,T4}(time, phasor, surface, bottom, launchangle, arrivalangle, raypath)
 end
 
-function Arrival(time::T1, phasor::T2, surface::Int, bottom::Int, launchangle::T3, arrivalangle::T3, ) where {T1,T2,T3}
-  Arrival{T1,T2,T3,Missing}(time, phasor, surface, bottom, launchangle, arrivalangle, missing)
+function RayArrival(time::T1, phasor::T2, surface::Int, bottom::Int, launchangle::T3, arrivalangle::T3, ) where {T1,T2,T3}
+  RayArrival{T1,T2,T3,Missing}(time, phasor, surface, bottom, launchangle, arrivalangle, missing)
 end
 
 ### fallbacks

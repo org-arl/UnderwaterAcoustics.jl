@@ -16,6 +16,7 @@ include("basic.jl")
 include("pm_core.jl")
 include("pm_basic.jl")
 include("pm_pekeris.jl")
+include("pm_rays.jl")
 include("pm_bellhop.jl")
 include("pm_all.jl")
 

@@ -2,6 +2,7 @@ export models
 
 const allmodels = [
   PekerisRayModel,
+  RaySolver,
   Bellhop
 ]
 

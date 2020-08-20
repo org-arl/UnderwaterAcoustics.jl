@@ -48,14 +48,14 @@ function eigenrays(model::PekerisRayModel, tx1::AcousticSource, rx1::AcousticRec
   [arrival(j, model, R, R², d1, d2, h, c, f, p1, p2) for j ∈ 1:model.rays]
 end
 
-function rays(model::PekerisRayModel, tx1::AcousticSource, θ::Real, hrange)
+function rays(model::PekerisRayModel, tx1::AcousticSource, θ::Real, rmax)
   -π/2 < θ < π/2 || throw(ArgumentError("θ must be between -π/2 and π/2"))
   c = soundspeed(ssp(model.env), 0.0, 0.0, 0.0)
   h = depth(bathymetry(model.env), 0.0, 0.0)
   f = nominalfrequency(tx1)
   p1 = location(tx1)
   d1 = -p1[3]
-  d2 = d1 - hrange * tan(θ)
+  d2 = d1 - rmax * tan(θ)
   s = 0
   b = 0
   while true
@@ -77,8 +77,8 @@ function rays(model::PekerisRayModel, tx1::AcousticSource, θ::Real, hrange)
     @assert s == b
     j = θ > 0 ? 4s : 4s + 1
   end
-  p2 = (p1[1] + hrange, p1[2], -d2)
-  arrival(j, model, hrange, hrange*hrange, d1, d2, h, c, f, p1, p2)
+  p2 = (p1[1] + rmax, p1[2], -d2)
+  arrival(j, model, rmax, rmax*rmax, d1, d2, h, c, f, p1, p2)
 end
 
 function transfercoef(model::PekerisRayModel, tx1::AcousticSource, rx1::AcousticReceiver; mode=:coherent)
@@ -126,7 +126,6 @@ function arrival(j, model, R, R², d1, d2, h, c, f, p1=missing, p2=missing)
   θ = atan(R, dz)
   t = D/c
   A = Complex(1.0, 0.0) / D * fast_absorption(f, D, salinity(model.env))
-  #A = cis(2π*t*f) / D * fast_absorption(f, D, salinity(model.env))
   s > 0 && (A *= ipow(reflectioncoef(seasurface(model.env), f, θ), s))
   b > 0 && (A *= ipow(reflectioncoef(seabed(model.env), f, θ), b))
   λ = π/2 - θ

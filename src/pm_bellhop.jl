@@ -68,17 +68,17 @@ function eigenrays(model::Bellhop, tx1::AcousticSource, rx1::AcousticReceiver)
   end
 end
 
-function rays(model::Bellhop, tx1::AcousticSource, θ::AbstractArray, hrange)
-  θ isa StepRangeLen || length(θ) == 1 || throw(ArgumentError("Bellhop only supports uniformly spaced angles"))
+function rays(model::Bellhop, tx1::AcousticSource, θ::AbstractArray, rmax)
+  θ isa AbstractRange || length(θ) == 1 || throw(ArgumentError("Bellhop only supports uniformly spaced angles"))
   all(-π/2 .< θ .< π/2) || throw(ArgumentError("θ must be between -π/2 and π/2"))
   mktempdir(prefix="bellhop_") do dirname
-    writeenv(model, [tx1], [AcousticReceiver(hrange, 0.0)], "R", dirname; minangle=minimum(θ), maxangle=maximum(θ), nbeams=length(θ))
+    writeenv(model, [tx1], [AcousticReceiver(rmax, 0.0)], "R", dirname; minangle=minimum(θ), maxangle=maximum(θ), nbeams=length(θ))
     bellhop(dirname)
     readrays(joinpath(dirname, "model.ray"))
   end
 end
 
-rays(model::Bellhop, tx1::AcousticSource, θ, hrange) = rays(model, tx1, [θ], hrange)[1]
+rays(model::Bellhop, tx1::AcousticSource, θ, rmax) = rays(model, tx1, [θ], rmax)[1]
 
 ### helper functions
 
@@ -87,6 +87,7 @@ function bellhop(dirname)
     infilebase = joinpath(dirname, "model")
     outfilename = joinpath(dirname, "output.txt")
     run(pipeline(ignorestatus(`bellhop.exe $infilebase`); stdout=outfilename, stderr=outfilename))
+    # TODO: check stdout/stderr and prt file for ERRORs
   catch
     error("Unable to execute bellhop.exe")
   end

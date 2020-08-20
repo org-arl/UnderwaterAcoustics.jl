@@ -1,5 +1,5 @@
 export SoundSpeedProfile, soundspeed
-export Bathymetry, depth
+export Bathymetry, depth, maxdepth
 export Altimetry, altitude
 export ReflectionModel, reflectioncoef
 export UnderwaterEnvironment, altimetry, bathymetry, ssp, salinity, seasurface, seabed
@@ -80,7 +80,7 @@ environment(model::PropagationModel) = model.env
 function transfercoef(model::PropagationModel, tx1::AcousticSource, rx::AbstractArray{<:AcousticReceiver}; mode=:coherent)
   # threaded version of [transfercoef(model, tx1, rx1; mode=mode) for rx1 ∈ rx]
   rx1 = first(rx)
-  tc1 = transfercoef(model, tx1, rx1; mode=mode)  # just to check type
+  tc1 = transfercoef(model, tx1, rx1; mode=mode)
   tc = Array{typeof(tc1)}(undef, size(rx))
   Threads.@threads for i ∈ eachindex(rx)
     tc[i] = rx1 === rx[i] ? tc1 : transfercoef(model, tx1, rx[i]; mode=mode)
@@ -88,10 +88,12 @@ function transfercoef(model::PropagationModel, tx1::AcousticSource, rx::Abstract
   tc
 end
 
-function rays(model::PropagationModel, tx1::AcousticSource, θ::AbstractArray, hrange)
-  r = Array{RayArrival}(undef, size(θ))
+function rays(model::PropagationModel, tx1::AcousticSource, θ::AbstractArray, rmax)
+  θ1 = first(θ)
+  r1 = rays(model, tx1, θ1, rmax)
+  r = Array{typeof(r1)}(undef, size(θ))
   Threads.@threads for i ∈ eachindex(θ)
-    r[i] = rays(model, tx1, θ[i], hrange)
+    r[i] = θ1 === θ[i] ? r1 : rays(model, tx1, θ[i], rmax)
   end
   r
 end

@@ -26,9 +26,9 @@ struct SampledSSP{T1,T2,T3} <: SoundSpeedProfile
   function SampledSSP(depth, c, interp)
     if interp === :cubic
       # FIXME: Interpolations requires depth to be a AbstractRange (uniform spacing)
-      f = CubicSplineInterpolation(depth, c; extrapolation_bc=NaN)
+      f = CubicSplineInterpolation(depth, c; extrapolation_bc=Line())
     elseif interp === :linear
-      f = LinearInterpolation(depth, c; extrapolation_bc=NaN)
+      f = LinearInterpolation(depth, c; extrapolation_bc=Line())
     else
       throw(ArgumentError("Unknown interpolation"))
     end
@@ -63,9 +63,9 @@ struct SampledDepth{T1,T2,T3} <: Bathymetry
   function SampledDepth(x, depth, interp)
     if interp === :cubic
       # FIXME: Interpolations requires x to be a AbstractRange (uniform spacing)
-      f = CubicSplineInterpolation(x, depth; extrapolation_bc=NaN)
+      f = CubicSplineInterpolation(x, depth; extrapolation_bc=Line())
     elseif interp === :linear
-      f = LinearInterpolation(x, depth; extrapolation_bc=NaN)
+      f = LinearInterpolation(x, depth; extrapolation_bc=Line())
     else
       throw(ArgumentError("Unknown interpolation"))
     end

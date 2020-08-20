@@ -2,7 +2,7 @@ using Plots
 using Colors
 
 @recipe function plot(env::UnderwaterEnvironment;
-    sources=[], receivers=[], transmissionloss=[], eigenrays=[], xmargin=0.0, dynamicrange=42.0,
+    sources=[], receivers=[], transmissionloss=[], rays=[], xmargin=0.0, dynamicrange=42.0,
     colors=range(colorant"darkred", colorant"deepskyblue"; length=256)
   )
   if length(transmissionloss) > 0
@@ -19,8 +19,8 @@ using Colors
   end
   xmin = Inf64
   xmax = -Inf64
-  length(eigenrays) > 0 && (xmin = min(xmin, minimum(minimum(r1[1] for r1 ∈ r.raypath) for r ∈ eigenrays)))
-  length(eigenrays) > 0 && (xmax = max(xmax, maximum(maximum(r1[1] for r1 ∈ r.raypath) for r ∈ eigenrays)))
+  length(rays) > 0 && (xmin = min(xmin, minimum(minimum(r1[1] for r1 ∈ r.raypath) for r ∈ rays)))
+  length(rays) > 0 && (xmax = max(xmax, maximum(maximum(r1[1] for r1 ∈ r.raypath) for r ∈ rays)))
   length(sources) > 0 && (xmin = min(xmin, minimum(p[1] for p ∈ location.(sources))))
   length(sources) > 0 && (xmax = max(xmax, maximum(p[1] for p ∈ location.(sources))))
   length(receivers) > 0 && (xmin = min(xmin, minimum(p[1] for p ∈ location.(receivers))))
@@ -46,15 +46,15 @@ using Colors
     linecolor := :brown
     xrange, [-depth(z, x, 0.0) for x ∈ xrange]
   end
-  if length(eigenrays) > 0
-    ampl = [r.phasor === missing ? 0.0 : amp2db(abs.(r.phasor)) for r ∈ eigenrays]
+  if length(rays) > 0
+    ampl = [r.phasor === missing ? -(r.surface + 3*r.bottom) : amp2db(abs.(r.phasor)) for r ∈ rays]
     ampl .-= minimum(ampl)
     if maximum(ampl) > 0.0
       cndx = round.(Int, 1 .+ (length(colors)-1) .* ampl ./ maximum(ampl))
     else
       cndx = ones(Int, length(ampl)) .* length(colors)
     end
-    for (j, eigenray) ∈ enumerate(eigenrays)
+    for (j, eigenray) ∈ enumerate(rays)
       r = eigenray.raypath
       @series begin
         seriestype := :line

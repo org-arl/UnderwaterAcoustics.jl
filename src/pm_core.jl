@@ -4,7 +4,7 @@ export Altimetry, altitude
 export ReflectionModel, reflectioncoef
 export UnderwaterEnvironment, altimetry, bathymetry, ssp, salinity, seasurface, seabed
 export AcousticSource, AcousticReceiver, location, nominalfrequency, phasor, record
-export PropagationModel, arrivals, transfercoef, transmissionloss, eigenrays
+export PropagationModel, arrivals, transfercoef, transmissionloss, eigenrays, rays
 export impulseresponse
 
 ### interfaces
@@ -46,6 +46,7 @@ function arrivals end
 function transfercoef end
 function transmissionloss end
 function eigenrays end
+function rays end
 function record end
 
 abstract type Arrival end
@@ -85,6 +86,14 @@ function transfercoef(model::PropagationModel, tx1::AcousticSource, rx::Abstract
     tc[i] = rx1 === rx[i] ? tc1 : transfercoef(model, tx1, rx[i]; mode=mode)
   end
   tc
+end
+
+function rays(model::PropagationModel, tx1::AcousticSource, θ::AbstractArray, hrange)
+  r = Array{RayArrival}(undef, size(θ))
+  Threads.@threads for i ∈ eachindex(θ)
+    r[i] = rays(model, tx1, θ[i], hrange)
+  end
+  r
 end
 
 transmissionloss(model, tx, rx; mode=:coherent) = -amp2db.(abs.(transfercoef(model, tx, rx; mode=mode)))

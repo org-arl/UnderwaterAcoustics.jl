@@ -5,18 +5,18 @@ export Bellhop
 struct Bellhop{T} <: PropagationModel{T}
   env::T
   nbeams::Int
-  minangle::Float32   # degrees
-  maxangle::Float32   # degrees
+  minangle::Float32
+  maxangle::Float32
   function Bellhop(env, nbeams, minangle, maxangle)
     nbeams < 0 && (nbeams = 0)
-    -90 ≤ minangle ≤ 90 || throw(ArgumentError("minangle should be between -90 and 90"))
-    -90 ≤ maxangle ≤ 90 || throw(ArgumentError("maxangle should be between -90 and 90"))
+    -π/2 ≤ minangle ≤ π/2 || throw(ArgumentError("minangle should be between -π/2 and π/2"))
+    -π/2 ≤ maxangle ≤ π/2 || throw(ArgumentError("maxangle should be between -π/2 and π/2"))
     minangle < maxangle || throw(ArgumentError("maxangle should be more than minangle"))
     new{typeof(env)}(check(Bellhop, env), nbeams, Float32(minangle), Float32(maxangle))
   end
 end
 
-Bellhop(env) = Bellhop(env, 0, -80, 80)
+Bellhop(env) = Bellhop(env, 0, -80°, 80°)
 
 ### interface functions
 
@@ -68,6 +68,18 @@ function eigenrays(model::Bellhop, tx1::AcousticSource, rx1::AcousticReceiver)
   end
 end
 
+function rays(model::Bellhop, tx1::AcousticSource, θ::AbstractArray, hrange)
+  θ isa StepRangeLen || length(θ) == 1 || throw(ArgumentError("Bellhop only supports uniformly spaced angles"))
+  all(-π/2 .< θ .< π/2) || throw(ArgumentError("θ must be between -π/2 and π/2"))
+  mktempdir(prefix="bellhop_") do dirname
+    writeenv(model, [tx1], [AcousticReceiver(hrange, 0.0)], "R", dirname; minangle=minimum(θ), maxangle=maximum(θ), nbeams=length(θ))
+    bellhop(dirname)
+    readrays(joinpath(dirname, "model.ray"))
+  end
+end
+
+rays(model::Bellhop, tx1::AcousticSource, θ, hrange) = rays(model, tx1, [θ], hrange)[1]
+
 ### helper functions
 
 function bellhop(dirname)
@@ -80,7 +92,7 @@ function bellhop(dirname)
   end
 end
 
-function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArray{<:AcousticReceiver}, taskcode, dirname)
+function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArray{<:AcousticReceiver}, taskcode, dirname; minangle=model.minangle, maxangle=model.maxangle, nbeams=model.nbeams)
   env = model.env
   name = split(basename(dirname), "_")[end]
   filename = joinpath(dirname, "model.env")
@@ -139,8 +151,8 @@ function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArra
     end
     # TODO: support source directionality
     println(io, "'", taskcode, "'")
-    @printf(io, "%d\n", model.nbeams)
-    @printf(io, "%0.6f %0.6f /\n", model.minangle, model.maxangle)
+    @printf(io, "%d\n", nbeams)
+    @printf(io, "%0.6f %0.6f /\n", rad2deg(minangle), rad2deg(maxangle))
     @printf(io, "0.0 %0.6f %0.6f\n", 1.01*depth, 1.01*maxr)
   end
 end

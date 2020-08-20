@@ -28,9 +28,10 @@ function arrivals(model::PekerisRayModel, tx1::AcousticSource, rx1::AcousticRece
   p1 = location(tx1)
   p2 = location(rx1)
   R² = abs2(p1[1] - p2[1]) + abs2(p1[2] - p2[2])
+  R = R² == 0 ? R² : √R²   # ForwardDiff compatible version of √R²
   d1 = -p1[3]
   d2 = -p2[3]
-  [arrival(j, model, R², d1, d2, h, c, f) for j ∈ 1:model.rays]
+  [arrival(j, model, R, R², d1, d2, h, c, f) for j ∈ 1:model.rays]
 end
 
 function eigenrays(model::PekerisRayModel, tx1::AcousticSource, rx1::AcousticReceiver)
@@ -38,13 +39,46 @@ function eigenrays(model::PekerisRayModel, tx1::AcousticSource, rx1::AcousticRec
   c = soundspeed(ssp(model.env), 0.0, 0.0, 0.0)
   h = depth(bathymetry(model.env), 0.0, 0.0)
   f = nominalfrequency(tx1)
-  k = c / (2π * f)
   p1 = location(tx1)
   p2 = location(rx1)
   R² = abs2(p1[1] - p2[1]) + abs2(p1[2] - p2[2])
+  R = R² == 0 ? R² : √R²   # ForwardDiff compatible version of √R²
   d1 = -p1[3]
   d2 = -p2[3]
-  [arrival(j, model, R², d1, d2, h, c, f, p1, p2) for j ∈ 1:model.rays]
+  [arrival(j, model, R, R², d1, d2, h, c, f, p1, p2) for j ∈ 1:model.rays]
+end
+
+function rays(model::PekerisRayModel, tx1::AcousticSource, θ::Real, hrange)
+  -π/2 < θ < π/2 || throw(ArgumentError("θ must be between -π/2 and π/2"))
+  c = soundspeed(ssp(model.env), 0.0, 0.0, 0.0)
+  h = depth(bathymetry(model.env), 0.0, 0.0)
+  f = nominalfrequency(tx1)
+  p1 = location(tx1)
+  d1 = -p1[3]
+  d2 = d1 - hrange * tan(θ)
+  s = 0
+  b = 0
+  while true
+    if d2 < 0
+      s += 1
+      d2 = -d2
+    elseif d2 > h
+      b += 1
+      d2 = 2h - d2
+    else
+      break
+    end
+  end
+  if 4s - 2 == 4b + 2
+    j = 4s - 2
+  elseif 4s + 3 == 4b - 1
+    j = 4s + 3
+  else
+    @assert s == b
+    j = θ > 0 ? 4s : 4s + 1
+  end
+  p2 = (p1[1] + hrange, p1[2], -d2)
+  arrival(j, model, hrange, hrange*hrange, d1, d2, h, c, f, p1, p2)
 end
 
 function transfercoef(model::PekerisRayModel, tx1::AcousticSource, rx1::AcousticReceiver; mode=:coherent)
@@ -80,7 +114,7 @@ fast_absorption(f, D, S) = absorption(f, D, S)
 # complex ForwardDiff friendly version of x^n
 ipow(x, n::Int) = prod(x for _ ∈ 1:n)
 
-function arrival(j, model, R², d1, d2, h, c, f, p1=missing, p2=missing)
+function arrival(j, model, R, R², d1, d2, h, c, f, p1=missing, p2=missing)
   upward = iseven(j)
   s1 = 2*upward - 1
   n = div(j, 2)
@@ -89,8 +123,7 @@ function arrival(j, model, R², d1, d2, h, c, f, p1=missing, p2=missing)
   s2 = 2*iseven(n) - 1
   dz = 2*b*h + s1*d1 - s1*s2*d2
   D = √(R² + abs2(dz))
-  R = R² == 0 ? R² : √R²   # ForwardDiff compatible version of √R²
-  θ = atan(R/dz)
+  θ = atan(R, dz)
   t = D/c
   A = Complex(1.0, 0.0) / D * fast_absorption(f, D, salinity(model.env))
   #A = cis(2π*t*f) / D * fast_absorption(f, D, salinity(model.env))

@@ -5,6 +5,10 @@ using Requires
 using DSP: amp2db, db2amp
 using Printf
 
+export °
+
+const ° = π/180.0
+
 # basic underwater acoustics
 include("basic.jl")
 

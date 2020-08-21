@@ -13,10 +13,10 @@ Base.@kwdef struct RaySolver{T} <: PropagationModel{T}
   rugocity::Float64 = 1.5
   athreshold::Float64 = 1e-5
   function RaySolver(env, nbeams, minangle, maxangle, atol, rugocity, athreshold)
+    nbeams < 0 && (nbeams = 0)
     -π/2 ≤ minangle ≤ π/2 || throw(ArgumentError("minangle should be between -π/2 and π/2"))
     -π/2 ≤ maxangle ≤ π/2 || throw(ArgumentError("maxangle should be between -π/2 and π/2"))
     minangle < maxangle || throw(ArgumentError("maxangle should be more than minangle"))
-    nbeams ≤ 0 && (nbeams = round(Int, (maxangle - minangle)/(1°)))
     new{typeof(env)}(check(Bellhop, env), nbeams, minangle, maxangle, atol, rugocity, athreshold)
   end
 end
@@ -39,29 +39,36 @@ function arrivals(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver)
 end
 
 function eigenrays(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver; ds=1.0)
-  p1 = location(rx1)
-  θ = range(model.minangle, model.maxangle; length=model.nbeams)
+  p2 = location(rx1)
+  nbeams = model.nbeams
+  if nbeams == 0
+    p1 = location(tx1)
+    R = √(abs2(p2[1] - p1[1]) + abs2(p2[2] - p1[2]))
+    h = maxdepth(bathymetry(model.env))
+    nbeams = ceil(Int, 4 * (model.maxangle - model.minangle) / atan(h, R))
+  end
+  θ = range(model.minangle, model.maxangle; length=nbeams)
   n = length(θ)
   err = fill(NaN64, n)
-  r1 = traceray(model, tx1, θ[1], p1[1])  # needed to get type
+  r1 = traceray(model, tx1, θ[1], p2[1])  # needed to get type
   Threads.@threads for i ∈ 1:n
-    p2 = (i == 1 ? r1 : traceray(model, tx1, θ[i], p1[1])).raypath[end]
-    if isapprox(p2[1], p1[1]; atol=model.atol) && isapprox(p2[2], p1[2]; atol=model.atol)
-      err[i] = p2[3] - p1[3]
+    p3 = (i == 1 ? r1 : traceray(model, tx1, θ[i], p2[1])).raypath[end]
+    if isapprox(p3[1], p2[1]; atol=model.atol) && isapprox(p3[2], p2[2]; atol=model.atol)
+      err[i] = p3[3] - p2[3]
     end
   end
   erays = Array{typeof(r1)}(undef, 0)
   for i ∈ 1:n
     if isapprox(err[i], 0.0; atol=model.atol)
-      push!(erays, traceray(model, tx1, θ[i], p1[1], ds))
+      push!(erays, traceray(model, tx1, θ[i], p2[1], ds))
     elseif i > 1 && !isnan(err[i-1]) && !isnan(err[i]) && sign(err[i-1]) != sign(err[i])
       a, b = ordered(θ[i-1], θ[i])
-      soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, p1[1]).raypath[end][3] - p1[3]), a, b; abs_tol=model.atol)
-      push!(erays, traceray(model, tx1, soln.minimizer, p1[1], ds))
+      soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, p2[1]).raypath[end][3] - p2[3]), a, b; abs_tol=model.atol)
+      push!(erays, traceray(model, tx1, soln.minimizer, p2[1], ds))
     elseif i > 2 && isnearzero(err[i-2], err[i-1], err[i])
       a, b = ordered(θ[i-2], θ[i])
-      soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, p1[1]).raypath[end][3] - p1[3]), a, b; abs_tol=model.atol)
-      push!(erays, traceray(model, tx1, soln.minimizer, p1[1], ds))
+      soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, p2[1]).raypath[end][3] - p2[3]), a, b; abs_tol=model.atol)
+      push!(erays, traceray(model, tx1, soln.minimizer, p2[1], ds))
     end
   end
   erays

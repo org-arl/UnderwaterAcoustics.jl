@@ -34,74 +34,41 @@ function check(::Type{RaySolver}, env::Union{<:UnderwaterEnvironment,Missing})
 end
 
 function arrivals(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver)
-  # TODO
+  a = [RayArrival(r.time, r.phasor, r.surface, r.bottom, r.launchangle, r.arrivalangle) for r ∈ eigenrays(model, tx1, rx1; ds=0.0)]
+  sort(a; by = a1 -> a1.time)
 end
 
-function eigenrays(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver)
-  p = location(rx1)
+function eigenrays(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver; ds=1.0)
+  p1 = location(rx1)
   θ = range(model.minangle, model.maxangle; length=model.nbeams)
-  r = tmap(θ1 -> rays(model, tx1, θ1, p[1]), θ)
-  ie = Array{Tuple{Int,Float64}}(undef, 0)
-  for i ∈ 1:length(θ)
-    r1 = r[i].raypath[end]
-    if isapprox(r1[1], p[1]; atol=model.atol) && isapprox(r1[2], p[2]; atol=model.atol)
-      push!(ie, (i, r1[3] - p[3]))
+  n = length(θ)
+  err = fill(NaN64, n)
+  r1 = traceray(model, tx1, θ[1], p1[1])  # needed to get type
+  Threads.@threads for i ∈ 1:n
+    p2 = (i == 1 ? r1 : traceray(model, tx1, θ[i], p1[1])).raypath[end]
+    if isapprox(p2[1], p1[1]; atol=model.atol) && isapprox(p2[2], p1[2]; atol=model.atol)
+      err[i] = p2[3] - p1[3]
     end
   end
-  n = length(ie)
-  er = Array{eltype(r)}(undef, 0)
+  erays = Array{typeof(r1)}(undef, 0)
   for i ∈ 1:n
-    if isapprox(ie[i][2], 0.0; atol=model.atol)
-      push!(er, r[ie[i][1]])
-    elseif i > 1 && sign(ie[i-1][2]) != sign(ie[i][2])
-      a, b = ordered(θ[ie[i-1][1]], θ[ie[i][1]])
-      soln = optimize(x -> abs(rays(model, tx1, x, p[1]).raypath[end][3] - p[3]), a, b; abs_tol=model.atol)
-      push!(er, rays(model, tx1, soln.minimizer, p[1]))
-    elseif i > 2 && isnearzero(ie[i-2][2], ie[i-1][2], ie[i][2])
-      a, b = ordered(θ[ie[i-2][1]], θ[ie[i][1]])
-      soln = optimize(x -> abs(rays(model, tx1, x, p[1]).raypath[end][3] - p[3]), a, b; abs_tol=model.atol)
-      push!(er, rays(model, tx1, soln.minimizer, p[1]))
+    if isapprox(err[i], 0.0; atol=model.atol)
+      push!(erays, traceray(model, tx1, θ[i], p1[1], ds))
+    elseif i > 1 && !isnan(err[i-1]) && !isnan(err[i]) && sign(err[i-1]) != sign(err[i])
+      a, b = ordered(θ[i-1], θ[i])
+      soln = optimize(ϕ -> abs(traceray(model, tx1, ϕ, p1[1]).raypath[end][3] - p1[3]), a, b; abs_tol=model.atol)
+      push!(erays, traceray(model, tx1, soln.minimizer, p1[1], ds))
+    elseif i > 2 && isnearzero(err[i-2], err[i-1], err[i])
+      a, b = ordered(θ[i-2], θ[i])
+      soln = optimize(ϕ -> abs(traceray(model, tx1, ϕ, p1[1]).raypath[end][3] - p1[3]), a, b; abs_tol=model.atol)
+      push!(erays, traceray(model, tx1, soln.minimizer, p1[1], ds))
     end
   end
-  er
+  erays
 end
 
 function rays(model::RaySolver, tx1::AcousticSource, θ::Real, rmax)
-  θ₀ = θ
-  f = nominalfrequency(tx1)
-  zmax = -maxdepth(bathymetry(model.env))
-  p = location(tx1)
-  raypath = Array{typeof(p)}(undef, 0)
-  a = Complex(1.0, 0.0)
-  s = 0
-  b = 0
-  t = 0.0
-  D = 0.0
-  while true
-    dD, r, z, θ, dt, u = traceray1(model, p[1], p[3], θ, rmax)
-    for u1 ∈ u
-      push!(raypath, (u1[1], 0.0, u1[2]))
-    end
-    t += dt
-    D += dD
-    if isapprox(z, 0.0; atol=1e-3)        # FIXME: assumes flat altimetry
-      s += 1
-      a *= reflectioncoef(seasurface(model.env), f, θ)
-    elseif isapprox(z, zmax; atol=1e-3)   # FIXME: assumes flat bathymetry
-      b += 1
-      a *= reflectioncoef(seabed(model.env), f, θ)
-    else
-      break
-    end
-    if abs(a)/D < model.athreshold
-      break
-    end
-    p = (r, 0.0, z)
-    θ = -θ                                # FIXME: assumes flat altimetry/bathymetry
-  end
-  a /= D
-  a *= fast_absorption(f, D, salinity(model.env))
-  RayArrival(t, a, s, b, θ₀, θ, raypath)
+  traceray(model, tx1, θ, rmax, 1.0)
 end
 
 function transfercoef(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver; mode=:coherent)
@@ -113,6 +80,7 @@ end
 ordered(a, b) = a < b ? (a, b) : (b, a)
 
 function isnearzero(a, b, c)
+  (isnan(a) || isnan(b) || isnan(c)) && return false
   sign(a) != sign(b) && return false
   sign(a) != sign(c) && return false
   abs(a) < abs(b) && return false
@@ -140,7 +108,7 @@ function checkray!(out, u, s, integrator, a::Altimetry, b::Bathymetry, rmax)
 end
 
 # FIXME: type inference fails for prob and soln, but will be fixed in PR570 for DiffEqBase soon
-function traceray1(model, r0, z0, θ, rmax; ds=1.0)
+function traceray1(model, r0, z0, θ, rmax, ds)
   a = altimetry(model.env)
   b = bathymetry(model.env)
   c = z -> soundspeed(ssp(model.env), 0.0, 0.0, z)
@@ -151,7 +119,45 @@ function traceray1(model, r0, z0, θ, rmax; ds=1.0)
   cb = VectorContinuousCallback(
     (out, u, s, i) -> checkray!(out, u, s, i, a, b, rmax),
     (i, ndx) -> terminate!(i), 3; rootfind=true)
-  soln = solve(prob; saveat=ds, callback=cb)
+  soln = ds ≤ 0 ? solve(prob; save_everystep=false, callback=cb) : solve(prob; saveat=ds, callback=cb)
   s2 = soln[end]
   soln.t[end], s2[1], s2[2], atan(s2[4], s2[3]), s2[5], soln.u
+end
+
+function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0)
+  θ₀ = θ
+  f = nominalfrequency(tx1)
+  zmax = -maxdepth(bathymetry(model.env))
+  p = location(tx1)
+  raypath = Array{typeof(p)}(undef, 0)
+  a = Complex(1.0, 0.0)
+  s = 0
+  b = 0
+  t = 0.0
+  D = 0.0
+  while true
+    dD, r, z, θ, dt, u = traceray1(model, p[1], p[3], θ, rmax, ds)
+    for u1 ∈ u
+      push!(raypath, (u1[1], 0.0, u1[2]))
+    end
+    t += dt
+    D += dD
+    if isapprox(z, 0.0; atol=1e-3)        # FIXME: assumes flat altimetry
+      s += 1
+      a *= reflectioncoef(seasurface(model.env), f, θ)
+    elseif isapprox(z, zmax; atol=1e-3)   # FIXME: assumes flat bathymetry
+      b += 1
+      a *= reflectioncoef(seabed(model.env), f, θ)
+    else
+      break
+    end
+    if abs(a)/D < model.athreshold
+      break
+    end
+    p = (r, 0.0, z)
+    θ = -θ                                # FIXME: assumes flat altimetry/bathymetry
+  end
+  a /= D
+  a *= fast_absorption(f, D, salinity(model.env))
+  RayArrival(t, a, s, b, θ₀, θ, raypath)
 end

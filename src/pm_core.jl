@@ -65,7 +65,7 @@ function RayArrival(time::T1, phasor::T2, surface::Int, bottom::Int, launchangle
   RayArrival{T1,T2,T3,T4}(time, phasor, surface, bottom, launchangle, arrivalangle, raypath)
 end
 
-function RayArrival(time::T1, phasor::T2, surface::Int, bottom::Int, launchangle::T3, arrivalangle::T3, ) where {T1,T2,T3}
+function RayArrival(time::T1, phasor::T2, surface::Int, bottom::Int, launchangle::T3, arrivalangle::T3) where {T1,T2,T3}
   RayArrival{T1,T2,T3,Missing}(time, phasor, surface, bottom, launchangle, arrivalangle, missing)
 end
 

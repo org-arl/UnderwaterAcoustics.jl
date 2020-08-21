@@ -81,19 +81,6 @@ function rays(model::PekerisRayModel, tx1::AcousticSource, θ::Real, rmax)
   arrival(j, model, rmax, rmax*rmax, d1, d2, h, c, f, p1, p2)
 end
 
-function transfercoef(model::PekerisRayModel, tx1::AcousticSource, rx1::AcousticReceiver; mode=:coherent)
-  arr = arrivals(model, tx1, rx1)
-  if mode === :coherent
-    f = nominalfrequency(tx1)
-    tc = sum(a.phasor * cis(2π * a.time * f) for a ∈ arr)
-  elseif mode === :incoherent
-    tc = Complex(√sum(abs2(a.phasor) for a ∈ arr), 0)
-  else
-    throw(ArgumentError("Unknown mode :" * string(mode)))
-  end
-  tc
-end
-
 ### helper functions
 
 # memoized version of absorption

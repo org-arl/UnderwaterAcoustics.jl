@@ -78,9 +78,10 @@ function rays(model::RaySolver, tx1::AcousticSource, θ::Real, rmax)
   traceray(model, tx1, θ, rmax, 1.0)
 end
 
-function transfercoef(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver; mode=:coherent)
-  # TODO
-end
+# function transfercoef(model::Bellhop, tx1::AcousticSource, rx::AbstractArray{<:AcousticReceiver}; mode=:coherent)
+#   rx isa AcousticReceiverGrid2D || throw(ArgumentError("Receivers must be on a 2D grid"))
+#   # TODO
+# end
 
 ### helper functions
 
@@ -165,7 +166,7 @@ function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0)
     else
       break
     end
-    if abs(A)/D < model.athreshold
+    if abs(A)/q < model.athreshold
       break
     end
     θ = -θ                                # FIXME: assumes flat altimetry/bathymetry
@@ -173,5 +174,5 @@ function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0)
   cₛ = soundspeed(ssp(model.env), p...)
   A *= √(cₛ * cos(θ₀) / (p[1] * c₀ * q))
   A *= fast_absorption(f, D, salinity(model.env))
-  RayArrival(t, A, s, b, θ₀, -θ, raypath)
+  RayArrival(t, conj(A), s, b, θ₀, -θ, raypath)    # conj(A) needed to match with Bellhop
 end

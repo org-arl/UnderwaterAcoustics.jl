@@ -77,6 +77,19 @@ location(x::NTuple{2,T}) where T = (x[1], zero(T), x[2])
 check(model::PropagationModel, env) = env
 environment(model::PropagationModel) = model.env
 
+function transfercoef(model::PropagationModel, tx1::AcousticSource, rx1::AcousticReceiver; mode=:coherent)
+  arr = arrivals(model, tx1, rx1)
+  if mode === :coherent
+    f = nominalfrequency(tx1)
+    tc = sum(a.phasor * cis(2π * a.time * f) for a ∈ arr)
+  elseif mode === :incoherent
+    tc = Complex(√sum(abs2(a.phasor) for a ∈ arr), 0)
+  else
+    throw(ArgumentError("Unknown mode :" * string(mode)))
+  end
+  tc
+end
+
 function transfercoef(model::PropagationModel, tx1::AcousticSource, rx::AbstractArray{<:AcousticReceiver}; mode=:coherent)
   # threaded version of [transfercoef(model, tx1, rx1; mode=mode) for rx1 ∈ rx], seems to be faster than tmap()
   rx1 = first(rx)

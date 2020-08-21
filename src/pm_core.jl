@@ -69,7 +69,7 @@ function RayArrival(time::T1, phasor::T2, surface::Int, bottom::Int, launchangle
   RayArrival{T1,T2,T3,Missing}(time, phasor, surface, bottom, launchangle, arrivalangle, missing)
 end
 
-### fallbacks
+### fallbacks & helpers
 
 location(x::NTuple{3,T}) where T = x
 location(x::NTuple{2,T}) where T = (x[1], zero(T), x[2])
@@ -78,7 +78,7 @@ check(model::PropagationModel, env) = env
 environment(model::PropagationModel) = model.env
 
 function transfercoef(model::PropagationModel, tx1::AcousticSource, rx::AbstractArray{<:AcousticReceiver}; mode=:coherent)
-  # threaded version of [transfercoef(model, tx1, rx1; mode=mode) for rx1 ∈ rx]
+  # threaded version of [transfercoef(model, tx1, rx1; mode=mode) for rx1 ∈ rx], seems to be faster than tmap()
   rx1 = first(rx)
   tc1 = transfercoef(model, tx1, rx1; mode=mode)
   tc = Array{typeof(tc1)}(undef, size(rx))
@@ -89,13 +89,7 @@ function transfercoef(model::PropagationModel, tx1::AcousticSource, rx::Abstract
 end
 
 function rays(model::PropagationModel, tx1::AcousticSource, θ::AbstractArray, rmax)
-  θ1 = first(θ)
-  r1 = rays(model, tx1, θ1, rmax)
-  r = Array{typeof(r1)}(undef, size(θ))
-  Threads.@threads for i ∈ eachindex(θ)
-    r[i] = θ1 === θ[i] ? r1 : rays(model, tx1, θ[i], rmax)
-  end
-  r
+  tmap(θ1 -> rays(model, tx1, θ1, rmax), θ)
 end
 
 transmissionloss(model, tx, rx; mode=:coherent) = -amp2db.(abs.(transfercoef(model, tx, rx; mode=mode)))
@@ -112,8 +106,6 @@ function record(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx
   record(model, tx, [rx1], duration, fs; start=start)
 end
 
-### core implementation
-
 function record(model::PropagationModel, tx::AbstractArray{AcousticSource}, rx::AbstractArray{AcousticReceiver}, duration, fs; start=0.0)
   # TODO implement record
 end
@@ -129,6 +121,11 @@ function impulseresponse(arrivals::Vector{<:Arrival}, fs; reltime=true)
     ir[ndx] = a.phasor
   end
   ir
+end
+
+function tmap(f, itr)
+  refs = [Threads.@spawn(f(i)) for i ∈ itr]
+  fetch.(refs)
 end
 
 ### pretty printing

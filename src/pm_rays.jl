@@ -25,6 +25,8 @@ RaySolver(env; kwargs...) = RaySolver(; env=env, kwargs...)
 
 ### interface functions
 
+# TODO: check for 3D coordinates and report error
+
 function check(::Type{RaySolver}, env::Union{<:UnderwaterEnvironment,Missing})
   if env !== missing
     altimetry(env) isa FlatSurface || throw(ArgumentError("RaySolver only supports environments with flat sea surface"))
@@ -43,7 +45,7 @@ function eigenrays(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver;
   nbeams = model.nbeams
   if nbeams == 0
     p1 = location(tx1)
-    R = √(abs2(p2[1] - p1[1]) + abs2(p2[2] - p1[2]))
+    R = abs(p2[1] - p1[1])
     h = maxdepth(bathymetry(model.env))
     nbeams = ceil(Int, 4 * (model.maxangle - model.minangle) / atan(h, R))
   end
@@ -79,8 +81,41 @@ function rays(model::RaySolver, tx1::AcousticSource, θ::Real, rmax)
 end
 
 function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceiverGrid2D; mode=:coherent)
-  rx isa AcousticReceiverGrid2D || throw(ArgumentError("Receivers must be on a 2D grid"))
-  # TODO
+  tc = zeros(ComplexF64, size(rx,1), size(rx,2), Threads.nthreads())
+  rmax = maximum(rx.xrange)
+  nbeams = model.nbeams
+  if nbeams == 0
+    p1 = location(tx1)
+    R = abs(rmax - p1[1])
+    h = maxdepth(bathymetry(model.env))
+    nbeams = 161 #clamp(ceil(Int, 10 * (model.maxangle - model.minangle) / atan(h, R)), 100, 1000)
+  end
+  θ = range(model.minangle, model.maxangle; length=nbeams)
+  δθ = 1° #Float64(θ.step)
+  c₀ = soundspeed(ssp(model.env), location(tx1)...)
+  f = nominalfrequency(tx1)
+  Threads.@threads for θ1 ∈ θ
+    traceray(model, tx1, θ1, rmax, 1.0; cb = (s1, u1, s2, u2, A₀, D₀, cₛ) -> begin
+      r1, z1, ξ1, ζ1, t1, _, q1 = u1
+      r2, z2, ξ2, ζ2, t2, _, q2 = u2
+      ndx = findall(r -> r1 ≤ r < r2, rx.xrange)
+      t = (t1 + t2) / 2
+      s = (s1 + s2) / 2
+      r = (r1 + r2) / 2
+      q = (q1 + q2) / 2
+      if length(ndx) > 0
+        for i ∈ 1:length(rx.zrange)
+          dz = abs(rx.zrange[i] - (z1 + z2) / 2)
+          A = A₀
+          A *= √(2cₛ * cos(θ1) / (r * c₀ * q))
+          A *= fast_absorption(f, D₀ + s, salinity(model.env))
+          A *= cis(2π * t * f)
+          tc[ndx, i, Threads.threadid()] .+= A * exp(-(dz/(q*δθ))^2)
+        end
+      end
+    end)
+  end
+  dropdims(sum(tc; dims=3); dims=3)
 end
 
 ### helper functions
@@ -133,10 +168,10 @@ function traceray1(model, r0, z0, θ, rmax, ds, q0)
     (i, ndx) -> terminate!(i), 3; rootfind=true)
   soln = ds ≤ 0 ? solve(prob; save_everystep=false, callback=cb) : solve(prob; saveat=ds, callback=cb)
   s2 = soln[end]
-  soln.t[end], s2[1], s2[2], atan(s2[4], s2[3]), s2[5], s2[7], soln.u
+  soln.t[end], s2[1], s2[2], atan(s2[4], s2[3]), s2[5], s2[7], soln.u, soln.t
 end
 
-function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0)
+function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0; cb=nothing)
   θ₀ = θ
   f = nominalfrequency(tx1)
   zmax = -maxdepth(bathymetry(model.env))
@@ -150,9 +185,15 @@ function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0)
   D = 0.0
   q = 0.0
   while true
-    dD, r, z, θ, dt, q, u = traceray1(model, p[1], p[3], θ, rmax, ds, q)
+    dD, r, z, θ, dt, q, u, svec = traceray1(model, p[1], p[3], θ, rmax, ds, q)
     for u1 ∈ u
       push!(raypath, (u1[1], 0.0, u1[2]))
+    end
+    if cb !== nothing
+      for i ∈ 2:length(u)
+        cₛ = soundspeed(ssp(model.env), (u[i-1][1]+u[i][1])/2, 0.0, (u[i-1][2]+u[i][2])/2)
+        cb(svec[i-1], u[i-1], svec[i], u[i], A, D, cₛ)
+      end
     end
     t += dt
     D += dD

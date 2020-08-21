@@ -56,11 +56,11 @@ function eigenrays(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver;
       push!(erays, traceray(model, tx1, θ[i], p1[1], ds))
     elseif i > 1 && !isnan(err[i-1]) && !isnan(err[i]) && sign(err[i-1]) != sign(err[i])
       a, b = ordered(θ[i-1], θ[i])
-      soln = optimize(ϕ -> abs(traceray(model, tx1, ϕ, p1[1]).raypath[end][3] - p1[3]), a, b; abs_tol=model.atol)
+      soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, p1[1]).raypath[end][3] - p1[3]), a, b; abs_tol=model.atol)
       push!(erays, traceray(model, tx1, soln.minimizer, p1[1], ds))
     elseif i > 2 && isnearzero(err[i-2], err[i-1], err[i])
       a, b = ordered(θ[i-2], θ[i])
-      soln = optimize(ϕ -> abs(traceray(model, tx1, ϕ, p1[1]).raypath[end][3] - p1[3]), a, b; abs_tol=model.atol)
+      soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, p1[1]).raypath[end][3] - p1[3]), a, b; abs_tol=model.atol)
       push!(erays, traceray(model, tx1, soln.minimizer, p1[1], ds))
     end
   end
@@ -130,7 +130,7 @@ function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0)
   zmax = -maxdepth(bathymetry(model.env))
   p = location(tx1)
   raypath = Array{typeof(p)}(undef, 0)
-  a = Complex(1.0, 0.0)
+  A = Complex(1.0, 0.0)
   s = 0
   b = 0
   t = 0.0
@@ -144,20 +144,20 @@ function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0)
     D += dD
     if isapprox(z, 0.0; atol=1e-3)        # FIXME: assumes flat altimetry
       s += 1
-      a *= reflectioncoef(seasurface(model.env), f, θ)
+      A *= reflectioncoef(seasurface(model.env), f, π/2 - θ)
     elseif isapprox(z, zmax; atol=1e-3)   # FIXME: assumes flat bathymetry
       b += 1
-      a *= reflectioncoef(seabed(model.env), f, θ)
+      A *= reflectioncoef(seabed(model.env), f, π/2 + θ)
     else
       break
     end
-    if abs(a)/D < model.athreshold
+    if abs(A)/D < model.athreshold
       break
     end
     p = (r, 0.0, z)
     θ = -θ                                # FIXME: assumes flat altimetry/bathymetry
   end
-  a /= D
-  a *= fast_absorption(f, D, salinity(model.env))
-  RayArrival(t, a, s, b, θ₀, θ, raypath)
+  A /= D
+  A *= fast_absorption(f, D, salinity(model.env))
+  RayArrival(t, A, s, b, θ₀, -θ, raypath)
 end

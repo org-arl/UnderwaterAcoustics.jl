@@ -96,15 +96,18 @@ function isnearzero(a, b, c)
 end
 
 function rayeqns!(du, u, params, s)
-  r, z, ξ, ζ, t = u
-  c, ∂c = params
+  r, z, ξ, ζ, t, p, q = u
+  c, ∂c, ∂²c = params
   cᵥ = c(z)
   cᵥ² = cᵥ * cᵥ
+  c̄ₙₙ = ∂²c(z) * ξ * ξ
   du[1] = cᵥ * ξ
   du[2] = cᵥ * ζ
   du[3] = 0               # TODO: support range-dependent soundspeed
   du[4] = -∂c(z) / cᵥ²
   du[5] = 1 / cᵥ
+  du[6] = -c̄ₙₙ * q
+  du[7] = cᵥ * p
 end
 
 function checkray!(out, u, s, integrator, a::Altimetry, b::Bathymetry, rmax)
@@ -115,20 +118,21 @@ function checkray!(out, u, s, integrator, a::Altimetry, b::Bathymetry, rmax)
 end
 
 # FIXME: type inference fails for prob and soln, but will be fixed in PR570 for DiffEqBase soon
-function traceray1(model, r0, z0, θ, rmax, ds)
+function traceray1(model, r0, z0, θ, rmax, ds, q0)
   a = altimetry(model.env)
   b = bathymetry(model.env)
   c = z -> soundspeed(ssp(model.env), 0.0, 0.0, z)
   ∂c = z -> ForwardDiff.derivative(c, z)
+  ∂²c = z -> ForwardDiff.derivative(∂c, z)
   cᵥ = c(z0)
-  u0 = [r0, z0, cos(θ)/cᵥ, sin(θ)/cᵥ, 0.0]
-  prob = ODEProblem(rayeqns!, u0, (0.0, model.rugocity * (rmax-r0)/cos(θ)), (c, ∂c))
+  u0 = [r0, z0, cos(θ)/cᵥ, sin(θ)/cᵥ, 0.0, 1/cᵥ, q0]
+  prob = ODEProblem(rayeqns!, u0, (0.0, model.rugocity * (rmax-r0)/cos(θ)), (c, ∂c, ∂²c))
   cb = VectorContinuousCallback(
     (out, u, s, i) -> checkray!(out, u, s, i, a, b, rmax),
     (i, ndx) -> terminate!(i), 3; rootfind=true)
   soln = ds ≤ 0 ? solve(prob; save_everystep=false, callback=cb) : solve(prob; saveat=ds, callback=cb)
   s2 = soln[end]
-  soln.t[end], s2[1], s2[2], atan(s2[4], s2[3]), s2[5], soln.u
+  soln.t[end], s2[1], s2[2], atan(s2[4], s2[3]), s2[5], s2[7], soln.u
 end
 
 function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0)
@@ -136,19 +140,22 @@ function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0)
   f = nominalfrequency(tx1)
   zmax = -maxdepth(bathymetry(model.env))
   p = location(tx1)
+  c₀ = soundspeed(ssp(model.env), p...)
   raypath = Array{typeof(p)}(undef, 0)
   A = Complex(1.0, 0.0)
   s = 0
   b = 0
   t = 0.0
   D = 0.0
+  q = 0.0
   while true
-    dD, r, z, θ, dt, u = traceray1(model, p[1], p[3], θ, rmax, ds)
+    dD, r, z, θ, dt, q, u = traceray1(model, p[1], p[3], θ, rmax, ds, q)
     for u1 ∈ u
       push!(raypath, (u1[1], 0.0, u1[2]))
     end
     t += dt
     D += dD
+    p = (r, 0.0, z)
     if isapprox(z, 0.0; atol=1e-3)        # FIXME: assumes flat altimetry
       s += 1
       A *= reflectioncoef(seasurface(model.env), f, π/2 - θ)
@@ -161,10 +168,10 @@ function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0)
     if abs(A)/D < model.athreshold
       break
     end
-    p = (r, 0.0, z)
     θ = -θ                                # FIXME: assumes flat altimetry/bathymetry
   end
-  A /= D
+  cₛ = soundspeed(ssp(model.env), p...)
+  A *= √(cₛ * cos(θ₀) / (p[1] * c₀ * q))
   A *= fast_absorption(f, D, salinity(model.env))
   RayArrival(t, A, s, b, θ₀, -θ, raypath)
 end

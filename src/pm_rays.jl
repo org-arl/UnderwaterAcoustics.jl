@@ -78,10 +78,10 @@ function rays(model::RaySolver, tx1::AcousticSource, θ::Real, rmax)
   traceray(model, tx1, θ, rmax, 1.0)
 end
 
-# function transfercoef(model::Bellhop, tx1::AcousticSource, rx::AbstractArray{<:AcousticReceiver}; mode=:coherent)
-#   rx isa AcousticReceiverGrid2D || throw(ArgumentError("Receivers must be on a 2D grid"))
-#   # TODO
-# end
+function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceiverGrid2D; mode=:coherent)
+  rx isa AcousticReceiverGrid2D || throw(ArgumentError("Receivers must be on a 2D grid"))
+  # TODO
+end
 
 ### helper functions
 

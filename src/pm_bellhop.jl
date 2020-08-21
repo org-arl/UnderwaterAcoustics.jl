@@ -41,7 +41,7 @@ function arrivals(model::Bellhop, tx1::AcousticSource, rx1::AcousticReceiver)
   end
 end
 
-function transfercoef(model::Bellhop, tx1::AcousticSource, rx::AbstractArray{<:AcousticReceiver}; mode=:coherent)
+function transfercoef(model::Bellhop, tx1::AcousticSource, rx::AcousticReceiverGrid2D; mode=:coherent)
   if mode === :coherent
     taskcode = "C"
   elseif mode === :incoherent
@@ -58,7 +58,22 @@ function transfercoef(model::Bellhop, tx1::AcousticSource, rx::AbstractArray{<:A
   end
 end
 
-transfercoef(model::Bellhop, tx1::AcousticSource, rx1::AcousticReceiver; mode=:coherent) = transfercoef(model, tx1, [rx1]; mode=mode)[1]
+function transfercoef(model::Bellhop, tx1::AcousticSource, rx1::AcousticReceiver; mode=:coherent)
+  if mode === :coherent
+    taskcode = "C"
+  elseif mode === :incoherent
+    taskcode = "I"
+  elseif mode === :semicoherent
+    taskcode = "S"
+  else
+    throw(ArgumentError("Unknown mode :" * string(mode)))
+  end
+  mktempdir(prefix="bellhop_") do dirname
+    writeenv(model, [tx1], [rx1], taskcode, dirname)
+    bellhop(dirname)
+    readshd(joinpath(dirname, "model.shd"))[1]
+  end
+end
 
 function eigenrays(model::Bellhop, tx1::AcousticSource, rx1::AcousticReceiver)
   mktempdir(prefix="bellhop_") do dirname

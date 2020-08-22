@@ -1,3 +1,4 @@
+using LinearAlgebra
 using DifferentialEquations
 using ForwardDiff
 using Optim
@@ -81,36 +82,48 @@ function rays(model::RaySolver, tx1::AcousticSource, θ::Real, rmax)
 end
 
 function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceiverGrid2D; mode=:coherent)
+  # implementation primarily based on ideas from COA (Computational Ocean Acoustics, 2nd ed., ch. 3)
   tc = zeros(ComplexF64, size(rx,1), size(rx,2), Threads.nthreads())
-  rmax = maximum(rx.xrange)
+  rmax = maximum(rx.xrange) + 0.1
   nbeams = model.nbeams
   if nbeams == 0
     p1 = location(tx1)
     R = abs(rmax - p1[1])
     h = maxdepth(bathymetry(model.env))
-    nbeams = 161 #clamp(ceil(Int, 10 * (model.maxangle - model.minangle) / atan(h, R)), 100, 1000)
+    nbeams = clamp(ceil(Int, 20 * (model.maxangle - model.minangle) / atan(h, R)), 100, 1000)
   end
   θ = range(model.minangle, model.maxangle; length=nbeams)
-  δθ = 1° #Float64(θ.step)
+  δθ = Float64(θ.step)
   c₀ = soundspeed(ssp(model.env), location(tx1)...)
   f = nominalfrequency(tx1)
+  ω = 2π * f
+  G = 1 / √(2π)    # seems to be right, although not in line with COA (3.76)
   Threads.@threads for θ1 ∈ θ
-    traceray(model, tx1, θ1, rmax, 1.0; cb = (s1, u1, s2, u2, A₀, D₀, cₛ) -> begin
+    β = 2 * cos(θ1)/c₀
+    traceray(model, tx1, θ1, rmax, 1.0; cb = (s1, u1, s2, u2, A₀, D₀, t₀, cₛ) -> begin
       r1, z1, ξ1, ζ1, t1, _, q1 = u1
       r2, z2, ξ2, ζ2, t2, _, q2 = u2
       ndx = findall(r -> r1 ≤ r < r2, rx.xrange)
-      t = (t1 + t2) / 2
-      s = (s1 + s2) / 2
-      r = (r1 + r2) / 2
-      q = (q1 + q2) / 2
-      if length(ndx) > 0
+      rz1 = (r1, z1)
+      vlen = norm((r2-r1, z2-z1))
+      rvlen = norm((ξ1, ζ1))
+      tᵥ = (ξ1, ζ1) ./ rvlen
+      nᵥ = (ζ1, -ξ1) ./ rvlen
+      γ = fast_absorption(f, D₀, salinity(model.env))
+      for j ∈ ndx
         for i ∈ 1:length(rx.zrange)
-          dz = abs(rx.zrange[i] - (z1 + z2) / 2)
-          A = A₀
-          A *= √(2cₛ * cos(θ1) / (r * c₀ * q))
-          A *= fast_absorption(f, D₀ + s, salinity(model.env))
-          A *= cis(2π * t * f)
-          tc[ndx, i, Threads.threadid()] .+= A * exp(-(dz/(q*δθ))^2)
+          rz = (rx.xrange[j], rx.zrange[i])
+          v = rz .- rz1
+          s = dot(v, tᵥ)
+          n = dot(v, nᵥ)
+          α = s / vlen
+          t = t₀ + t1 + (t2 - t1) * α
+          q = q1 + (q2 - q1) * α
+          if q > 0
+            A = A₀ * G * γ * √(β * cₛ / (rz[1] * q)) * cis(ω * t)   # based on COA (3.76)
+            W = q * δθ                                              # COA (3.74)
+            tc[j, i, Threads.threadid()] += A * exp(-(n / W)^2)
+          end
         end
       end
     end)
@@ -132,6 +145,7 @@ function isnearzero(a, b, c)
 end
 
 function rayeqns!(du, u, params, s)
+  # implementation based on COA (3.161-164, 3.58-63)
   r, z, ξ, ζ, t, p, q = u
   c, ∂c, ∂²c = params
   cᵥ = c(z)
@@ -147,10 +161,10 @@ function rayeqns!(du, u, params, s)
 end
 
 function checkray!(out, u, s, integrator, a::Altimetry, b::Bathymetry, rmax)
-  bz = u[4] ≥ 0 ? altitude(a, u[1], 0.0) : -depth(b, u[1], 0.0)
-  out[1] = u[2] - bz
-  out[2] = u[3]
-  out[3] = u[1] - rmax
+  out[1] = altitude(a, u[1], 0.0) - u[2]   # surface reflection
+  out[2] = u[2] + depth(b, u[1], 0.0)      # bottom reflection
+  out[3] = u[1] - rmax                     # maximum range
+  out[4] = u[3]                            # ray turned back
 end
 
 # FIXME: type inference fails for prob and soln, but will be fixed in PR570 for DiffEqBase soon
@@ -165,7 +179,7 @@ function traceray1(model, r0, z0, θ, rmax, ds, q0)
   prob = ODEProblem(rayeqns!, u0, (0.0, model.rugocity * (rmax-r0)/cos(θ)), (c, ∂c, ∂²c))
   cb = VectorContinuousCallback(
     (out, u, s, i) -> checkray!(out, u, s, i, a, b, rmax),
-    (i, ndx) -> terminate!(i), 3; rootfind=true)
+    (i, ndx) -> terminate!(i), 4; rootfind=true)
   soln = ds ≤ 0 ? solve(prob; save_everystep=false, callback=cb) : solve(prob; saveat=ds, callback=cb)
   s2 = soln[end]
   soln.t[end], s2[1], s2[2], atan(s2[4], s2[3]), s2[5], s2[7], soln.u, soln.t
@@ -175,6 +189,7 @@ function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0;
   θ₀ = θ
   f = nominalfrequency(tx1)
   zmax = -maxdepth(bathymetry(model.env))
+  ϵ = eps(typeof(zmax))
   p = location(tx1)
   c₀ = soundspeed(ssp(model.env), p...)
   raypath = Array{typeof(p)}(undef, 0)
@@ -192,12 +207,12 @@ function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0;
     if cb !== nothing
       for i ∈ 2:length(u)
         cₛ = soundspeed(ssp(model.env), (u[i-1][1]+u[i][1])/2, 0.0, (u[i-1][2]+u[i][2])/2)
-        cb(svec[i-1], u[i-1], svec[i], u[i], A, D, cₛ)
+        cb(svec[i-1], u[i-1], svec[i], u[i], A, D, t, cₛ)
       end
     end
     t += dt
     D += dD
-    p = (r, 0.0, z)
+    p = (r, 0.0, clamp(z, zmax+ϵ, -ϵ))    # FIXME: assumes flat bathymetry + altimetry
     if isapprox(z, 0.0; atol=1e-3)        # FIXME: assumes flat altimetry
       s += 1
       A *= reflectioncoef(seasurface(model.env), f, π/2 - θ)
@@ -213,7 +228,7 @@ function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0;
     θ = -θ                                # FIXME: assumes flat altimetry/bathymetry
   end
   cₛ = soundspeed(ssp(model.env), p...)
-  A *= √(cₛ * cos(θ₀) / (p[1] * c₀ * q))
+  A *= √(cₛ * cos(θ₀) / (p[1] * c₀ * q))           # based on COA (3.65)
   A *= fast_absorption(f, D, salinity(model.env))
   RayArrival(t, conj(A), s, b, θ₀, -θ, raypath)    # conj(A) needed to match with Bellhop
 end

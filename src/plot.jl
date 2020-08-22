@@ -47,6 +47,7 @@ using Colors
     xrange, [-depth(z, x, 0.0) for x ∈ xrange]
   end
   if length(rays) > 0
+    reverse!(rays)
     ampl = [r.phasor === missing ? -(r.surface + 3*r.bottom) : amp2db(abs.(r.phasor)) for r ∈ rays]
     ampl .-= minimum(ampl)
     if maximum(ampl) > 0.0

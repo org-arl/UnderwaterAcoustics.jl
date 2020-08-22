@@ -82,6 +82,7 @@ function rays(model::RaySolver, tx1::AcousticSource, θ::Real, rmax)
 end
 
 function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceiverGrid2D; mode=:coherent)
+  mode === :coherent || mode === :incoherent || throw(ArgumentError("Unknown mode :" * string(mode)))
   # implementation primarily based on ideas from COA (Computational Ocean Acoustics, 2nd ed., ch. 3)
   tc = zeros(ComplexF64, size(rx,1), size(rx,2), Threads.nthreads())
   rmax = maximum(rx.xrange) + 0.1
@@ -120,15 +121,18 @@ function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceive
           t = t₀ + t1 + (t2 - t1) * α
           q = q1 + (q2 - q1) * α
           if q > 0
-            A = A₀ * G * γ * √(β * cₛ / (rz[1] * q)) * cis(ω * t)   # based on COA (3.76)
-            W = q * δθ                                              # COA (3.74)
-            tc[j, i, Threads.threadid()] += A * exp(-(n / W)^2)
+            A = A₀ * G * γ * √(β * cₛ / (rz[1] * q))    # based on COA (3.76)
+            W = q * δθ                                  # COA (3.74)
+            A *= exp(-(n / W)^2)
+            tc[j, i, Threads.threadid()] += mode === :coherent ? A * cis(ω * t) : Complex(abs2(A), 0.0)
           end
         end
       end
     end)
   end
-  dropdims(sum(tc; dims=3); dims=3)
+  rv = dropdims(sum(tc; dims=3); dims=3)
+  mode === :incoherent && (rv = sqrt.(rv) .* (π/2))      # FIXME: π/2 fudge factor
+  rv
 end
 
 ### helper functions

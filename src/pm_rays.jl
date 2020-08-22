@@ -5,20 +5,22 @@ using Optim
 
 export RaySolver
 
-Base.@kwdef struct RaySolver{T} <: PropagationModel{T}
-  env::T
+Base.@kwdef struct RaySolver{T1,T2} <: PropagationModel{T1}
+  env::T1
   nbeams::Int = 0
   minangle::Float64 = -80°
   maxangle::Float64 = +80°
   atol::Float64 = 1e-3
   rugocity::Float64 = 1.5
   athreshold::Float64 = 1e-5
-  function RaySolver(env, nbeams, minangle, maxangle, atol, rugocity, athreshold)
+  solver::T2 = Tsit5()
+  solvertol::Float64 = 1e-3
+  function RaySolver(env, nbeams, minangle, maxangle, atol, rugocity, athreshold, solver, solvertol)
     nbeams < 0 && (nbeams = 0)
     -π/2 ≤ minangle ≤ π/2 || throw(ArgumentError("minangle should be between -π/2 and π/2"))
     -π/2 ≤ maxangle ≤ π/2 || throw(ArgumentError("maxangle should be between -π/2 and π/2"))
     minangle < maxangle || throw(ArgumentError("maxangle should be more than minangle"))
-    new{typeof(env)}(check(Bellhop, env), nbeams, minangle, maxangle, atol, rugocity, athreshold)
+    new{typeof(env),typeof(solver)}(check(Bellhop, env), nbeams, minangle, maxangle, atol, rugocity, athreshold, solver, solvertol)
   end
 end
 
@@ -111,8 +113,10 @@ function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceive
       tᵥ = (ξ1, ζ1) ./ rvlen
       nᵥ = (ζ1, -ξ1) ./ rvlen
       γ = fast_absorption(f, D₀, salinity(model.env))
+      Wmax = max(q1, q2) * δθ
+      ndx2 = findall(z -> min(z1, z2) - 4*Wmax ≤ z ≤ max(z1, z2) + 4*Wmax, rx.zrange)
       for j ∈ ndx
-        for i ∈ 1:length(rx.zrange)
+        for i ∈ ndx2
           rz = (rx.xrange[j], rx.zrange[i])
           v = rz .- rz1
           s = dot(v, tᵥ)
@@ -184,7 +188,11 @@ function traceray1(model, r0, z0, θ, rmax, ds, q0)
   cb = VectorContinuousCallback(
     (out, u, s, i) -> checkray!(out, u, s, i, a, b, rmax),
     (i, ndx) -> terminate!(i), 4; rootfind=true)
-  soln = ds ≤ 0 ? solve(prob; save_everystep=false, callback=cb) : solve(prob; saveat=ds, callback=cb)
+  if ds ≤ 0
+    soln = solve(prob, model.solver; abstol=model.solvertol, save_everystep=false, callback=cb)
+  else
+    soln = solve(prob, model.solver; abstol=model.solvertol, saveat=ds, callback=cb)
+  end
   s2 = soln[end]
   soln.t[end], s2[1], s2[2], atan(s2[4], s2[3]), s2[5], s2[7], soln.u, soln.t
 end

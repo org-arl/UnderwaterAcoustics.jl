@@ -52,15 +52,15 @@ function eigenrays(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver;
   end
   θ = range(model.minangle, model.maxangle; length=nbeams)
   n = length(θ)
-  err = fill(NaN64, n)
   r1 = traceray(model, tx1, θ[1], p2[1])  # needed to get type
+  err = fill(convert(eltype(r1.raypath[end]), NaN64), n)
   Threads.@threads for i ∈ 1:n
     p3 = (i == 1 ? r1 : traceray(model, tx1, θ[i], p2[1])).raypath[end]
     if isapprox(p3[1], p2[1]; atol=model.atol) && isapprox(p3[2], p2[2]; atol=model.atol)
       err[i] = p3[3] - p2[3]
     end
   end
-  erays = Array{typeof(r1)}(undef, 0)
+  erays = Array{RayArrival}(undef, 0)   # FIXME: use of generic type as the traceray() returns different types when used with ForwardDiff
   for i ∈ 1:n
     if isapprox(err[i], 0.0; atol=model.atol)
       push!(erays, traceray(model, tx1, θ[i], p2[1], ds))
@@ -84,7 +84,7 @@ end
 function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceiverGrid2D; mode=:coherent)
   mode === :coherent || mode === :incoherent || throw(ArgumentError("Unknown mode :" * string(mode)))
   # implementation primarily based on ideas from COA (Computational Ocean Acoustics, 2nd ed., ch. 3)
-  tc = zeros(ComplexF64, size(rx,1), size(rx,2), Threads.nthreads())
+  tc = zeros(ComplexF64, size(rx,1), size(rx,2), Threads.nthreads())     # FIXME: type here makes this function non-differentiable
   rmax = maximum(rx.xrange) + 0.1
   nbeams = model.nbeams
   if nbeams == 0

@@ -51,22 +51,22 @@ function record end
 
 abstract type Arrival end
 
-struct RayArrival{T1,T2,T3,T4} <: Arrival
+struct RayArrival{T1,T2,T3,T4,T5} <: Arrival
   time::T1
   phasor::T2
   surface::Int
   bottom::Int
   launchangle::T3
-  arrivalangle::T3
-  raypath::Union{Vector{NTuple{3,T4}},Missing}
+  arrivalangle::T4
+  raypath::Union{Vector{NTuple{3,T5}},Missing}
 end
 
-function RayArrival(time::T1, phasor::T2, surface::Int, bottom::Int, launchangle::T3, arrivalangle::T3, raypath::Vector{NTuple{3,T4}}) where {T1,T2,T3,T4}
-  RayArrival{T1,T2,T3,T4}(time, phasor, surface, bottom, launchangle, arrivalangle, raypath)
+function RayArrival(time::T1, phasor::T2, surface::Int, bottom::Int, launchangle::T3, arrivalangle::T4, raypath::Vector{NTuple{3,T5}}) where {T1,T2,T3,T4,T5}
+  RayArrival{T1,T2,T3,T4,T5}(time, phasor, surface, bottom, launchangle, arrivalangle, raypath)
 end
 
-function RayArrival(time::T1, phasor::T2, surface::Int, bottom::Int, launchangle::T3, arrivalangle::T3) where {T1,T2,T3}
-  RayArrival{T1,T2,T3,Missing}(time, phasor, surface, bottom, launchangle, arrivalangle, missing)
+function RayArrival(time::T1, phasor::T2, surface::Int, bottom::Int, launchangle::T3, arrivalangle::T4) where {T1,T2,T3,T4}
+  RayArrival{T1,T2,T3,T4,Missing}(time, phasor, surface, bottom, launchangle, arrivalangle, missing)
 end
 
 ### fallbacks & helpers

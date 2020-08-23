@@ -202,7 +202,7 @@ function readrays(filename)
 end
 
 function readarrivals(filename)
-  arrivals = RayArrival{Float64,ComplexF64,Float64,Missing}[]
+  arrivals = RayArrival{Float64,ComplexF64,Float64,Float64,Missing}[]
   open(filename, "r") do io
     s = strip(readline(io))
     if occursin("2D", s)

@@ -175,7 +175,6 @@ function checkray!(out, u, s, integrator, a::Altimetry, b::Bathymetry, rmax)
   out[4] = u[3]                            # ray turned back
 end
 
-# FIXME: type inference fails for prob and soln, but will be fixed in PR570 for DiffEqBase soon
 function traceray1(model, r0, z0, θ, rmax, ds, q0)
   a = altimetry(model.env)
   b = bathymetry(model.env)
@@ -184,7 +183,7 @@ function traceray1(model, r0, z0, θ, rmax, ds, q0)
   ∂²c = z -> ForwardDiff.derivative(∂c, z)
   cᵥ = c(z0)
   u0 = [r0, z0, cos(θ)/cᵥ, sin(θ)/cᵥ, 0.0, 1/cᵥ, q0]
-  prob = ODEProblem(rayeqns!, u0, (0.0, model.rugocity * (rmax-r0)/cos(θ)), (c, ∂c, ∂²c))
+  prob = ODEProblem{true}(rayeqns!, u0, (0.0, model.rugocity * (rmax-r0)/cos(θ)), (c, ∂c, ∂²c))
   cb = VectorContinuousCallback(
     (out, u, s, i) -> checkray!(out, u, s, i, a, b, rmax),
     (i, ndx) -> terminate!(i), 4; rootfind=true)

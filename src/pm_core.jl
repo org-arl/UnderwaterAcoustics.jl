@@ -2,9 +2,10 @@ export SoundSpeedProfile, soundspeed
 export Bathymetry, depth, maxdepth
 export Altimetry, altitude
 export ReflectionModel, reflectioncoef
-export UnderwaterEnvironment, altimetry, bathymetry, ssp, salinity, seasurface, seabed
+export UnderwaterEnvironment, altimetry, bathymetry, ssp, salinity, seasurface, seabed, noise
 export AcousticSource, AcousticReceiver, location, nominalfrequency, phasor, record
 export PropagationModel, arrivals, transfercoef, transmissionloss, eigenrays, rays
+export NoiseModel
 export impulseresponse
 
 ### interfaces
@@ -29,6 +30,7 @@ function ssp end
 function salinity end
 function seasurface end
 function seabed end
+function noise end
 
 abstract type AcousticSource end
 function location end
@@ -38,6 +40,9 @@ function record end
 
 abstract type AcousticReceiver end
 function location end
+
+abstract type NoiseModel end
+function record end
 
 abstract type PropagationModel{T<:UnderwaterEnvironment} end
 function environment end
@@ -117,11 +122,30 @@ function record(model::PropagationModel, tx1::AcousticSource, rx::AbstractArray{
 end
 
 function record(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx1::AcousticReceiver, duration, fs; start=0.0)
-  record(model, tx, [rx1], duration, fs; start=start)
+  dropdims(record(model, tx, [rx1], duration, fs; start=start), 2)
 end
 
-function record(model::PropagationModel, tx::AbstractArray{AcousticSource}, rx::AbstractArray{AcousticReceiver}, duration, fs; start=0.0)
-  # TODO implement record
+function record(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx::AbstractArray{<:AcousticReceiver}, duration, fs; start=0.0)
+  arr = [arrivals(model, tx1, rx1) for tx1 ∈ tx, rx1 ∈ rx]
+  mindelay, maxdelay = extrema(Iterators.flatten([[a1.time for a1 ∈ a] for a ∈ arr]))
+  src = [record(tx1, duration + (maxdelay-mindelay), fs; start=start-maxdelay) for tx1 ∈ tx]
+  nsamples = round(Int, duration * fs)
+  x = zeros(Base.promote_eltype(src...), nsamples, length(rx))
+  for j = 1:length(tx)
+    for k = 1:length(rx)
+      for a ∈ arr[j,k]
+        t = round(Int, (maxdelay - a.time) * fs)
+        x[:,k] .+= a.phasor .* src[j][t+1:t+nsamples]
+      end
+    end
+  end
+  noisemodel = noise(environment(model))
+  if noisemodel !== missing
+    for k = 1:length(rx)
+      x[:,k] .+= record(noisemodel, duration, fs; start=start)
+    end
+  end
+  signal(x, fs)
 end
 
 function impulseresponse(arrivals::Vector{<:Arrival}, fs; reltime=true)
@@ -152,6 +176,7 @@ function Base.show(io::IO, env::UnderwaterEnvironment)
   println(io, "  salinity = ", salinity(env))
   println(io, "  seasurface = ", seasurface(env))
   println(io, "  seabed = ", seabed(env))
+  println(io, "  noise = ", noise(env))
 end
 
 function Base.show(io::IO, model::PropagationModel)

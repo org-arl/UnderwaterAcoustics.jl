@@ -7,6 +7,7 @@ export ClayeySand, CoarseSilt, SandySilt, Silt, FineSilt, SandyClay, SiltyClay, 
 export Vacuum, SeaState0, SeaState1, SeaState2, SeaState3, SeaState4
 export SeaState5, SeaState6, SeaState7, SeaState8, SeaState9
 export AcousticReceiverGrid2D, AcousticReceiverGrid3D
+export RedGaussianNoise, Pinger
 
 ### sound speed profiles
 
@@ -146,13 +147,14 @@ const SeaState9 = SurfaceLoss(32.9)
 
 ### basic environmental model
 
-Base.@kwdef struct BasicUnderwaterEnvironment{T1<:Altimetry, T2<:Bathymetry, T3<:SoundSpeedProfile, T4<:Number, T5<:ReflectionModel, T6<:ReflectionModel} <: UnderwaterEnvironment
+Base.@kwdef struct BasicUnderwaterEnvironment{T1<:Altimetry, T2<:Bathymetry, T3<:SoundSpeedProfile, T4<:Number, T5<:ReflectionModel, T6<:ReflectionModel, T7} <: UnderwaterEnvironment
   altimetry::T1 = FlatSurface()
   bathymetry::T2 = ConstantDepth(20.0)
   ssp::T3 = IsoSSP(soundspeed())
   salinity::T4 = 35.0
   seasurface::T5 = SeaState1
   seabed::T6 = SandySilt
+  noise::T7 = RedGaussianNoise(db2amp(120.0))
 end
 
 UnderwaterEnvironment(; kwargs...) = BasicUnderwaterEnvironment(; kwargs...)
@@ -163,6 +165,18 @@ ssp(env::BasicUnderwaterEnvironment) = env.ssp
 salinity(env::BasicUnderwaterEnvironment) = env.salinity
 seasurface(env::BasicUnderwaterEnvironment) = env.seasurface
 seabed(env::BasicUnderwaterEnvironment) = env.seabed
+noise(env::UnderwaterEnvironment) = env.noise
+
+### noise models
+
+struct RedGaussianNoise{T} <: NoiseModel
+  σ::T
+end
+
+function record(noisemodel::RedGaussianNoise, duration, fs; start=0.0)
+  # FIXME: shows some variability in PSD with sampling rate!
+  analytic(signal(rand(RedGaussian(; n=round(Int, duration*fs), σ=noisemodel.σ)), fs))
+end
 
 ### basic source & recevier models
 
@@ -173,15 +187,48 @@ struct NarrowbandAcousticSource{T1,T2,T3,T4} <: AcousticSource
   ϕ::T4
 end
 
-NarrowbandAcousticSource(x, y, z, f; sourcelevel=1.0, ϕ=0.0) = NarrowbandAcousticSource(promote(x, y, z), f, sourcelevel, ϕ)
-NarrowbandAcousticSource(x, z, f; sourcelevel=1.0, ϕ=0.0) = NarrowbandAcousticSource(promote(x, 0, z), f, sourcelevel, ϕ)
-AcousticSource(x, y, z, f; sourcelevel=1.0, ϕ=0.0) = NarrowbandAcousticSource(promote(x, y, z), f, sourcelevel, ϕ)
-AcousticSource(x, z, f; sourcelevel=1.0, ϕ=0.0) = NarrowbandAcousticSource(promote(x, 0, z), f, sourcelevel, ϕ)
+NarrowbandAcousticSource(x, y, z, f; sourcelevel=db2amp(180.0), ϕ=0.0) = NarrowbandAcousticSource(promote(x, y, z), f, sourcelevel, ϕ)
+NarrowbandAcousticSource(x, z, f; sourcelevel=db2amp(180.0), ϕ=0.0) = NarrowbandAcousticSource(promote(x, 0, z), f, sourcelevel, ϕ)
+AcousticSource(x, y, z, f; sourcelevel=db2amp(180.0), ϕ=0.0) = NarrowbandAcousticSource(promote(x, y, z), f, sourcelevel, ϕ)
+AcousticSource(x, z, f; sourcelevel=db2amp(180.0), ϕ=0.0) = NarrowbandAcousticSource(promote(x, 0, z), f, sourcelevel, ϕ)
 
 location(tx::NarrowbandAcousticSource) = tx.pos
 nominalfrequency(tx::NarrowbandAcousticSource) = tx.f
 phasor(tx::NarrowbandAcousticSource) = tx.A * cis(tx.ϕ)
-record(tx::NarrowbandAcousticSource, start, duration, fs) = tx.A .* sin(2π .* tx.f .* (start:1/fs:start+duration) .+ tx.ϕ)
+record(tx::NarrowbandAcousticSource, duration, fs; start=0.0) = signal(tx.A .* cis.(2π .* tx.f .* (start:1/fs:start+duration) .+ tx.ϕ), fs)
+
+Base.@kwdef struct Pinger{T1,T2,T3,T4,T5,T6,T7,T8} <: AcousticSource
+  pos::NTuple{3,T1}
+  frequency::T2
+  sourcelevel::T3 = db2amp(180.0)
+  phase::T4 = 0.0
+  duration::T5 = 0.02
+  start::T6 = 0.0
+  interval::T7 = 1.0
+  window::T8 = nothing
+end
+
+Pinger(x, y, z, f; kwargs...) = Pinger(; pos=promote(x, y, z), frequency=f, kwargs...)
+Pinger(x, z, f; kwargs...) = Pinger(; pos=promote(x, 0, z), frequency=f, kwargs...)
+
+location(tx::Pinger) = tx.pos
+nominalfrequency(tx::Pinger) = tx.frequency
+phasor(tx::Pinger) = tx.sourcelevel * cis(tx.phase)
+
+function record(pinger::Pinger, duration, fs; start=0.0)
+  nsamples = round(Int, duration * fs)
+  ping = cw(pinger.frequency, pinger.duration, fs; phase=pinger.phase, window=pinger.window)
+  x = zeros(eltype(ping), nsamples)
+  t = pinger.start - start
+  while t < duration
+    ndx = round(Int, t*fs) + 1
+    n = length(ping)
+    ndx+n-1 > nsamples && (n = 1+nsamples-ndx)
+    x[ndx:ndx+n-1] .= ping[1:n]
+    t += pinger.interval
+  end
+  signal(pinger.sourcelevel * x, fs)
+end
 
 struct BasicAcousticReceiver{T} <: AcousticReceiver
   pos::NTuple{3,T}

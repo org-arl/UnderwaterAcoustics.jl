@@ -74,6 +74,8 @@ function RayArrival(time::T1, phasor::T2, surface::Int, bottom::Int, launchangle
   RayArrival{T1,T2,T3,T4,Missing}(time, phasor, surface, bottom, launchangle, arrivalangle, missing)
 end
 
+phasortype(::Type{RayArrival{T1,T2,T3,T4,T5}}) where {T1,T2,T3,T4,T5} = T2
+
 ### fallbacks & helpers
 
 location(x::NTuple{3,T}) where T = x
@@ -84,7 +86,7 @@ environment(model::PropagationModel) = model.env
 
 function transfercoef(model::PropagationModel, tx1::AcousticSource, rx1::AcousticReceiver; mode=:coherent)
   arr = arrivals(model, tx1, rx1)
-  # TODO: deal with empty arr in a typesafe way
+  length(arr) == 0 && return zero(phasortype(eltype(arr)))
   if mode === :coherent
     f = nominalfrequency(tx1)
     tc = sum(a.phasor * cis(2π * a.time * f) for a ∈ arr)

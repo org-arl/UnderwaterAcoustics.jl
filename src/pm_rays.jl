@@ -62,7 +62,7 @@ function eigenrays(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver;
       err[i] = p3[3] - p2[3]
     end
   end
-  erays = Array{RayArrival}(undef, 0)   # FIXME: use of generic type as the traceray() returns different types when used with ForwardDiff
+  erays = Array{typeof(r1)}(undef, 0)   # FIXME: type here makes this function non-differentiable
   for i ∈ 1:n
     if isapprox(err[i], 0.0; atol=model.atol)
       push!(erays, traceray(model, tx1, θ[i], p2[1], ds))

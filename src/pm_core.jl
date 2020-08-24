@@ -76,6 +76,8 @@ end
 
 phasortype(::Type{RayArrival{T1,T2,T3,T4,T5}}) where {T1,T2,T3,T4,T5} = T2
 
+# TODO: define scatterers
+
 ### fallbacks & helpers
 
 location(x::NTuple{3,T}) where T = x

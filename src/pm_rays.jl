@@ -10,17 +10,18 @@ Base.@kwdef struct RaySolver{T1,T2} <: PropagationModel{T1}
   nbeams::Int = 0
   minangle::Float64 = -80°
   maxangle::Float64 = +80°
+  ds::Float64 = 1.0
   atol::Float64 = 1e-3
   rugocity::Float64 = 1.5
   athreshold::Float64 = 1e-5
   solver::T2 = Tsit5()
   solvertol::Float64 = 1e-3
-  function RaySolver(env, nbeams, minangle, maxangle, atol, rugocity, athreshold, solver, solvertol)
+  function RaySolver(env, nbeams, minangle, maxangle, ds, atol, rugocity, athreshold, solver, solvertol)
     nbeams < 0 && (nbeams = 0)
     -π/2 ≤ minangle ≤ π/2 || throw(ArgumentError("minangle should be between -π/2 and π/2"))
     -π/2 ≤ maxangle ≤ π/2 || throw(ArgumentError("maxangle should be between -π/2 and π/2"))
     minangle < maxangle || throw(ArgumentError("maxangle should be more than minangle"))
-    new{typeof(env),typeof(solver)}(check(RaySolver, env), nbeams, minangle, maxangle, atol, rugocity, athreshold, solver, solvertol)
+    new{typeof(env),typeof(solver)}(check(RaySolver, env), nbeams, minangle, maxangle, ds, atol, rugocity, athreshold, solver, solvertol)
   end
 end
 
@@ -80,7 +81,7 @@ function eigenrays(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver;
 end
 
 function rays(model::RaySolver, tx1::AcousticSource, θ::Real, rmax)
-  traceray(model, tx1, θ, rmax, 1.0)
+  traceray(model, tx1, θ, rmax, model.ds)
 end
 
 function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceiverGrid2D; mode=:coherent)
@@ -158,7 +159,7 @@ function rayeqns!(du, u, params, s)
   c, ∂c, ∂²c = params
   cᵥ = c(z)
   cᵥ² = cᵥ * cᵥ
-  c̄ₙₙ = ∂²c(z) * ξ * ξ
+  c̄ₙₙ = ∂²c(z) * ξ * ξ    # FIXME: seems to cause problems with negative q
   du[1] = cᵥ * ξ
   du[2] = cᵥ * ζ
   du[3] = 0               # TODO: support range-dependent soundspeed

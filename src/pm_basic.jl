@@ -1,6 +1,6 @@
 using Interpolations
 
-export IsoSSP, SampledSSP, ConstantDepth, SampledDepth
+export IsoSSP, MunkSSP, SampledSSP, ConstantDepth, SampledDepth
 export ReflectionCoef, FlatSurface, Rayleigh, SurfaceLoss
 export Rock, Pebbles, SandyGravel, CoarseSand, MediumSand, FineSand, VeryFineSand
 export ClayeySand, CoarseSilt, SandySilt, Silt, FineSilt, SandyClay, SiltyClay, Clay
@@ -16,6 +16,14 @@ struct IsoSSP{T} <: SoundSpeedProfile
 end
 
 soundspeed(ssp::IsoSSP, x, y, z) = ssp.c
+
+struct MunkSSP <: SoundSpeedProfile end
+
+function soundspeed(::MunkSSP, x, y, z)
+  ϵ = 0.00737
+  z̃ = 2.0 * (-z - 1300.0) / 1300.0
+  1500.0 * (1.0 + ϵ * (z̃ - 1 + exp(-z̃)))
+end
 
 # TODO: 2D and 3D sampled SSP
 

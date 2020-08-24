@@ -44,7 +44,7 @@ function arrivals(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver)
   sort(a; by = a1 -> a1.time)
 end
 
-function eigenrays(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver; ds=1.0)
+function eigenrays(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver; ds=model.ds)
   p2 = location(rx1)
   nbeams = model.nbeams
   if nbeams == 0
@@ -55,7 +55,7 @@ function eigenrays(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver;
   end
   θ = range(model.minangle, model.maxangle; length=nbeams)
   n = length(θ)
-  r1 = traceray(model, tx1, θ[1], p2[1])  # needed to get type
+  r1 = traceray(model, tx1, θ[1], p2[1])  # get type
   err = fill(convert(eltype(r1.raypath[end]), NaN64), n)
   Threads.@threads for i ∈ 1:n
     p3 = (i == 1 ? r1 : traceray(model, tx1, θ[i], p2[1])).raypath[end]
@@ -63,7 +63,7 @@ function eigenrays(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver;
       err[i] = p3[3] - p2[3]
     end
   end
-  erays = Array{typeof(r1)}(undef, 0)   # FIXME: type here makes this function non-differentiable
+  erays = Array{RayArrival}(undef, 0)   # although array of typeof(r1) is better, we use generic type for ForwardDiff
   for i ∈ 1:n
     if isapprox(err[i], 0.0; atol=model.atol)
       push!(erays, traceray(model, tx1, θ[i], p2[1], ds))
@@ -87,7 +87,7 @@ end
 function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceiverGrid2D; mode=:coherent)
   mode === :coherent || mode === :incoherent || throw(ArgumentError("Unknown mode :" * string(mode)))
   # implementation primarily based on ideas from COA (Computational Ocean Acoustics, 2nd ed., ch. 3)
-  tc = zeros(ComplexF64, size(rx,1), size(rx,2), Threads.nthreads())     # FIXME: type here makes this function non-differentiable
+  tc = zeros(ComplexF64, size(rx,1), size(rx,2), Threads.nthreads())
   rmax = maximum(rx.xrange) + 0.1
   nbeams = model.nbeams
   if nbeams == 0
@@ -201,11 +201,13 @@ function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0;
   θ₀ = θ
   f = nominalfrequency(tx1)
   zmax = -maxdepth(bathymetry(model.env))
-  ϵ = 0.001 #eps(typeof(zmax))   # FIXME: needs large enough value to be in the boundary
+  ϵ = one(typeof(zmax)) * model.solvertol
   p = location(tx1)
   c₀ = soundspeed(ssp(model.env), p...)
   raypath = Array{typeof(p)}(undef, 0)
-  A = Complex(1.0, 0.0)
+  tmp1 = reflectioncoef(seasurface(model.env), f, 0.0)          # get type
+  tmp2 = reflectioncoef(seabed(model.env), f, 0.0)              # get type
+  A = convert(eltype(promote(tmp1, tmp2)), Complex(1.0, 0.0))
   s = 0
   b = 0
   t = 0.0

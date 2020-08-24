@@ -123,35 +123,53 @@ function record(model::PropagationModel, tx1::AcousticSource, rx1::AcousticRecei
   record(model, [tx1], [rx1], duration, fs; start=start)
 end
 
+function record(model::PropagationModel, tx1::AcousticSource, rx1::AcousticReceiver)
+  record(model, [tx1], [rx1])
+end
+
 function record(model::PropagationModel, tx1::AcousticSource, rx::AbstractArray{<:AcousticReceiver}, duration, fs; start=0.0)
   record(model, [tx1], rx, duration, fs; start=start)
+end
+
+function record(model::PropagationModel, tx1::AcousticSource, rx::AbstractArray{<:AcousticReceiver})
+  record(model, [tx1], rx)
 end
 
 function record(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx1::AcousticReceiver, duration, fs; start=0.0)
   signal(dropdims(record(model, tx, [rx1], duration, fs; start=start), 2), fs)
 end
 
-function record(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx::AbstractArray{<:AcousticReceiver}, duration, fs; start=0.0)
+function record(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx1::AcousticReceiver)
+  dropdims(record(model, tx, [rx1]), 2)
+end
+
+function record(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx::AbstractArray{<:AcousticReceiver})
   arr = [arrivals(model, tx1, rx1) for tx1 ∈ tx, rx1 ∈ rx]
   mindelay, maxdelay = extrema(Iterators.flatten([[a1.time for a1 ∈ a] for a ∈ arr]))
-  src = [record(tx1, duration + (maxdelay-mindelay), fs; start=start-maxdelay) for tx1 ∈ tx]
-  nsamples = round(Int, duration * fs)
-  x = zeros(Base.promote_eltype(src...), nsamples, length(rx))
-  for j = 1:length(tx)
-    for k = 1:length(rx)
-      for a ∈ arr[j,k]
-        t = round(Int, (maxdelay - a.time) * fs)
-        x[:,k] .+= a.phasor .* src[j][t+1:t+nsamples]
+  function rec(duration, fs; start=0.0)
+    src = [record(tx1, duration + (maxdelay-mindelay), fs; start=start-maxdelay) for tx1 ∈ tx]
+    nsamples = round(Int, duration * fs)
+    x = zeros(Base.promote_eltype(src...), nsamples, length(rx))
+    for j = 1:length(tx)
+      for k = 1:length(rx)
+        for a ∈ arr[j,k]
+          t = round(Int, (maxdelay - a.time) * fs)
+          x[:,k] .+= a.phasor .* src[j][t+1:t+nsamples]
+        end
       end
     end
-  end
-  noisemodel = noise(environment(model))
-  if noisemodel !== missing
-    for k = 1:length(rx)
-      x[:,k] .+= record(noisemodel, duration, fs; start=start)
+    noisemodel = noise(environment(model))
+    if noisemodel !== missing
+      for k = 1:length(rx)
+        x[:,k] .+= record(noisemodel, duration, fs; start=start)
+      end
     end
+    signal(x, fs)
   end
-  signal(x, fs)
+end
+
+function record(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx::AbstractArray{<:AcousticReceiver}, duration, fs; start=0.0)
+  record(model, tx, rx)(duration, fs; start=start)
 end
 
 function impulseresponse(arrivals::Vector{<:Arrival}, fs; reltime=true)

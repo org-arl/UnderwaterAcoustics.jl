@@ -1,3 +1,5 @@
+using SignalAnalysis: signal
+
 export SoundSpeedProfile, soundspeed
 export Bathymetry, depth, maxdepth
 export Altimetry, altitude
@@ -126,7 +128,7 @@ function record(model::PropagationModel, tx1::AcousticSource, rx::AbstractArray{
 end
 
 function record(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx1::AcousticReceiver, duration, fs; start=0.0)
-  dropdims(record(model, tx, [rx1], duration, fs; start=start), 2)
+  signal(dropdims(record(model, tx, [rx1], duration, fs; start=start), 2), fs)
 end
 
 function record(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx::AbstractArray{<:AcousticReceiver}, duration, fs; start=0.0)
@@ -149,7 +151,7 @@ function record(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx
       x[:,k] .+= record(noisemodel, duration, fs; start=start)
     end
   end
-  x
+  signal(x, fs)
 end
 
 function impulseresponse(arrivals::Vector{<:Arrival}, fs; reltime=true)

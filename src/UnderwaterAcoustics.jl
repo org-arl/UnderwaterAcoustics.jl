@@ -3,7 +3,6 @@ module UnderwaterAcoustics
 using Requires
 
 using DSP: amp2db, db2amp
-using SignalAnalysis
 using Printf
 
 export °

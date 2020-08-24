@@ -149,7 +149,7 @@ function record(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx
       x[:,k] .+= record(noisemodel, duration, fs; start=start)
     end
   end
-  signal(x, fs)
+  x
 end
 
 function impulseresponse(arrivals::Vector{<:Arrival}, fs; reltime=true)

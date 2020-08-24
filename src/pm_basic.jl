@@ -1,4 +1,5 @@
 using Interpolations
+using DSP: hilbert
 
 export IsoSSP, MunkSSP, SampledSSP, ConstantDepth, SampledDepth
 export ReflectionCoef, FlatSurface, Rayleigh, SurfaceLoss
@@ -183,7 +184,7 @@ end
 
 function record(noisemodel::RedGaussianNoise, duration, fs; start=0.0)
   # FIXME: shows some variability in PSD with sampling rate!
-  analytic(signal(rand(RedGaussian(; n=round(Int, duration*fs), σ=noisemodel.σ)), fs))
+  hilbert(rand(RedGaussian(; n=round(Int, duration*fs), σ=noisemodel.σ)), fs) / √2
 end
 
 ### basic source & recevier models
@@ -203,7 +204,7 @@ AcousticSource(x, z, f; sourcelevel=db2amp(180.0), ϕ=0.0) = NarrowbandAcousticS
 location(tx::NarrowbandAcousticSource) = tx.pos
 nominalfrequency(tx::NarrowbandAcousticSource) = tx.f
 phasor(tx::NarrowbandAcousticSource) = tx.A * cis(tx.ϕ)
-record(tx::NarrowbandAcousticSource, duration, fs; start=0.0) = signal(tx.A .* cis.(2π .* tx.f .* (start:1/fs:start+duration) .+ tx.ϕ), fs)
+record(tx::NarrowbandAcousticSource, duration, fs; start=0.0) = tx.A .* cis.(2π .* tx.f .* (start:1/fs:start+duration) .+ tx.ϕ)
 
 Base.@kwdef struct Pinger{T1,T2,T3,T4,T5,T6,T7,T8} <: AcousticSource
   pos::NTuple{3,T1}
@@ -235,7 +236,7 @@ function record(pinger::Pinger, duration, fs; start=0.0)
     x[ndx:ndx+n-1] .= ping[1:n]
     t += pinger.interval
   end
-  signal(pinger.sourcelevel * x, fs)
+  pinger.sourcelevel * x
 end
 
 struct BasicAcousticReceiver{T} <: AcousticReceiver

@@ -229,13 +229,20 @@ function record(pinger::Pinger, duration, fs; start=0.0)
   nsamples = round(Int, duration * fs)
   ping = cw(pinger.frequency, pinger.duration, fs; phase=pinger.phase, window=pinger.window)
   x = zeros(eltype(ping), nsamples)
-  t = pinger.start - start
-  while t < duration
-    ndx = round(Int, t*fs) + 1
-    n = length(ping)
-    ndx+n-1 > nsamples && (n = 1+nsamples-ndx)
-    x[ndx:ndx+n-1] .= ping[1:n]
-    t += pinger.interval
+  k1 = ceil(Int, (start - pinger.start - pinger.duration) / pinger.interval)
+  k2 = floor(Int, (start - pinger.start + duration) / pinger.interval)
+  n = length(ping)
+  for k ∈ k1:k2
+    ndx = round(Int, (pinger.start + k * pinger.interval - start) * fs) + 1
+    if ndx > 0 && ndx + n ≤ nsamples
+      x[ndx:ndx+n-1] .= ping
+    elseif ndx > 0
+      x[ndx:end] .= ping[1:nsamples-ndx+1]
+    elseif ndx + n ≤ nsamples
+      x[1:n+ndx-1] .= ping[2-ndx:end]
+    else
+      x .= ping[2-ndx:1-ndx+nsamples]
+    end
   end
   signal(pinger.sourcelevel * x, fs)
 end

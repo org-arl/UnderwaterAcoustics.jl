@@ -120,8 +120,8 @@ function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArra
     @printf(io, "%0.6f\n", f)
     println(io, "1")
     ss = ssp(env)
-    sspi = "C"
-    ss isa SampledSSP && ss.interp == :cubic && (sspi = "S")
+    sspi = "S"
+    ss isa SampledSSP && ss.interp == :linear && (sspi = "C")
     print(io, "'", sspi, "VWT")
     # TODO: support altimetry
     println(io, "'")
@@ -137,7 +137,7 @@ function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArra
         @printf(io, "%0.6f %0.6f /\n", -ss.z[i], ss.c[i])
       end
     else
-      for d ∈ 0.0:1.0:depth
+      for d ∈ range(0.0, depth; length=25)
         @printf(io, "%0.6f %0.6f /\n", d, soundspeed(ss, 0.0, 0.0, -d))
       end
       floor(depth) != depth && @printf(io, "%0.6f %0.6f /\n", depth, soundspeed(ss, 0.0, 0.0, -depth))

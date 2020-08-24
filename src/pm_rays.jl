@@ -63,7 +63,8 @@ function eigenrays(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver;
       err[i] = p3[3] - p2[3]
     end
   end
-  erays = Array{RayArrival}(undef, 0)   # although array of typeof(r1) is better, we use generic type for ForwardDiff
+  #erays = Array{RayArrival}(undef, 0)   # generic type works with ForwardDiff, but breaks Turing
+  erays = Array{typeof(r1)}(undef, 0)
   for i ∈ 1:n
     if isapprox(err[i], 0.0; atol=model.atol)
       push!(erays, traceray(model, tx1, θ[i], p2[1], ds))
@@ -172,7 +173,7 @@ end
 function checkray!(out, u, s, integrator, a::Altimetry, b::Bathymetry, rmax)
   out[1] = altitude(a, u[1], 0.0) - u[2]   # surface reflection
   out[2] = u[2] + depth(b, u[1], 0.0)      # bottom reflection
-  out[3] = u[1] - rmax                     # maximum range
+  out[3] = rmax - u[1]                     # maximum range
   out[4] = u[3]                            # ray turned back
 end
 
@@ -227,7 +228,9 @@ function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0;
     t += dt
     D += dD
     p = (r, 0.0, clamp(z, zmax+ϵ, -ϵ))    # FIXME: assumes flat bathymetry + altimetry
-    if isapprox(z, 0.0; atol=1e-3)        # FIXME: assumes flat altimetry
+    if r ≥ rmax - 1e-3
+      break
+    elseif isapprox(z, 0.0; atol=1e-3)    # FIXME: assumes flat altimetry
       s += 1
       A *= reflectioncoef(seasurface(model.env), f, π/2 - θ)
     elseif isapprox(z, zmax; atol=1e-3)   # FIXME: assumes flat bathymetry

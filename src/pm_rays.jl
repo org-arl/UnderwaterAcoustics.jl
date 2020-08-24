@@ -20,7 +20,7 @@ Base.@kwdef struct RaySolver{T1,T2} <: PropagationModel{T1}
     -π/2 ≤ minangle ≤ π/2 || throw(ArgumentError("minangle should be between -π/2 and π/2"))
     -π/2 ≤ maxangle ≤ π/2 || throw(ArgumentError("maxangle should be between -π/2 and π/2"))
     minangle < maxangle || throw(ArgumentError("maxangle should be more than minangle"))
-    new{typeof(env),typeof(solver)}(check(Bellhop, env), nbeams, minangle, maxangle, atol, rugocity, athreshold, solver, solvertol)
+    new{typeof(env),typeof(solver)}(check(RaySolver, env), nbeams, minangle, maxangle, atol, rugocity, athreshold, solver, solvertol)
   end
 end
 
@@ -200,7 +200,7 @@ function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0;
   θ₀ = θ
   f = nominalfrequency(tx1)
   zmax = -maxdepth(bathymetry(model.env))
-  ϵ = eps(typeof(zmax))
+  ϵ = 0.001 #eps(typeof(zmax))   # FIXME: needs large enough value to be in the boundary
   p = location(tx1)
   c₀ = soundspeed(ssp(model.env), p...)
   raypath = Array{typeof(p)}(undef, 0)

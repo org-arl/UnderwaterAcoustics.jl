@@ -80,3 +80,29 @@ using Colors
     end
   end
 end
+
+@recipe function plot(ssp::SoundSpeedProfile; maxdepth=missing)
+  D = 10.0
+  if maxdepth === missing
+    ssp isa SampledSSP && (D = maximum(-ssp.z))
+  else
+    D = maxdepth
+  end
+  d = 0.0:-0.1:-D
+  c = [soundspeed(ssp, 0.0, 0.0, d1) for d1 ∈ d]
+  clim = extrema(c)
+  if clim[2] - clim[1] > 50.0
+    clim = (round(clim[1]-5.0), round(clim[2]+5.0))
+  else
+    μ = (clim[2] + clim[1]) / 2.0
+    clim = (round(μ - 30.0), round(μ + 30.0))
+  end
+  ticks --> :native
+  legend --> false
+  xlims --> clim
+  xguide --> "soundspeed (m/s)"
+  yguide --> "z (m) "
+  @series begin
+    c, d
+  end
+end

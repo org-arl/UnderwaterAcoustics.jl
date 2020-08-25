@@ -68,14 +68,14 @@ using Colors
     @series begin
       seriestype := :scatter
       marker := :star
-      color := :red
+      seriescolor := :red
       [p[1] for p ∈ location.(sources)], [p[3] for p ∈ location.(sources)]
     end
   end
   if length(receivers) > 0 && length(transmissionloss) == 0
     @series begin
       seriestype := :scatter
-      color := :blue
+      seriescolor := :blue
       [p[1] for p ∈ location.(receivers)], [p[3] for p ∈ location.(receivers)]
     end
   end

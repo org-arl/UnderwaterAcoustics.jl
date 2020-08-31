@@ -58,25 +58,31 @@ function record end
 
 abstract type Arrival end
 
-struct RayArrival{T1,T2,T3,T4,T5} <: Arrival
+struct RayArrival{T1,T2} <: Arrival
   time::T1
-  phasor::T2
+  phasor::Complex{T1}
   surface::Int
   bottom::Int
-  launchangle::T3
-  arrivalangle::T4
-  raypath::Union{Vector{NTuple{3,T5}},Missing}
+  launchangle::T1
+  arrivalangle::T1
+  raypath::Union{Vector{NTuple{3,T2}},Missing}
 end
 
-function RayArrival(time::T1, phasor::T2, surface::Int, bottom::Int, launchangle::T3, arrivalangle::T4, raypath::Vector{NTuple{3,T5}}) where {T1,T2,T3,T4,T5}
-  RayArrival{T1,T2,T3,T4,T5}(time, phasor, surface, bottom, launchangle, arrivalangle, raypath)
+function RayArrival(time::T1, phasor::Complex{T1}, surface::Int, bottom::Int, launchangle::T1, arrivalangle::T1, raypath::Vector{NTuple{3,T2}}) where {T1,T2}
+  RayArrival{T1,T2}(time, phasor, surface, bottom, launchangle, arrivalangle, raypath)
 end
 
-function RayArrival(time::T1, phasor::T2, surface::Int, bottom::Int, launchangle::T3, arrivalangle::T4) where {T1,T2,T3,T4}
-  RayArrival{T1,T2,T3,T4,Missing}(time, phasor, surface, bottom, launchangle, arrivalangle, missing)
+function RayArrival(time, phasor, surface::Int, bottom::Int, launchangle, arrivalangle, raypath::Vector{NTuple{3,T}}) where T
+  t, r, i, θ1, θ2 = promote(time, real(phasor), imag(phasor), launchangle, arrivalangle)
+  RayArrival{typeof(t),T}(t, Complex(r, i), surface, bottom, θ1, θ2, raypath)
 end
 
-phasortype(::Type{RayArrival{T1,T2,T3,T4,T5}}) where {T1,T2,T3,T4,T5} = T2
+function RayArrival(time, phasor, surface::Int, bottom::Int, launchangle, arrivalangle)
+  t, r, i, θ1, θ2 = promote(time, real(phasor), imag(phasor), launchangle, arrivalangle)
+  RayArrival{typeof(t),Missing}(t, Complex(r, i), surface, bottom, θ1, θ2, missing)
+end
+
+phasortype(::Type{RayArrival{T1,T2}}) where {T1,T2} = T1
 
 # TODO: define scatterers
 
@@ -114,7 +120,8 @@ function transfercoef(model::PropagationModel, tx1::AcousticSource, rx::Abstract
 end
 
 function rays(model::PropagationModel, tx1::AcousticSource, θ::AbstractArray, rmax)
-  tmap(θ1 -> rays(model, tx1, θ1, rmax), θ)
+  # FIXME: if tmap is used here seems to occasionally fail
+  map(θ1 -> rays(model, tx1, θ1, rmax), θ)
 end
 
 transmissionloss(model, tx, rx; mode=:coherent) = -amp2db.(abs.(transfercoef(model, tx, rx; mode=mode)))
@@ -209,7 +216,7 @@ function Base.show(io::IO, model::PropagationModel)
 end
 
 function Base.show(io::IO, a::Arrival)
-  if a.time === missing || a.phasor === missing
+  if isnan(a.time) || isnan(a.phasor)
     @printf(io, "∠%5.1f° %2d↑ %2d↓%s",
       rad2deg(a.launchangle), a.surface, a.bottom, a.raypath === missing ? "" : " ⤷")
   else

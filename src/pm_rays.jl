@@ -55,27 +55,36 @@ function eigenrays(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver;
   end
   θ = range(model.minangle, model.maxangle; length=nbeams)
   n = length(θ)
-  r1 = traceray(model, tx1, θ[1], p2[1])  # get type
-  err = fill(convert(eltype(r1.raypath[end]), NaN64), n)
-  Threads.@threads for i ∈ 1:n
-    p3 = (i == 1 ? r1 : traceray(model, tx1, θ[i], p2[1])).raypath[end]
+  err = fill(NaN64, n)
+  #Threads.@threads   # FIXME: adding this causes the loop to fail occasionally
+  for i ∈ 1:n
+    p3 = traceray(model, tx1, θ[i], p2[1]).raypath[end]
     if isapprox(p3[1], p2[1]; atol=model.atol) && isapprox(p3[2], p2[2]; atol=model.atol)
-      err[i] = p3[3] - p2[3]
+      err[i] = ForwardDiff.value(p3[3] - p2[3])
     end
   end
-  #erays = Array{RayArrival}(undef, 0)   # generic type works with ForwardDiff, but breaks Turing
-  erays = Array{typeof(r1)}(undef, 0)
+  local erays
+  first = true
   for i ∈ 1:n
+    eray = nothing
     if isapprox(err[i], 0.0; atol=model.atol)
-      push!(erays, traceray(model, tx1, θ[i], p2[1], ds))
+      eray = traceray(model, tx1, θ[i], p2[1], ds)
     elseif i > 1 && !isnan(err[i-1]) && !isnan(err[i]) && sign(err[i-1]) != sign(err[i])
       a, b = ordered(θ[i-1], θ[i])
       soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, p2[1]).raypath[end][3] - p2[3]), a, b; abs_tol=model.atol)
-      push!(erays, traceray(model, tx1, soln.minimizer, p2[1], ds))
+      eray = traceray(model, tx1, soln.minimizer, p2[1], ds)
     elseif i > 2 && isnearzero(err[i-2], err[i-1], err[i])
       a, b = ordered(θ[i-2], θ[i])
       soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, p2[1]).raypath[end][3] - p2[3]), a, b; abs_tol=model.atol)
-      push!(erays, traceray(model, tx1, soln.minimizer, p2[1], ds))
+      eray = traceray(model, tx1, soln.minimizer, p2[1], ds)
+    end
+    if eray !== nothing
+      if first
+        erays = [eray]
+        first = false
+      else
+        push!(erays, eray)
+      end
     end
   end
   erays
@@ -103,7 +112,8 @@ function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceive
   f = nominalfrequency(tx1)
   ω = 2π * f
   G = 1 / √(2π)    # seems to be right, although not in line with COA (3.76)
-  Threads.@threads for θ1 ∈ θ
+  #Threads.@threads   # FIXME: threading seems to cause problems occasionally
+  for θ1 ∈ θ
     β = 2 * cos(θ1)/c₀
     traceray(model, tx1, θ1, rmax, 1.0; cb = (s1, u1, s2, u2, A₀, D₀, t₀, cₛ) -> begin
       r1, z1, ξ1, ζ1, t1, _, q1 = u1
@@ -184,8 +194,9 @@ function traceray1(model, r0, z0, θ, rmax, ds, q0)
   ∂c = z -> ForwardDiff.derivative(c, z)
   ∂²c = z -> ForwardDiff.derivative(∂c, z)
   cᵥ = c(z0)
-  u0 = [r0, z0, cos(θ)/cᵥ, sin(θ)/cᵥ, 0.0, 1/cᵥ, q0]
-  prob = ODEProblem{true}(rayeqns!, u0, (0.0, model.rugocity * (rmax-r0)/cos(θ)), (c, ∂c, ∂²c))
+  T = promote_type(typeof(altitude(a, r0, 0.0)), typeof(depth(b, r0, 0.0)))
+  u0 = [r0, z0, cos(θ)/cᵥ, sin(θ)/cᵥ, zero(T), 1/cᵥ, q0]
+  prob = ODEProblem{true}(rayeqns!, u0, (zero(T), one(T) * model.rugocity * (rmax-r0)/cos(θ)), (c, ∂c, ∂²c))
   cb = VectorContinuousCallback(
     (out, u, s, i) -> checkray!(out, u, s, i, a, b, rmax),
     (i, ndx) -> terminate!(i), 4; rootfind=true)
@@ -205,7 +216,7 @@ function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0;
   ϵ = one(typeof(zmax)) * model.solvertol
   p = location(tx1)
   c₀ = soundspeed(ssp(model.env), p...)
-  raypath = Array{typeof(p)}(undef, 0)
+  global raypath
   tmp1 = reflectioncoef(seasurface(model.env), f, 0.0)          # get type
   tmp2 = reflectioncoef(seabed(model.env), f, 0.0)              # get type
   A = convert(eltype(promote(tmp1, tmp2)), Complex(1.0, 0.0))
@@ -214,8 +225,13 @@ function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0;
   t = 0.0
   D = 0.0
   q = 0.0
+  first = true
   while true
     dD, r, z, θ, dt, q, u, svec = traceray1(model, p[1], p[3], θ, rmax, ds, q)
+    if first
+      raypath = Array{NTuple{3,eltype(eltype(u))}}(undef, 0)
+      first = false
+    end
     for u1 ∈ u
       push!(raypath, (u1[1], 0.0, u1[2]))
     end

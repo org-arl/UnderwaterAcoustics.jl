@@ -182,7 +182,7 @@ function printarray(io, a::AbstractVector)
 end
 
 function readrays(filename)
-  rays = RayArrival{Missing,Missing,Float64,Float64}[]
+  rays = RayArrival{Float64,Float64}[]
   open(filename, "r") do io
     [readline(io) for i ∈ 1:7]
     while !eof(io)
@@ -195,14 +195,14 @@ function readrays(filename)
         x, d = parse.(Float64, split(strip(readline(io)) ,r" +"))
         raypath[k] = (x, 0.0, -d)
       end
-      push!(rays, RayArrival(missing, missing, sb, bb, -deg2rad(aod), NaN64, raypath))
+      push!(rays, RayArrival(NaN64, NaN64, sb, bb, -deg2rad(aod), NaN64, raypath))
     end
   end
   rays
 end
 
 function readarrivals(filename)
-  arrivals = RayArrival{Float64,ComplexF64,Float64,Float64,Missing}[]
+  arrivals = RayArrival{Float64,Missing}[]
   open(filename, "r") do io
     s = strip(readline(io))
     if occursin("2D", s)

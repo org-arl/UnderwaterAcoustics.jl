@@ -55,36 +55,29 @@ function eigenrays(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver;
   end
   θ = range(model.minangle, model.maxangle; length=nbeams)
   n = length(θ)
+  rmax = ForwardDiff.value(p2[1])
   err = fill(NaN64, n)
-  #Threads.@threads   # FIXME: adding this causes the loop to fail occasionally
-  for i ∈ 1:n
-    p3 = traceray(model, tx1, θ[i], p2[1]).raypath[end]
+  Threads.@threads for i ∈ 1:n
+    p3 = traceray(model, tx1, θ[i], rmax).raypath[end]
     if isapprox(p3[1], p2[1]; atol=model.atol) && isapprox(p3[2], p2[2]; atol=model.atol)
       err[i] = ForwardDiff.value(p3[3] - p2[3])
     end
   end
-  local erays
-  first = true
+  erays = Array{RayArrival,1}(undef, 0)     # FIXME: generic type, because traceray() isn't type stable for dual numbers
   for i ∈ 1:n
-    eray = nothing
     if isapprox(err[i], 0.0; atol=model.atol)
-      eray = traceray(model, tx1, θ[i], p2[1], ds)
+      eray = traceray(model, tx1, θ[i], rmax, ds)
+      push!(erays, eray)
     elseif i > 1 && !isnan(err[i-1]) && !isnan(err[i]) && sign(err[i-1]) != sign(err[i])
       a, b = ordered(θ[i-1], θ[i])
-      soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, p2[1]).raypath[end][3] - p2[3]), a, b; abs_tol=model.atol)
-      eray = traceray(model, tx1, soln.minimizer, p2[1], ds)
+      soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, rmax).raypath[end][3] - p2[3]), a, b; abs_tol=model.atol)
+      eray = traceray(model, tx1, soln.minimizer, rmax, ds)
+      push!(erays, eray)
     elseif i > 2 && isnearzero(err[i-2], err[i-1], err[i])
       a, b = ordered(θ[i-2], θ[i])
-      soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, p2[1]).raypath[end][3] - p2[3]), a, b; abs_tol=model.atol)
-      eray = traceray(model, tx1, soln.minimizer, p2[1], ds)
-    end
-    if eray !== nothing
-      if first
-        erays = [eray]
-        first = false
-      else
-        push!(erays, eray)
-      end
+      soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, rmax).raypath[end][3] - p2[3]), a, b; abs_tol=model.atol)
+      eray = traceray(model, tx1, soln.minimizer, rmax, ds)
+      push!(erays, eray)
     end
   end
   erays
@@ -112,8 +105,7 @@ function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceive
   f = nominalfrequency(tx1)
   ω = 2π * f
   G = 1 / √(2π)    # seems to be right, although not in line with COA (3.76)
-  #Threads.@threads   # FIXME: threading seems to cause problems occasionally
-  for θ1 ∈ θ
+  Threads.@threads for θ1 ∈ θ
     β = 2 * cos(θ1)/c₀
     traceray(model, tx1, θ1, rmax, 1.0; cb = (s1, u1, s2, u2, A₀, D₀, t₀, cₛ) -> begin
       r1, z1, ξ1, ζ1, t1, _, q1 = u1
@@ -209,6 +201,7 @@ function traceray1(model, r0, z0, θ, rmax, ds, q0)
   soln.t[end], s2[1], s2[2], atan(s2[4], s2[3]), s2[5], s2[7], soln.u, soln.t
 end
 
+# FIXME: type stability issues when inputs are Dual numbers
 function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0; cb=nothing)
   θ₀ = θ
   f = nominalfrequency(tx1)
@@ -216,7 +209,7 @@ function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0;
   ϵ = one(typeof(zmax)) * model.solvertol
   p = location(tx1)
   c₀ = soundspeed(ssp(model.env), p...)
-  global raypath
+  local raypath
   tmp1 = reflectioncoef(seasurface(model.env), f, 0.0)          # get type
   tmp2 = reflectioncoef(seabed(model.env), f, 0.0)              # get type
   A = convert(eltype(promote(tmp1, tmp2)), Complex(1.0, 0.0))

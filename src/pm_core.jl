@@ -120,8 +120,7 @@ function transfercoef(model::PropagationModel, tx1::AcousticSource, rx::Abstract
 end
 
 function rays(model::PropagationModel, tx1::AcousticSource, θ::AbstractArray, rmax)
-  # FIXME: if tmap is used here seems to occasionally fail
-  map(θ1 -> rays(model, tx1, θ1, rmax), θ)
+  tmap(θ1 -> rays(model, tx1, θ1, rmax), θ)
 end
 
 transmissionloss(model, tx, rx; mode=:coherent) = -amp2db.(abs.(transfercoef(model, tx, rx; mode=mode)))

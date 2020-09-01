@@ -6,19 +6,19 @@ Compute sound speed in water in m/s, given:
 - water temperature in °C
 - salinity in ppm
 - depth in meters
-- void fraction (ν) in bubbly water
+- void fraction (voidfrac) in bubbly water
 - sound speed in gas (cgas), if ν > 0
 - ratio of density of water to gas (reldensity), if ν > 0
 
 Implementation based on Mackenzie (1981), Wood (1964) and Buckingham (1997).
 """
-function soundspeed(temperature=27.0, salinity=35.0, depth=10.0; ν=0.0, cgas=340.0, reldensity=1000.0)
+function soundspeed(temperature=27.0, salinity=35.0, depth=10.0; voidfrac=0.0, cgas=340.0, reldensity=1000.0)
   c = 1448.96 + 4.591*temperature - 5.304e-2*temperature^2 + 2.374e-4*temperature^3
   c += 1.340*(salinity-35) + 1.630e-2*depth + 1.675e-7*depth^2
   c += -1.025e-2*temperature*(salinity-35) - 7.139e-13*temperature*depth^3
-  if ν > 0.0
+  if voidfrac > 0.0
     m = √reldensity
-    c = 1.0/(1.0/c*√((ν*(c/cgas)^2*m+(1.0-ν)/m)*(ν/m+(1-ν)*m)))
+    c = 1.0/(1.0/c*√((voidfrac*(c/cgas)^2*m+(1.0-voidfrac)/m)*(voidfrac/m+(1-voidfrac)*m)))
   end
   return c
 end

@@ -5,8 +5,8 @@ using UnderwaterAcoustics: amp2db, db2amp
 @testset "basic" begin
 
   @test soundspeed() ≈ 1539.0 atol=0.1
-  @test soundspeed(; ν=1e-5) ≈ 1402.1 atol=0.1
-  @test soundspeed(; ν=1.0) ≈ 340.0
+  @test soundspeed(; voidfrac=1e-5) ≈ 1402.1 atol=0.1
+  @test soundspeed(; voidfrac=1.0) ≈ 340.0
 
   @test amp2db(absorption(10000, 1000.0, 35.0, 15.0)) ≈ -1.0 atol=0.5
   @test amp2db(absorption(50000)) ≈ -11.0 atol=0.5

@@ -1,20 +1,41 @@
 export soundspeed, absorption, waterdensity, reflectioncoef, surfaceloss, doppler, bubbleresonance
 
+"""
+$(SIGNATURES)
+Compute sound speed in water in m/s, given:
+- water temperature in °C
+- salinity in ppm
+- depth in meters
+- void fraction (ν) in bubbly water
+- sound speed in gas (cgas), if ν > 0
+- ratio of density of water to gas (reldensity), if ν > 0
+
+Implementation based on Mackenzie (1981), Wood (1964) and Buckingham (1997).
+"""
 function soundspeed(temperature=27.0, salinity=35.0, depth=10.0; ν=0.0, cgas=340.0, reldensity=1000.0)
-  # based on Mackenzie (1981)
   c = 1448.96 + 4.591*temperature - 5.304e-2*temperature^2 + 2.374e-4*temperature^3
   c += 1.340*(salinity-35) + 1.630e-2*depth + 1.675e-7*depth^2
   c += -1.025e-2*temperature*(salinity-35) - 7.139e-13*temperature*depth^3
   if ν > 0.0
-    # based on Wood (1964) or Buckingham (1997)
     m = √reldensity
     c = 1.0/(1.0/c*√((ν*(c/cgas)^2*m+(1.0-ν)/m)*(ν/m+(1-ν)*m)))
   end
   return c
 end
 
+"""
+$(SIGNATURES)
+Compute volume acoustic absorption coefficient in water, given:
+- frequency in Hz
+- distance in meters
+- salinity in ppm
+- water temperature in °C
+- depth in meters
+- pH of water
+
+Implementation based on the Francois-Garrison model.
+"""
 function absorption(frequency, distance=1000.0, salinity=35.0, temperature=27.0, depth=10.0, pH=8.1)
-  # based on Francois-Garrison model
   f = frequency/1000.0
   d = distance/1000.0
   c = 1412.0 + 3.21*temperature + 1.19*salinity + 0.0167*depth
@@ -34,8 +55,13 @@ function absorption(frequency, distance=1000.0, salinity=35.0, temperature=27.0,
   db2amp(-a*d)
 end
 
+"""
+$(SIGNATURES)
+Compute density of water (kg/m^3), given temperature in °C and salinity in ppm.
+
+Implementation based on Fofonoff (1985 - IES 80).
+"""
 function waterdensity(temperature=27, salinity=35)
-  # based on Fofonoff (1985 - IES 80)
   t = temperature
   A = 1.001685e-04 + t * (-1.120083e-06 + t * 6.536332e-09)
   A = 999.842594 + t * (6.793952e-02 + t * (-9.095290e-03 + t * A))
@@ -46,8 +72,18 @@ function waterdensity(temperature=27, salinity=35)
   A + salinity * (B + C*√(salinity) + D*salinity)
 end
 
+"""
+$(SIGNATURES)
+Compute complex reflection coefficient at a fluid-fluid boundary, given:
+- angle of incidence θ (angle to the surface normal)
+- relative density of the reflecting medium to incidence medium ρᵣ
+- relative sound speed of the reflecting medium to incidence medium cᵣ
+- dimensionless absorption coefficient δ
+
+Implementation based on Brekhovskikh & Lysanov. Dimensionless absorption
+coefficient based on APL-UW Technical Report 9407.
+"""
 function reflectioncoef(θ, ρᵣ, cᵣ, δ=0.0)
-  # based on Brekhovskikh & Lysanov
   n = Complex(1.0, δ) / cᵣ
   t1 = ρᵣ * cos(θ)
   t2 = n*n - sin(θ)^2
@@ -55,16 +91,38 @@ function reflectioncoef(θ, ρᵣ, cᵣ, δ=0.0)
   (t1 - t3) / (t1 + t3)
 end
 
+"""
+$(SIGNATURES)
+Compute surface reflection coefficient, given:
+- windspeed in m/s
+- frequency in Hz
+- angle of incidence θ (angle to the surface normal)
+
+Implementation based on the APL-UW Technical Report 9407 II-21.
+"""
 function surfaceloss(windspeed, frequency, θ)
-  # based on APL model (1994)
   β = π/2 - θ
+  f = frequency/1000.0
   if windspeed >= 6.0
-    a = 1.26e-3/sin(β) * windspeed^1.57 * frequency^0.85
+    a = 1.26e-3/sin(β) * windspeed^1.57 * f^0.85
   else
-    a = 1.26e-3/sin(β) * 6^1.57 * frequency^0.85 * exp(1.2*(windspeed-6.0))
+    a = 1.26e-3/sin(β) * 6^1.57 * f^0.85 * exp(1.2*(windspeed-6.0))
   end
   db2amp(-a)
 end
 
+"""
+$(SIGNATURES)
+Compute Doppler frequency, given relative speed in m/s.
+"""
 doppler(speed, frequency, c=soundspeed()) = (1.0+speed/c)*frequency
-bubbleresonance(radius, depth=0) = 3.25/radius * √(1+0.1*depth)     # Medwin & Clay (1998)
+
+"""
+$(SIGNATURES)
+Compute resonance frequency of a freely oscillating has bubble in water, given:
+- bubble radius in meters
+- depth of bubble in water in meters
+
+Implementation based on Medwin & Clay (1998).
+"""
+bubbleresonance(radius, depth=0.0) = 3.25/radius * √(1+0.1*depth)

@@ -1,6 +1,7 @@
 module UnderwaterAcoustics
 
 using Requires
+using DocStringExtensions
 
 using DSP: amp2db, db2amp
 using Printf

@@ -5,56 +5,262 @@ export Bathymetry, depth, maxdepth
 export Altimetry, altitude
 export ReflectionModel, reflectioncoef
 export UnderwaterEnvironment, altimetry, bathymetry, ssp, salinity, seasurface, seabed, noise
-export AcousticSource, AcousticReceiver, location, nominalfrequency, phasor, record
+export AcousticSource, AcousticReceiver, location, nominalfrequency, phasor, record, recorder
 export PropagationModel, arrivals, transfercoef, transmissionloss, eigenrays, rays
 export NoiseModel
 export impulseresponse
 
-### interfaces
+### interface: SoundSpeedProfile
 
 abstract type SoundSpeedProfile end
+
+"""
+    soundspeed(ssp::SoundSpeedProfile, x, y, z)
+
+Get sound speed at location (x, y, z). If a sound speed profile is range
+independent, x and y may be ignored. z is generally negative, since the
+sea surface is the datum and z-axis points upwards.
+"""
 function soundspeed end
 
+### interface: Bathymetry
+
 abstract type Bathymetry end
+
+"""
+    depth(bathy:Bathymetry, x, y)
+
+Get water depth at location (x, y).
+"""
 function depth end
+
+"""
+    maxdepth(bathy::Bathymetry)
+
+Get the maximum water depth.
+"""
 function maxdepth end
 
+### interface: Altimetry
+
 abstract type Altimetry end
+
+"""
+    altitude(alt:Altimetry, x, y)
+
+Get water surface altitude at location (x, y). The nominal water surface
+is considered to have an altitude of zero. However, the water surface may
+not be flat, and the Altimetry provisions for variations of altitude around the
+nominal altitutde of zero.
+"""
 function altitude end
 
+### interface: ReflectionModel
+
 abstract type ReflectionModel end
+
+"""
+    reflectioncoef(rm::ReflectionModel, f, θ)
+
+Get complex reflection coefficient at frequency f Hz and incidence angle θ
+(w.r.t. the surface normal).
+"""
 function reflectioncoef end
 
+### interface: UnderwaterEnvironment
+
 abstract type UnderwaterEnvironment end
+
+"""
+    altimetry(env::UnderwaterEnvironment)::Altimetry
+
+Get the altimetry for the underwater environment.
+"""
 function altimetry end
+
+"""
+    bathymetry(env::UnderwaterEnvironment)::Bathymetry
+
+Get the bathymetry for the underwater environment.
+"""
 function bathymetry end
+
+"""
+    ssp(env::UnderwaterEnvironment)::SoundSpeedProfile
+
+Get the sound speed profile for the underwater environment.
+"""
 function ssp end
+
+"""
+    salinity(env::UnderwaterEnvironment)
+
+Get the salinity of the underwater environment.
+"""
 function salinity end
+
+"""
+    seasurface(env::UnderwaterEnvironment)::ReflectionModel
+
+Get the sea surface reflection model for the underwater environment.
+"""
 function seasurface end
+
+"""
+    seabed(env::UnderwaterEnvironment)::ReflectionModel
+
+Get the seabed reflection model for the underwater environment.
+"""
 function seabed end
+
+"""
+    noise(env::UnderwaterEnvironment)::NoiseModel
+
+Get the noise model for the underwater environment.
+"""
 function noise end
 
+### interface: AcousticSource
+
 abstract type AcousticSource end
+
+"""
+    location(src::AcousticSource)
+    location(src::AcousticReceiver)
+
+Get the location of an acoustic source or receiver as a 3-tuple (x, y, z).
+"""
 function location end
+
+"""
+    nominalfrequency(src::AcousticSource)
+
+Get the nominal frequency of an acoustic source in Hz.
+"""
 function nominalfrequency end
+
+"""
+    nominalfrequency(src::AcousticSource)
+
+Get the complex phasor representation (amplitude & phase) of a narrowband
+acoustic source at the nominal frequency.
+"""
 function phasor end
+
+"""
+    record(src::AcousticSource, duration, fs; start=0.0)
+    record(noise::NoiseModel, duration, fs; start=0.0)
+    record(model::PropagationModel, tx, rx, duration, fs; start=0.0)
+
+Make a recording of an acoustic source or ambient noise. The start time and
+duration are specified in seconds, and the recording is made at a sampling
+rate of fs Hz.
+
+For an recording of an acoustic source, free space propagation is assumed,
+and the recording is made at a nominal range of 1 meter from the acoustic
+center of the source.
+
+For a recording through a propagation model, tx and rx may be single AcousticSource
+and AcousticReceiver, or an array each.
+"""
 function record end
+
+### interface: AcousticReceiver
 
 abstract type AcousticReceiver end
 function location end
 
+### interface: NoiseModel
+
 abstract type NoiseModel end
 function record end
 
+### interface: PropagationModel
+
 abstract type PropagationModel{T<:UnderwaterEnvironment} end
+
+"""
+    environment(pm::PropagationModel)
+
+Get the environment associated with the propagation model.
+"""
 function environment end
+
+"""
+    check(pm::Type{<:PropagationModel}, env::UnderwaterEnvironment)
+    check(pm::Type{<:PropagationModel}, env=missing)
+
+Check if an propagation model is available, and can simulate the specified
+environment. Returns the environment if it can be simulated, or throws an
+error with a descriptive error message if it cannot be simulated.
+
+This function is internally used by the propagation modeling toolbox to choose
+a model or offer a selection of models to the user.
+"""
 function check end
+
+"""
+    arrivals(pm::PropagationModel, tx1::AcousticSource, rx1::AcousticReceiver)
+
+Compute the arrivals from tx1 to rx1. Returns an array of Arrival datatypes.
+"""
 function arrivals end
+
+"""
+    transfercoef(pm::PropagationModel, tx1::AcousticSource, rx1::AcousticReceiver; mode=:coherent)
+    transfercoef(pm::PropagationModel, tx1::AcousticSource, rx::AbstractArray{<:AcousticReceiver}; mode=:coherent)
+
+Compute the complex transfer coefficients from tx1 to rx1 or all receivers in rx.
+The mode may be :coherent or :incoherent.
+"""
 function transfercoef end
+
+"""
+    transmissionloss(pm::PropagationModel, tx1::AcousticSource, rx1::AcousticReceiver; mode=:coherent)
+    transmissionloss(pm::PropagationModel, tx1::AcousticSource, rx::AbstractArray{<:AcousticReceiver}; mode=:coherent)
+
+Compute the transmission loss in dB from tx1 to rx1 or all receivers in rx.
+The mode may be :coherent or :incoherent.
+"""
 function transmissionloss end
+
+"""
+    eigenrays(pm::PropagationModel, tx1::AcousticSource, rx1::AcousticReceiver)
+
+Compute the eigenrays from tx1 to rx1. Returns an array of RayArrival datatypes.
+"""
 function eigenrays end
+
+"""
+    rays(pm::PropagationModel, tx1::AcousticSource, θ::Real, rmax)
+
+Compute the rays from tx1 launched at angle θ (or all angles in θ, if it is a vector).
+Returns an array of RayArrival datatypes. rmax is the maximum horizontal range in meters
+to track the rays over.
+"""
 function rays end
+
 function record end
+
+"""
+    recorder(model::PropagationModel, tx, rx)
+
+Create a recorder function that may be called later to make an acoustic recording
+of sources in tx at receviers rx. tx and rx may be single AcousticSource and
+AcousticReceiver, or an array each.
+
+The recorder function may be called later with duration, fs, and optionally a start
+time. It functions in a similar way as the record() function.
+
+# Examples:
+```julia-repl
+julia> rec = recorder(pm, tx, rx);
+julia> s = rec(1.0, 44100.0; start=0.0);  # make a recording of 1 second at 44.1 kHz
+```
+"""
+function recorder end
+
+### arrival types
 
 abstract type Arrival end
 
@@ -129,27 +335,27 @@ function record(model::PropagationModel, tx1::AcousticSource, rx1::AcousticRecei
   record(model, [tx1], [rx1], duration, fs; start=start)
 end
 
-function record(model::PropagationModel, tx1::AcousticSource, rx1::AcousticReceiver)
-  record(model, [tx1], [rx1])
+function recorder(model::PropagationModel, tx1::AcousticSource, rx1::AcousticReceiver)
+  recorder(model, [tx1], [rx1])
 end
 
 function record(model::PropagationModel, tx1::AcousticSource, rx::AbstractArray{<:AcousticReceiver}, duration, fs; start=0.0)
   record(model, [tx1], rx, duration, fs; start=start)
 end
 
-function record(model::PropagationModel, tx1::AcousticSource, rx::AbstractArray{<:AcousticReceiver})
-  record(model, [tx1], rx)
+function recorder(model::PropagationModel, tx1::AcousticSource, rx::AbstractArray{<:AcousticReceiver})
+  recorder(model, [tx1], rx)
 end
 
 function record(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx1::AcousticReceiver, duration, fs; start=0.0)
   signal(dropdims(record(model, tx, [rx1], duration, fs; start=start), 2), fs)
 end
 
-function record(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx1::AcousticReceiver)
-  dropdims(record(model, tx, [rx1]), 2)
+function recorder(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx1::AcousticReceiver)
+  dropdims(recorder(model, tx, [rx1]), 2)
 end
 
-function record(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx::AbstractArray{<:AcousticReceiver})
+function recorder(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx::AbstractArray{<:AcousticReceiver})
   arr = [arrivals(model, tx1, rx1) for tx1 ∈ tx, rx1 ∈ rx]
   mindelay, maxdelay = extrema(Iterators.flatten([[a1.time for a1 ∈ a] for a ∈ arr]))
   function rec(duration, fs; start=0.0)
@@ -178,6 +384,12 @@ function record(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx
   record(model, tx, rx)(duration, fs; start=start)
 end
 
+"""
+$(SIGNATURES)
+Convert a vector of arrivals to a sampled impulse response time series at a
+sampling rate of fs Hz. If `reltime` is `true`, the impulse response start time
+is relative to the first arrival, otherwise it is relative to the absolute time.
+"""
 function impulseresponse(arrivals::Vector{<:Arrival}, fs; reltime=true)
   length(arrivals) == 0 && throw(ArgumentError("No arrivals"))
   mintime, maxtime = extrema(a.time for a ∈ arrivals)

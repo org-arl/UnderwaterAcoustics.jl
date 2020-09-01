@@ -3,12 +3,12 @@ export soundspeed, absorption, waterdensity, reflectioncoef, surfaceloss, dopple
 """
 $(SIGNATURES)
 Compute sound speed in water in m/s, given:
-- water temperature in °C
-- salinity in ppm
-- depth in meters
-- void fraction (voidfrac) in bubbly water
-- sound speed in gas (cgas), if ν > 0
-- ratio of density of water to gas (reldensity), if ν > 0
+- water `temperature` in °C
+- `salinity` in ppm
+- `depth` in meters
+- void fraction (`voidfrac`) in bubbly water
+- sound speed in gas (`cgas`), if `voidfrac` > 0
+- ratio of density of water to gas (`reldensity`), if `voidfrac` > 0
 
 Implementation based on Mackenzie (1981), Wood (1964) and Buckingham (1997).
 """
@@ -26,12 +26,12 @@ end
 """
 $(SIGNATURES)
 Compute volume acoustic absorption coefficient in water, given:
-- frequency in Hz
-- distance in meters
-- salinity in ppm
-- water temperature in °C
-- depth in meters
-- pH of water
+- `frequency` in Hz
+- `distance` in meters
+- `salinity` in ppm
+- water `temperature` in °C
+- `depth` in meters
+- `pH` of water
 
 Implementation based on the Francois-Garrison model.
 """
@@ -57,7 +57,7 @@ end
 
 """
 $(SIGNATURES)
-Compute density of water (kg/m^3), given temperature in °C and salinity in ppm.
+Compute density of water (kg/m^3), given `temperature` in °C and `salinity` in ppm.
 
 Implementation based on Fofonoff (1985 - IES 80).
 """
@@ -75,10 +75,10 @@ end
 """
 $(SIGNATURES)
 Compute complex reflection coefficient at a fluid-fluid boundary, given:
-- angle of incidence θ (angle to the surface normal)
-- relative density of the reflecting medium to incidence medium ρᵣ
-- relative sound speed of the reflecting medium to incidence medium cᵣ
-- dimensionless absorption coefficient δ
+- angle of incidence `θ` (angle to the surface normal)
+- relative density of the reflecting medium to incidence medium `ρᵣ`
+- relative sound speed of the reflecting medium to incidence medium `cᵣ`
+- dimensionless absorption coefficient `δ`
 
 Implementation based on Brekhovskikh & Lysanov. Dimensionless absorption
 coefficient based on APL-UW Technical Report 9407.
@@ -94,9 +94,9 @@ end
 """
 $(SIGNATURES)
 Compute surface reflection coefficient, given:
-- windspeed in m/s
-- frequency in Hz
-- angle of incidence θ (angle to the surface normal)
+- `windspeed` in m/s
+- `frequency` in Hz
+- angle of incidence `θ` (angle to the surface normal)
 
 Implementation based on the APL-UW Technical Report 9407 II-21.
 """
@@ -113,15 +113,16 @@ end
 
 """
 $(SIGNATURES)
-Compute Doppler frequency, given relative speed in m/s.
+Compute Doppler frequency, given relative speed between transmitter and
+receiver in m/s. `c` is the nominal sound speed in water.
 """
 doppler(speed, frequency, c=soundspeed()) = (1.0+speed/c)*frequency
 
 """
 $(SIGNATURES)
 Compute resonance frequency of a freely oscillating has bubble in water, given:
-- bubble radius in meters
-- depth of bubble in water in meters
+- bubble `radius` in meters
+- `depth` of bubble in water in meters
 
 Implementation based on Medwin & Clay (1998).
 """

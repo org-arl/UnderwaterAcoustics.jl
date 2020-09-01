@@ -5,6 +5,11 @@ using Optim
 
 export RaySolver
 
+"""
+$(TYPEDEF)
+A pure Julia implementation of a ray/Gaussian beam propapagation model. The model supports complex
+environments, but retains differentiability.
+"""
 Base.@kwdef struct RaySolver{T1,T2} <: PropagationModel{T1}
   env::T1
   nbeams::Int = 0
@@ -25,6 +30,11 @@ Base.@kwdef struct RaySolver{T1,T2} <: PropagationModel{T1}
   end
 end
 
+"""
+    RaySolver(env; nbeams, minangle, maxangle, ds, atol, rugocity, athreshold, solver, solvertol)
+
+Create a RaySolver propagation model.
+"""
 RaySolver(env; kwargs...) = RaySolver(; env=env, kwargs...)
 
 ### interface functions

@@ -1,5 +1,17 @@
 export PekerisRayModel
 
+"""
+    struct PekerisRayModel{T} <: PropagationModel{T}
+
+A fast differentiable ray model that only supports isovelocity constant depth
+environments.
+
+---
+
+    PekerisRayModel(env, rays)
+
+Create a Pekeris ray propagation model with a maximum of `rays` ray arrivals.
+"""
 struct PekerisRayModel{T} <: PropagationModel{T}
   env::T
   rays::Int

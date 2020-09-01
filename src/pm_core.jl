@@ -17,8 +17,8 @@ abstract type SoundSpeedProfile end
 """
     soundspeed(ssp::SoundSpeedProfile, x, y, z)
 
-Get sound speed at location (x, y, z). If a sound speed profile is range
-independent, x and y may be ignored. z is generally negative, since the
+Get sound speed at location (`x`, `y`, `z`). If a sound speed profile is range
+independent, `x` and `y` may be ignored. `z` is generally negative, since the
 sea surface is the datum and z-axis points upwards.
 """
 function soundspeed end
@@ -30,7 +30,7 @@ abstract type Bathymetry end
 """
     depth(bathy:Bathymetry, x, y)
 
-Get water depth at location (x, y).
+Get water depth at location (`x`, `y`).
 """
 function depth end
 
@@ -48,7 +48,7 @@ abstract type Altimetry end
 """
     altitude(alt:Altimetry, x, y)
 
-Get water surface altitude at location (x, y). The nominal water surface
+Get water surface altitude at location (`x`, `y`). The nominal water surface
 is considered to have an altitude of zero. However, the water surface may
 not be flat, and the Altimetry provisions for variations of altitude around the
 nominal altitutde of zero.
@@ -62,7 +62,7 @@ abstract type ReflectionModel end
 """
     reflectioncoef(rm::ReflectionModel, f, θ)
 
-Get complex reflection coefficient at frequency f Hz and incidence angle θ
+Get complex reflection coefficient at frequency `f` Hz and incidence angle `θ`
 (w.r.t. the surface normal).
 """
 function reflectioncoef end
@@ -128,7 +128,7 @@ abstract type AcousticSource end
     location(src::AcousticSource)
     location(src::AcousticReceiver)
 
-Get the location of an acoustic source or receiver as a 3-tuple (x, y, z).
+Get the location of an acoustic source or receiver as a 3-tuple (`x`, `y`, `z`).
 """
 function location end
 
@@ -152,16 +152,16 @@ function phasor end
     record(noise::NoiseModel, duration, fs; start=0.0)
     record(model::PropagationModel, tx, rx, duration, fs; start=0.0)
 
-Make a recording of an acoustic source or ambient noise. The start time and
-duration are specified in seconds, and the recording is made at a sampling
-rate of fs Hz.
+Make a recording of an acoustic source or ambient noise. The `start` time and
+`duration` are specified in seconds, and the recording is made at a sampling
+rate of `fs` Hz.
 
 For an recording of an acoustic source, free space propagation is assumed,
 and the recording is made at a nominal range of 1 meter from the acoustic
 center of the source.
 
-For a recording through a propagation model, tx and rx may be single AcousticSource
-and AcousticReceiver, or an array each.
+For a recording through a propagation model, `tx` and `rx` may be single `AcousticSource`
+and `AcousticReceiver`, or an array each.
 """
 function record end
 
@@ -202,7 +202,7 @@ function check end
 """
     arrivals(pm::PropagationModel, tx1::AcousticSource, rx1::AcousticReceiver)
 
-Compute the arrivals from tx1 to rx1. Returns an array of Arrival datatypes.
+Compute the arrivals from `tx1` to `rx1`. Returns an array of `Arrival` structs.
 """
 function arrivals end
 
@@ -210,8 +210,8 @@ function arrivals end
     transfercoef(pm::PropagationModel, tx1::AcousticSource, rx1::AcousticReceiver; mode=:coherent)
     transfercoef(pm::PropagationModel, tx1::AcousticSource, rx::AbstractArray{<:AcousticReceiver}; mode=:coherent)
 
-Compute the complex transfer coefficients from tx1 to rx1 or all receivers in rx.
-The mode may be :coherent or :incoherent.
+Compute the complex transfer coefficients from `tx1` to `rx1` or all receivers in `rx`.
+The mode may be `:coherent` or `:incoherent`.
 """
 function transfercoef end
 
@@ -219,23 +219,23 @@ function transfercoef end
     transmissionloss(pm::PropagationModel, tx1::AcousticSource, rx1::AcousticReceiver; mode=:coherent)
     transmissionloss(pm::PropagationModel, tx1::AcousticSource, rx::AbstractArray{<:AcousticReceiver}; mode=:coherent)
 
-Compute the transmission loss in dB from tx1 to rx1 or all receivers in rx.
-The mode may be :coherent or :incoherent.
+Compute the transmission loss in dB from `tx1` to `rx1` or all receivers in `rx`.
+The mode may be `:coherent` or `:incoherent`.
 """
 function transmissionloss end
 
 """
     eigenrays(pm::PropagationModel, tx1::AcousticSource, rx1::AcousticReceiver)
 
-Compute the eigenrays from tx1 to rx1. Returns an array of RayArrival datatypes.
+Compute the eigenrays from `tx1` to `rx1`. Returns an array of `RayArrival` structs.
 """
 function eigenrays end
 
 """
     rays(pm::PropagationModel, tx1::AcousticSource, θ::Real, rmax)
 
-Compute the rays from tx1 launched at angle θ (or all angles in θ, if it is a vector).
-Returns an array of RayArrival datatypes. rmax is the maximum horizontal range in meters
+Compute the rays from `tx1` launched at angle `θ` (or all angles in `θ`, if it is a vector).
+Returns an array of `RayArrival` datatypes. `rmax` is the maximum horizontal range in meters
 to track the rays over.
 """
 function rays end
@@ -246,11 +246,11 @@ function record end
     recorder(model::PropagationModel, tx, rx)
 
 Create a recorder function that may be called later to make an acoustic recording
-of sources in tx at receviers rx. tx and rx may be single AcousticSource and
-AcousticReceiver, or an array each.
+of sources in `tx` at receviers `rx`. `tx` and `rx` may be single `AcousticSource` and
+`AcousticReceiver`, or an array each.
 
-The recorder function may be called later with duration, fs, and optionally a start
-time. It functions in a similar way as the record() function.
+The recorder function may be called later with `duration`, `fs`, and optionally a `start`
+time. It functions in a similar way as the `record()` function.
 
 # Examples:
 ```julia-repl
@@ -387,7 +387,7 @@ end
 """
 $(SIGNATURES)
 Convert a vector of arrivals to a sampled impulse response time series at a
-sampling rate of fs Hz. If `reltime` is `true`, the impulse response start time
+sampling rate of `fs` Hz. If `reltime` is `true`, the impulse response start time
 is relative to the first arrival, otherwise it is relative to the absolute time.
 """
 function impulseresponse(arrivals::Vector{<:Arrival}, fs; reltime=true)

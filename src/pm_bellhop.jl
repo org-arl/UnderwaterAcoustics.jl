@@ -2,6 +2,10 @@ using Statistics
 
 export Bellhop
 
+"""
+$(TYPEDEF)
+A propagation model based on an external FORTRAN Bellhop executable.
+"""
 struct Bellhop{T} <: PropagationModel{T}
   env::T
   nbeams::Int
@@ -16,6 +20,12 @@ struct Bellhop{T} <: PropagationModel{T}
   end
 end
 
+"""
+    Bellhop(env)
+    Bellhop(env, nbeams, minangle, maxangle)
+
+Create a Bellhop propagation model.
+"""
 Bellhop(env) = Bellhop(env, 0, -80°, 80°)
 
 ### interface functions

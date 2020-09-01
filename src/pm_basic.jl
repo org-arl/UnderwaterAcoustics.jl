@@ -13,12 +13,26 @@ export RedGaussianNoise, Pinger
 
 ### sound speed profiles
 
+"""
+$(TYPEDEF)
+Isovelocity sound speed profile.
+
+---
+
+    IsoSSP(c)
+
+Create an isovelocity sound speed profile with sound speed `c`.
+"""
 struct IsoSSP{T} <: SoundSpeedProfile
   c::T
 end
 
 soundspeed(ssp::IsoSSP, x, y, z) = ssp.c
 
+"""
+$(TYPEDEF)
+Munk sound speed profile.
+"""
 struct MunkSSP <: SoundSpeedProfile end
 
 function soundspeed(::MunkSSP, x, y, z)
@@ -29,6 +43,10 @@ end
 
 # TODO: 2D and 3D sampled SSP
 
+"""
+$(TYPEDEF)
+Sound speed profile based on measurements at discrete depths.
+"""
 struct SampledSSP{T1,T2,T3} <: SoundSpeedProfile
   z::Vector{T1}
   c::Vector{T2}
@@ -47,6 +65,10 @@ struct SampledSSP{T1,T2,T3} <: SoundSpeedProfile
   end
 end
 
+"""
+$(SIGNATURES)
+Create a sound speed profile based on measurements at discrete depths.
+"""
 SampledSSP(depth, c) = SampledSSP(depth, c, :linear)
 
 soundspeed(ssp::SampledSSP, x, y, z) = ssp.f(-z)
@@ -57,6 +79,16 @@ end
 
 ### bathymetry models
 
+"""
+$(TYPEDEF)
+Bathymetry with constant depth.
+
+---
+
+    ConstantDepth(depth)
+
+Create a constant depth bathymetry.
+"""
 struct ConstantDepth{T} <: Bathymetry
   depth::T
 end
@@ -66,6 +98,10 @@ maxdepth(bathy::ConstantDepth) = bathy.depth
 
 # TODO: 2D sampled bathymetry
 
+"""
+$(TYPEDEF)
+Bathymetry based on depth samples.
+"""
 struct SampledDepth{T1,T2,T3} <: Bathymetry
   x::Vector{T1}
   depth::Vector{T2}
@@ -84,6 +120,10 @@ struct SampledDepth{T1,T2,T3} <: Bathymetry
   end
 end
 
+"""
+$(SIGNATURES)
+Create a bathymetry given discrete depth measurements at locations given in `x`.
+"""
 SampledDepth(x, depth) = SampledDepth(x, depth, :linear)
 
 depth(bathy::SampledDepth, x, y) = bathy.f(x)
@@ -95,18 +135,47 @@ end
 
 ### altimetry models
 
+"""
+$(TYPEDEF)
+Altimetry for a flat surface with constant altitude of zero.
+"""
 struct FlatSurface <: Altimetry end
 
 altitude(::FlatSurface, x, y) = 0.0
 
 ### reflection models
 
+"""
+$(TYPEDEF)
+Reflection model for a surface with a constant reflection coefficient.
+
+---
+
+    ReflectionCoef(coef)
+
+Create a reflection model for a surface with a constant reflection coefficient `coef`.
+"""
 struct ReflectionCoef{T<:Number} <: ReflectionModel
   coef::T
 end
 
 reflectioncoef(rm::ReflectionCoef, f, θ) = rm.coef
 
+"""
+$(TYPEDEF)
+Reflection model for a surface with a Rayleigh reflection coefficient.
+
+---
+
+    Rayleigh(ρᵣ, cᵣ, δ)
+    Rayleigh(ρᵣ, cᵣ)
+
+Create a reflection model for a surface with a Rayleigh reflection coefficient
+with relative density `ρᵣ`, relative sound speed `cᵣ`, and dimensionless
+attentuation `δ`. If attentuation `δ` is unspecified, it is assumed to be zero.
+
+See `reflectioncoef()` for more details.
+"""
 struct Rayleigh{T1,T2,T3} <: ReflectionModel
   ρᵣ::T1
   cᵣ::T2

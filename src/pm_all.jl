@@ -6,6 +6,12 @@ const allmodels = [
   Bellhop
 ]
 
+"""
+    models()
+    models(env::UnderwaterEnvironment)
+
+List available models, optionally for a given environment.
+"""
 function models(env=missing)
   mlist = []
   for m ∈ allmodels
@@ -19,4 +25,8 @@ function models(env=missing)
   mlist
 end
 
+"""
+$(SIGNATURES)
+Register model in the list of available models.
+"""
 addmodel!(mtype) = push!(allmodels, mtype)

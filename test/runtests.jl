@@ -587,8 +587,3 @@ end
   @test size(sig) == (44100,2)
 
 end
-
-# TODO: comparison tests between models
-# TODO: performance tests
-# TODO: differentiability tests
-# TODO: Turing tests

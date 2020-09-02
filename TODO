@@ -1,0 +1,25 @@
+General:
+  ☐ Check 3D environments and report error if unsupported
+  ☐ Auto 3D-to-2D conversion for range-independent environments
+  ☐ Scatterers
+  ☐ Validate noise model (shows variability in PSD with sampling rate)
+
+RaySolver:
+  ☐ Find a way to allow full derivative through a dependent θ
+
+Docs:
+  ☐ Propagation modeling guide
+  ☐ Developing propagation models
+  ☐ Differentiability & Turing with propagation models
+
+Tests:
+  ☐ comparison tests between models
+  ☐ performance tests
+  ☐ differentiability tests
+  ☐ Turing tests
+
+KIV:
+  ☐ 3D Bellhop
+  ☐ 3D RaySolver
+  ☐ 2D/3D SSP
+  ☐ 2D bathymetry

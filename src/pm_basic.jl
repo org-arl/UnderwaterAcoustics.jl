@@ -41,8 +41,6 @@ function soundspeed(::MunkSSP, x, y, z)
   1500.0 * (1.0 + ϵ * (z̃ - 1 + exp(-z̃)))
 end
 
-# TODO: 2D and 3D sampled SSP
-
 """
 $(TYPEDEF)
 Sound speed profile based on measurements at discrete depths.
@@ -99,8 +97,6 @@ end
 
 depth(bathy::ConstantDepth, x, y) = bathy.depth
 maxdepth(bathy::ConstantDepth) = bathy.depth
-
-# TODO: 2D sampled bathymetry
 
 """
 $(TYPEDEF)
@@ -287,7 +283,6 @@ struct RedGaussianNoise{T} <: NoiseModel
 end
 
 function record(noisemodel::RedGaussianNoise, duration, fs; start=0.0)
-  # FIXME: shows some variability in PSD with sampling rate!
   analytic(signal(rand(RedGaussian(; n=round(Int, duration*fs), σ=noisemodel.σ)), fs))
 end
 

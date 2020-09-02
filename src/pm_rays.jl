@@ -39,8 +39,6 @@ RaySolver(env; kwargs...) = RaySolver(; env=env, kwargs...)
 
 ### interface functions
 
-# TODO: check for 3D coordinates and report error
-
 function check(::Type{RaySolver}, env::Union{<:UnderwaterEnvironment,Missing})
   if env !== missing
     altimetry(env) isa FlatSurface || throw(ArgumentError("RaySolver only supports environments with flat sea surface"))

@@ -290,8 +290,6 @@ end
 
 phasortype(::Type{RayArrival{T1,T2}}) where {T1,T2} = T1
 
-# TODO: define scatterers
-
 ### fallbacks & helpers
 
 location(x::NTuple{3,T}) where T = x

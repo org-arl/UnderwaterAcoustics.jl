@@ -331,4 +331,29 @@ end
   sig = recorder(pm, tx, rx)(1.0, 44100.0; start=0.5)
   @test size(sig) == (44100,2)
 
+  env = UnderwaterEnvironment(noise=missing)
+  pm = PekerisRayModel(env, 7)
+  tx = Pinger(0.0, -5.0, 1000.0; interval=0.3)
+  rx = AcousticReceiver(100.0, -10.0)
+  sig1 = record(pm, tx, rx, 1.0, 44100.0)
+  @test size(sig1) == (44100,)
+  sig2 = record(pm, tx, rx, 1.0, 44100.0; start=0.5)
+  @test size(sig2) == (44100,)
+  @test sig1[22051:end] ≈ sig2[1:22050]
+  rx = AcousticReceiver(100.0, -11.0)
+  sig3 = record(pm, tx, rx, 1.0, 44100.0)
+  @test size(sig3) == (44100,)
+  @test !(sig1 ≈ sig3)
+  rx = AcousticReceiver(100.0/√2, 100.0/√2, -10.0)
+  sig3 = record(pm, tx, rx, 1.0, 44100.0)
+  @test size(sig3) == (44100,)
+  @test sig1 ≈ sig3
+  tx = [Pinger(0.0, -5.0, 1000.0; interval=0.3), Pinger(1.0, -5.0, 2000.0; interval=0.5)]
+  rx = AcousticReceiver(100.0, 0.0, -10.0)
+  sig1 = record(pm, tx, rx, 1.0, 44100.0)
+  rx = AcousticReceiver(100.0/√2, 100.0/√2, -10.0)
+  rx = AcousticReceiver(-100.0, 0.0, -10.0)
+  sig2 = record(pm, tx, rx, 1.0, 44100.0)
+  @test !(sig1 ≈ sig2)
+
 end

@@ -357,3 +357,102 @@ end
   @test !(sig1 ≈ sig2)
 
 end
+
+@testset "bellhop" begin
+
+  if Bellhop in models()
+
+    env = UnderwaterEnvironment(seasurface=Vacuum)
+    pm = Bellhop(env)
+    @test pm isa Bellhop
+
+    arr = arrivals(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -10.0))
+    @test arr isa AbstractArray{<:UnderwaterAcoustics.RayArrival}
+    r = eigenrays(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -10.0))
+    @test r isa AbstractArray{<:UnderwaterAcoustics.RayArrival}
+    r = rays(pm, AcousticSource(0.0, -5.0, 1000.0), -60°:15°:60°, 100.0)
+    @test r isa AbstractArray{<:UnderwaterAcoustics.RayArrival}
+    x = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -5.0))
+    @test x isa Complex
+    y = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -5.0))
+    @test -10 * log10(abs2(x)) ≈ y atol=0.1
+    x = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -5.0); mode=:incoherent)
+    @test x isa Complex
+    @test imag(x) == 0.0
+    y = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -5.0); mode=:incoherent)
+    @test -10 * log10(abs2(x)) ≈ y atol=0.1
+    x1 = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -5.0))
+    x2 = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -10.0))
+    x3 = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -15.0))
+    x = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), [AcousticReceiver(100.0, -d) for d ∈ 5.0:5.0:15.0])
+    @test x isa AbstractVector
+    @test [x1, x2, x3] == x
+    x = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiverGrid2D(100.0, 0.0, 1, -5.0, -5.0, 3))
+    @test x isa AbstractMatrix
+    @test size(x) == (1, 3)
+    @test [x1 x2 x3] == x
+    x = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiverGrid2D(100.0, 10.0, 3, -5.0, -5.0, 3))
+    @test x isa AbstractMatrix
+    @test size(x) == (3, 3)
+    @test [x1, x2, x3] == x[1,:]
+    x1 = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -5.0))
+    x2 = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -10.0))
+    x3 = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -15.0))
+    x = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), [AcousticReceiver(100.0, -d) for d ∈ 5.0:5.0:15.0])
+    @test x isa AbstractVector
+    @test [x1, x2, x3] == x
+    x = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiverGrid2D(100.0, 0.0, 1, -5.0, -5.0, 3))
+    @test x isa AbstractMatrix
+    @test size(x) == (1, 3)
+    @test [x1 x2 x3] == x
+    x = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiverGrid2D(100.0, 10.0, 3, -5.0, -5.0, 3))
+    @test x isa AbstractMatrix
+    @test size(x) == (3, 3)
+    @test [x1, x2, x3] == x[1,:]
+
+    tx = AcousticSource(0.0, -5.0, 1000.0)
+    rx = AcousticReceiver(100.0, -10.0)
+    sig = record(pm, tx, rx, 1.0, 44100.0)
+    @test size(sig) == (44100,)
+    sig = record(pm, tx, rx, 1.0, 44100.0; start=0.5)
+    @test size(sig) == (44100,)
+    sig = recorder(pm, tx, rx)(1.0, 44100.0)
+    @test size(sig) == (44100,)
+    sig = recorder(pm, tx, rx)(1.0, 44100.0; start=0.5)
+    @test size(sig) == (44100,)
+    tx = [AcousticSource(0.0, -5.0, 1000.0), AcousticSource(0.0, -10.0, 2000.0)]
+    rx = AcousticReceiver(100.0, -10.0)
+    sig = record(pm, tx, rx, 1.0, 44100.0)
+    @test size(sig) == (44100,)
+    sig = record(pm, tx, rx, 1.0, 44100.0; start=0.5)
+    @test size(sig) == (44100,)
+    sig = recorder(pm, tx, rx)(1.0, 44100.0)
+    @test size(sig) == (44100,)
+    sig = recorder(pm, tx, rx)(1.0, 44100.0; start=0.5)
+    @test size(sig) == (44100,)
+    tx = [AcousticSource(0.0, -5.0, 1000.0), AcousticSource(0.0, -10.0, 2000.0)]
+    rx = [AcousticReceiver(100.0, -10.0), AcousticReceiver(100.0, -15.0)]
+    sig = record(pm, tx, rx, 1.0, 44100.0)
+    @test size(sig) == (44100,2)
+    sig = record(pm, tx, rx, 1.0, 44100.0; start=0.5)
+    @test size(sig) == (44100,2)
+    sig = recorder(pm, tx, rx)(1.0, 44100.0)
+    @test size(sig) == (44100,2)
+    sig = recorder(pm, tx, rx)(1.0, 44100.0; start=0.5)
+    @test size(sig) == (44100,2)
+    tx = AcousticSource(0.0, -5.0, 1000.0)
+    rx = [AcousticReceiver(100.0, -10.0), AcousticReceiver(100.0, -15.0)]
+    sig = record(pm, tx, rx, 1.0, 44100.0)
+    @test size(sig) == (44100,2)
+    sig = record(pm, tx, rx, 1.0, 44100.0; start=0.5)
+    @test size(sig) == (44100,2)
+    sig = recorder(pm, tx, rx)(1.0, 44100.0)
+    @test size(sig) == (44100,2)
+    sig = recorder(pm, tx, rx)(1.0, 44100.0; start=0.5)
+    @test size(sig) == (44100,2)
+
+  else
+    @test_skip true
+  end
+
+end

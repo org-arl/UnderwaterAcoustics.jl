@@ -38,7 +38,7 @@ using UnderwaterAcoustics: amp2db, db2amp
 
 end
 
-@testset "pm-core" begin
+@testset "pm-core-basic" begin
 
   env = UnderwaterEnvironment()
 
@@ -59,7 +59,9 @@ end
   @test soundspeed(ssp(env), 0.0, 0.0, 0.0) isa Real
   @test reflectioncoef(seasurface(env), 1000.0, 0.0) isa Complex
   @test reflectioncoef(seabed(env), 1000.0, 0.0) isa Complex
-  @test length(record(noise(env), 1.0, 44100.0)) == 44100
+  sig = record(noise(env), 1.0, 44100.0)
+  @test length(sig) == 44100
+  @test sum(abs2.(sig)) > 0.0
 
   @test AcousticReceiver(0.0, 0.0) isa AcousticReceiver
   @test location(AcousticReceiver(100.0, 10.0, -50.0)) == (100, 10.0, -50.0)
@@ -78,6 +80,16 @@ end
   @test sig[1] != sig[2]
   @test sig[1] ≈ sig[11]
   @test sig[2] ≈ sig[12]
+  src = Pinger(10.0, -10.0, 1000.0; sourcelevel=1.0, interval=0.5)
+  sig = record(src, 1.0, 44100.0)
+  @test src isa AcousticSource
+  @test location(src) == (10.0, 0.0, -10.0)
+  @test nominalfrequency(src) == 1000.0
+  @test phasor(src) == complex(1.0, 0.0)
+  @test length(sig) == 44100
+  @test eltype(sig) <: Complex
+  @test sum(abs2.(sig))/44100.0 ≈ 0.04 atol=1e-4
+  @test maximum(abs2.(sig)) ≈ 1.0 atol=1e-4
 
   @test IsoSSP(1500.0) isa SoundSpeedProfile
   @test soundspeed(IsoSSP(1500.0), 100.0, 10.0, -50.0) == 1500.0
@@ -163,9 +175,19 @@ end
   @test abs(reflectioncoef(SeaState2, 1000.0, 0.0)) > abs(reflectioncoef(SeaState5, 1000.0, 0.0))
   @test abs(reflectioncoef(SeaState5, 1000.0, 0.0)) > abs(reflectioncoef(SeaState5, 2000.0, 0.0))
 
-  # Pinger
-  # RedNoise details
-  # AcousticReceiverGrid2D, AcousticReceiverGrid3D
+  rx = AcousticReceiverGrid2D(100.0, 2.0, 100, -100.0, 5.0, 10)
+  @test rx isa AcousticReceiverGrid2D
+  @test rx isa AbstractMatrix
+  @test size(rx) == (100, 10)
+  @test rx[1,1] == AcousticReceiver(100.0, -100.0)
+  @test rx[end,end] == AcousticReceiver(298.0, -55.0)
+  rx = AcousticReceiverGrid3D(100.0, 2.0, 100, 0.0, 1.0, 100, -100.0, 5.0, 10)
+  @test rx isa AcousticReceiverGrid3D
+  @test rx isa AbstractArray
+  @test size(rx) == (100, 100, 10)
+  @test rx[1,1,1] == AcousticReceiver(100.0, 0.0, -100.0)
+  @test rx[end,end,end] == AcousticReceiver(298.0, 99.0, -55.0)
+
 end
 
 @testset "pekeris" begin

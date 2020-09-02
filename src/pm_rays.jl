@@ -78,7 +78,7 @@ function eigenrays(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver;
     if isapprox(err[i], 0.0; atol=model.atol)
       eray = traceray(model, tx1, θ[i], rmax, ds)
       push!(erays, eray)
-    elseif i > 1 && !isnan(err[i-1]) && !isnan(err[i]) && sign(err[i-1]) != sign(err[i])
+    elseif i > 1 && !isnan(err[i-1]) && !isnan(err[i]) && sign(err[i-1]) * sign(err[i]) == -1
       a, b = ordered(θ[i-1], θ[i])
       soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, rmax).raypath[end][3] - p2[3]), a, b; abs_tol=model.atol)
       eray = traceray(model, tx1, soln.minimizer, rmax, ds)

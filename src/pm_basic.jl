@@ -8,7 +8,7 @@ export Rock, Pebbles, SandyGravel, CoarseSand, MediumSand, FineSand, VeryFineSan
 export ClayeySand, CoarseSilt, SandySilt, Silt, FineSilt, SandyClay, SiltyClay, Clay
 export Vacuum, SeaState0, SeaState1, SeaState2, SeaState3, SeaState4
 export SeaState5, SeaState6, SeaState7, SeaState8, SeaState9
-export AcousticReceiverGrid2D, AcousticReceiverGrid3D
+export AcousticReceiverGrid2D, AcousticReceiverGrid3D, NarrowbandAcousticSource
 export RedGaussianNoise, Pinger
 
 ### sound speed profiles
@@ -203,6 +203,17 @@ const Clay = Rayleigh(1.145, 0.98, 0.00148)
 
 reflectioncoef(rm::Rayleigh, f, θ) = reflectioncoef(θ, rm.ρᵣ, rm.cᵣ, rm.δ)
 
+"""
+$(TYPEDEF)
+Reflection model for a water surface affected by wind.
+
+---
+
+    SurfaceLoss(windspeed)
+
+Create a reflection model for a surface affected by wind. `windspeed` is
+given in m/s.
+"""
 struct SurfaceLoss{T} <: ReflectionModel
   windspeed::T
 end
@@ -236,6 +247,11 @@ Base.@kwdef struct BasicUnderwaterEnvironment{T1<:Altimetry, T2<:Bathymetry, T3<
   noise::T7 = RedGaussianNoise(db2amp(120.0))
 end
 
+"""
+    UnderwaterEnvironment(; altimetry, bathymetry, ssp, salinity, seasurface, seabed, noise)
+
+Create an underwater environment.
+"""
 UnderwaterEnvironment(; kwargs...) = BasicUnderwaterEnvironment(; kwargs...)
 
 altimetry(env::BasicUnderwaterEnvironment) = env.altimetry
@@ -244,10 +260,20 @@ ssp(env::BasicUnderwaterEnvironment) = env.ssp
 salinity(env::BasicUnderwaterEnvironment) = env.salinity
 seasurface(env::BasicUnderwaterEnvironment) = env.seasurface
 seabed(env::BasicUnderwaterEnvironment) = env.seabed
-noise(env::UnderwaterEnvironment) = env.noise
+noise(env::BasicUnderwaterEnvironment) = env.noise
 
 ### noise models
 
+"""
+$(TYPEDEF)
+Ambient noise model with Gaussian noise with a `1/f²` power spectral density.
+
+---
+
+    RedGaussianNoise(σ)
+
+Create an ambient noise model with variance `σ²` and `1/f²` power spectral density.
+"""
 struct RedGaussianNoise{T} <: NoiseModel
   σ::T
 end
@@ -259,6 +285,10 @@ end
 
 ### basic source & recevier models
 
+"""
+$(TYPEDEF)
+Narrowband acoustic source.
+"""
 struct NarrowbandAcousticSource{T1,T2,T3,T4} <: AcousticSource
   pos::NTuple{3,T1}
   f::T2
@@ -266,9 +296,32 @@ struct NarrowbandAcousticSource{T1,T2,T3,T4} <: AcousticSource
   ϕ::T4
 end
 
+"""
+$(SIGNATURES)
+Create a narrowband acoustic source with frequency `f` Hz at location (`x`, `y`, `z`).
+The `sourcelevel` is in µPa @ 1m. A phase `ϕ` may be optionlly specified.
+"""
 NarrowbandAcousticSource(x, y, z, f; sourcelevel=db2amp(180.0), ϕ=0.0) = NarrowbandAcousticSource(promote(x, y, z), f, sourcelevel, ϕ)
+
+"""
+$(SIGNATURES)
+Create a narrowband acoustic source with frequency `f` Hz at location (`x`, z`).
+The `sourcelevel` is in µPa @ 1m. A phase `ϕ` may be optionlly specified.
+"""
 NarrowbandAcousticSource(x, z, f; sourcelevel=db2amp(180.0), ϕ=0.0) = NarrowbandAcousticSource(promote(x, 0, z), f, sourcelevel, ϕ)
+
+"""
+$(SIGNATURES)
+Create a narrowband acoustic source with frequency `f` Hz at location (`x`, `y`, `z`).
+The `sourcelevel` is in µPa @ 1m. A phase `ϕ` may be optionlly specified.
+"""
 AcousticSource(x, y, z, f; sourcelevel=db2amp(180.0), ϕ=0.0) = NarrowbandAcousticSource(promote(x, y, z), f, sourcelevel, ϕ)
+
+"""
+$(SIGNATURES)
+Create a narrowband acoustic source with frequency `f` Hz at location (`x`, `y`, `z`).
+The `sourcelevel` is in µPa @ 1m. A phase `ϕ` may be optionlly specified.
+"""
 AcousticSource(x, z, f; sourcelevel=db2amp(180.0), ϕ=0.0) = NarrowbandAcousticSource(promote(x, 0, z), f, sourcelevel, ϕ)
 
 location(tx::NarrowbandAcousticSource) = tx.pos
@@ -276,6 +329,10 @@ nominalfrequency(tx::NarrowbandAcousticSource) = tx.f
 phasor(tx::NarrowbandAcousticSource) = tx.A * cis(tx.ϕ)
 record(tx::NarrowbandAcousticSource, duration, fs; start=0.0) = signal(tx.A .* cis.(2π .* tx.f .* (start:1/fs:start+duration) .+ tx.ϕ), fs)
 
+"""
+$(TYPEDEF)
+Narrowband pulsed acoustic source.
+"""
 Base.@kwdef struct Pinger{T1,T2,T3,T4,T5,T6,T7,T8} <: AcousticSource
   pos::NTuple{3,T1}
   frequency::T2
@@ -287,7 +344,32 @@ Base.@kwdef struct Pinger{T1,T2,T3,T4,T5,T6,T7,T8} <: AcousticSource
   window::T8 = nothing
 end
 
+"""
+    Pinger(x, y, z, f; sourcelevel, phase, duration, start, interval, window)
+
+Create a pulsed narrowband acoustic source with frequency `f` Hz at location (`x`, `y`, `z`).
+Additional parameters that may be specified:
+- `sourcelevel` in µPa @ 1m (default 180 dB)
+- `phase` of the narrowband signal (default 0)
+- `duration` of the pulse in seconds (default 20 ms)
+- `start` time of one of the pulses in seconds (default 0)
+- pulse repetition `interval` in seconds (default 1 second)
+- `window` type (from `DSP.jl`) (default `nothing`)
+"""
 Pinger(x, y, z, f; kwargs...) = Pinger(; pos=promote(x, y, z), frequency=f, kwargs...)
+
+"""
+    Pinger(x, z, f; sourcelevel, phase, duration, start, interval, window)
+
+Create a pulsed narrowband acoustic source with frequency `f` Hz at location (`x`, `z`).
+Additional parameters that may be specified:
+- `sourcelevel` in µPa @ 1m (default 180 dB)
+- `phase` of the narrowband signal (default 0)
+- `duration` of the pulse in seconds (default 20 ms)
+- `start` time of one of the pulses in seconds (default 0)
+- pulse repetition `interval` in seconds (default 1 second)
+- `window` type (from `DSP.jl`) (default `nothing`)
+"""
 Pinger(x, z, f; kwargs...) = Pinger(; pos=promote(x, 0, z), frequency=f, kwargs...)
 
 location(tx::Pinger) = tx.pos
@@ -316,24 +398,56 @@ function record(pinger::Pinger, duration, fs; start=0.0)
   signal(pinger.sourcelevel * x, fs)
 end
 
+"""
+$(TYPEDEF)
+Omnidirectional acoustic receiver.
+"""
 struct BasicAcousticReceiver{T} <: AcousticReceiver
   pos::NTuple{3,T}
 end
 
+"""
+$(SIGNATURES)
+Create an omnidirectional acoustic receiver at location (`x`, `y`, `z`).
+"""
 BasicAcousticReceiver(x, y, z) = BasicAcousticReceiver(promote(x, y, z))
+
+"""
+$(SIGNATURES)
+Create an omnidirectional acoustic receiver at location (`x`, `z`).
+"""
 BasicAcousticReceiver(x, z) = BasicAcousticReceiver(promote(x, 0, z))
+
+"""
+$(SIGNATURES)
+Create an omnidirectional acoustic receiver at location (`x`, `y`, `z`).
+"""
 AcousticReceiver(x, y, z) = BasicAcousticReceiver(promote(x, y, z))
+
+"""
+$(SIGNATURES)
+Create an omnidirectional acoustic receiver at location (`x`, `z`).
+"""
 AcousticReceiver(x, z) = BasicAcousticReceiver(promote(x, 0, z))
 
 location(rx::BasicAcousticReceiver) = rx.pos
 
 ### receiver grids for transmission loss computation
 
+"""
+$(TYPEDEF)
+A 2D Cartesian grid of omnidirectional acoustic receivers.
+"""
 struct AcousticReceiverGrid2D{T} <: AbstractArray{BasicAcousticReceiver{T},2}
   xrange::StepRangeLen{T,T,T}
   zrange::StepRangeLen{T,T,T}
 end
 
+"""
+$(SIGNATURES)
+Create a 2D Cartesian grid of omnidirectional acoustic receivers with `nx` × `nz`
+receviers starting (`xmin`, `zmin`) with step sizes `xstep` and `zstep`.
+"""
 function AcousticReceiverGrid2D(xmin, xstep, nx, zmin, zstep, nz)
   AcousticReceiverGrid2D(StepRangeLen(xmin, xstep, nx), StepRangeLen(zmin, zstep, nz))
 end
@@ -342,12 +456,21 @@ Base.size(g::AcousticReceiverGrid2D) = (g.xrange.len, g.zrange.len)
 Base.getindex(g::AcousticReceiverGrid2D, I::Vararg{Int,2}) = AcousticReceiver(g.xrange[I[1]], g.zrange[I[2]])
 Base.setindex!(g::AcousticReceiverGrid2D, v, I::Vararg{Int,2}) = throw(ArgumentError("AcousticReceiverGrid2D is readonly"))
 
+"""
+$(TYPEDEF)
+A 3D Cartesian grid of omnidirectional acoustic receivers.
+"""
 struct AcousticReceiverGrid3D{T} <: AbstractArray{BasicAcousticReceiver{T},3}
   xrange::StepRangeLen{T,T,T}
   yrange::StepRangeLen{T,T,T}
   zrange::StepRangeLen{T,T,T}
 end
 
+"""
+$(SIGNATURES)
+Create a 3D Cartesian grid of omnidirectional acoustic receivers with `nx` × `ny` × `nz`
+receviers starting (`xmin`, `ymin`, `zmin`) with step sizes `xstep`, `ystep`, and `zstep`.
+"""
 function AcousticReceiverGrid3D(xmin, xstep, nx, ymin, ystep, ny, zmin, zstep, nz)
   AcousticReceiverGrid3D(StepRangeLen(xmin, xstep, nx), StepRangeLen(ymin, ystep, ny), StepRangeLen(zmin, zstep, nz))
 end

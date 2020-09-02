@@ -195,8 +195,140 @@ end
   @test PekerisRayModel in models()
 
   env = UnderwaterEnvironment()
-  #pm = PekerisRayModel(env, )
+  pm = PekerisRayModel(env, 7)
+  @test pm isa PekerisRayModel
 
-  # impulse response
+  arr = arrivals(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -10.0))
+  @test arr isa AbstractArray{<:UnderwaterAcoustics.RayArrival}
+  @test length(arr) == 7
+  @test arr[1].time ≈ 0.0650 atol=0.0001
+  @test arr[2].time ≈ 0.0657 atol=0.0001
+  @test arr[3].time ≈ 0.0670 atol=0.0001
+  @test all([arr[j].time > arr[j-1].time for j ∈ 2:7])
+  @test abs(arr[1].phasor) ≈ 0.01 atol=0.001
+  @test real(arr[2].phasor) < 0.0
+  @test imag(arr[2].phasor) ≈ 0.0
+  @test all([abs(arr[j].phasor) < abs(arr[j-1].phasor) for j ∈ 2:7])
+  @test [(arr[j].surface, arr[j].bottom) for j ∈ 1:7] == [(0,0), (1,0), (0,1), (1,1), (1,1), (2,1), (1,2)]
+  @test all([abs(arr[j].arrivalangle) == abs(arr[j].launchangle) for j ∈ 1:7])
+
+  r = eigenrays(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -10.0))
+  @test r isa AbstractArray{<:UnderwaterAcoustics.RayArrival}
+  @test length(r) == 7
+  @test all([abs(r[j].arrivalangle) == abs(r[j].launchangle) for j ∈ 1:7])
+  @test all([r[j].raypath[1] == (0.0, 0.0, -5.0) for j ∈ 1:7])
+  @test all([r[j].raypath[end] == (100.0, 0.0, -10.0) for j ∈ 1:7])
+  @test all([length(r[j].raypath) == r[j].surface + r[j].bottom + 2 for j ∈ 1:7])
+
+  r = rays(pm, AcousticSource(0.0, -5.0, 1000.0), -60°:15°:60°, 100.0)
+  @test r isa AbstractArray{<:UnderwaterAcoustics.RayArrival}
+  @test length(r) == 9
+  @test all([r[j].launchangle for j ∈ 1:9] .≈ -60°:15°:60°)
+  @test all([abs(r[j].arrivalangle) == abs(r[j].launchangle) for j ∈ 1:9])
+  @test all([r[j].raypath[1] == (0.0, 0.0, -5.0) for j ∈ 1:9])
+  @test all([r[j].raypath[end][1] ≥ 100.0 for j ∈ 1:9])
+  @test all([length(r[j].raypath) == r[j].surface + r[j].bottom + 2 for j ∈ 1:9])
+
+  ir1 = impulseresponse(arr, 10000.0; reltime=true)
+  ir2 = impulseresponse(arr, 10000.0; reltime=false)
+  @test length(ir2) ≈ length(ir1) + round(Int, 10000.0 * arr[1].time) atol=1
+  @test length(ir2) == round(Int, 10000.0 * arr[end].time) + 1
+  @test sum(ir1 .!= 0.0) == 7
+  @test sum(ir2 .!= 0.0) == 7
+  ndx = findall(abs.(ir1) .> 0)
+  @test (ndx .- 1) ./ 10000.0 ≈ [arr[j].time - arr[1].time for j ∈ 1:7] atol=1e-4
+  ndx = findall(abs.(ir2) .> 0)
+  @test (ndx .- 1) ./ 10000.0 ≈ [arr[j].time for j ∈ 1:7] atol=1e-4
+
+  env = UnderwaterEnvironment(ssp=IsoSSP(1500.0))
+  pm = PekerisRayModel(env, 2)
+  d = (√1209.0)/4.0
+  x = transfercoef(pm, AcousticSource(0.0, -d, 1000.0), AcousticReceiver(100.0, -d))
+  @test x isa Complex
+  @test abs(x) ≈ 0.0 atol=0.0002
+  x′ = transfercoef(pm, AcousticSource(0.0, -d, 1000.0), AcousticReceiver(100.0, -d); mode=:incoherent)
+  @test x′ isa Complex
+  @test imag(x′) == 0.0
+  @test abs(x′) > 1/100.0
+  d = (√2409.0)/8.0
+  x = transfercoef(pm, AcousticSource(0.0, -d, 1000.0), AcousticReceiver(100.0, -d))
+  @test abs(x) > abs(x′)
+  y = transmissionloss(pm, AcousticSource(0.0, -d, 1000.0), AcousticReceiver(100.0, -d))
+  @test -10 * log10(abs2(x)) ≈ y atol=0.1
+  x = transfercoef(pm, AcousticSource(0.0, -d, 1000.0), AcousticReceiver(100.0, -d); mode=:incoherent)
+  @test abs(x) ≈ abs(x′) atol=0.0001
+  y = transmissionloss(pm, AcousticSource(0.0, -d, 1000.0), AcousticReceiver(100.0, -d); mode=:incoherent)
+  @test -10 * log10(abs2(x)) ≈ y atol=0.1
+  x1 = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -5.0))
+  x2 = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -10.0))
+  x3 = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -15.0))
+  x = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), [AcousticReceiver(100.0, -d) for d ∈ 5.0:5.0:15.0])
+  @test x isa AbstractVector
+  @test [x1, x2, x3] == x
+  x = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiverGrid2D(100.0, 0.0, 1, -5.0, -5.0, 3))
+  @test x isa AbstractMatrix
+  @test size(x) == (1, 3)
+  @test [x1 x2 x3] == x
+  x = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiverGrid2D(100.0, 10.0, 3, -5.0, -5.0, 3))
+  @test x isa AbstractMatrix
+  @test size(x) == (3, 3)
+  @test [x1, x2, x3] == x[1,:]
+  x1 = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -5.0))
+  x2 = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -10.0))
+  x3 = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -15.0))
+  x = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), [AcousticReceiver(100.0, -d) for d ∈ 5.0:5.0:15.0])
+  @test x isa AbstractVector
+  @test [x1, x2, x3] == x
+  x = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiverGrid2D(100.0, 0.0, 1, -5.0, -5.0, 3))
+  @test x isa AbstractMatrix
+  @test size(x) == (1, 3)
+  @test [x1 x2 x3] == x
+  x = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiverGrid2D(100.0, 10.0, 3, -5.0, -5.0, 3))
+  @test x isa AbstractMatrix
+  @test size(x) == (3, 3)
+  @test [x1, x2, x3] == x[1,:]
+
+  env = UnderwaterEnvironment()
+  pm = PekerisRayModel(env, 7)
+  tx = AcousticSource(0.0, -5.0, 1000.0)
+  rx = AcousticReceiver(100.0, -10.0)
+  sig = record(pm, tx, rx, 1.0, 44100.0)
+  @test size(sig) == (44100,)
+  sig = record(pm, tx, rx, 1.0, 44100.0; start=0.5)
+  @test size(sig) == (44100,)
+  sig = recorder(pm, tx, rx)(1.0, 44100.0)
+  @test size(sig) == (44100,)
+  sig = recorder(pm, tx, rx)(1.0, 44100.0; start=0.5)
+  @test size(sig) == (44100,)
+  tx = [AcousticSource(0.0, -5.0, 1000.0), AcousticSource(0.0, -10.0, 2000.0)]
+  rx = AcousticReceiver(100.0, -10.0)
+  sig = record(pm, tx, rx, 1.0, 44100.0)
+  @test size(sig) == (44100,)
+  sig = record(pm, tx, rx, 1.0, 44100.0; start=0.5)
+  @test size(sig) == (44100,)
+  sig = recorder(pm, tx, rx)(1.0, 44100.0)
+  @test size(sig) == (44100,)
+  sig = recorder(pm, tx, rx)(1.0, 44100.0; start=0.5)
+  @test size(sig) == (44100,)
+  tx = [AcousticSource(0.0, -5.0, 1000.0), AcousticSource(0.0, -10.0, 2000.0)]
+  rx = [AcousticReceiver(100.0, -10.0), AcousticReceiver(100.0, -15.0)]
+  sig = record(pm, tx, rx, 1.0, 44100.0)
+  @test size(sig) == (44100,2)
+  sig = record(pm, tx, rx, 1.0, 44100.0; start=0.5)
+  @test size(sig) == (44100,2)
+  sig = recorder(pm, tx, rx)(1.0, 44100.0)
+  @test size(sig) == (44100,2)
+  sig = recorder(pm, tx, rx)(1.0, 44100.0; start=0.5)
+  @test size(sig) == (44100,2)
+  tx = AcousticSource(0.0, -5.0, 1000.0)
+  rx = [AcousticReceiver(100.0, -10.0), AcousticReceiver(100.0, -15.0)]
+  sig = record(pm, tx, rx, 1.0, 44100.0)
+  @test size(sig) == (44100,2)
+  sig = record(pm, tx, rx, 1.0, 44100.0; start=0.5)
+  @test size(sig) == (44100,2)
+  sig = recorder(pm, tx, rx)(1.0, 44100.0)
+  @test size(sig) == (44100,2)
+  sig = recorder(pm, tx, rx)(1.0, 44100.0; start=0.5)
+  @test size(sig) == (44100,2)
 
 end

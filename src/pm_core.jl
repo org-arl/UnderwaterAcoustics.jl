@@ -331,35 +331,31 @@ end
 
 transmissionloss(model, tx, rx; mode=:coherent) = -amp2db.(abs.(transfercoef(model, tx, rx; mode=mode)))
 
-function record(model::PropagationModel, tx1::AcousticSource, rx1::AcousticReceiver, duration, fs; start=0.0)
-  record(model, [tx1], [rx1], duration, fs; start=start)
-end
-
 function recorder(model::PropagationModel, tx1::AcousticSource, rx1::AcousticReceiver)
-  recorder(model, [tx1], [rx1])
-end
-
-function record(model::PropagationModel, tx1::AcousticSource, rx::AbstractArray{<:AcousticReceiver}, duration, fs; start=0.0)
-  record(model, [tx1], rx, duration, fs; start=start)
+  f = recorder(model, [tx1], [rx1])
+  function rec(duration, fs; start=0.0)
+    x = f(duration, fs; start=start)
+    signal(dropdims(samples(x); dims=2), framerate(x))
+  end
 end
 
 function recorder(model::PropagationModel, tx1::AcousticSource, rx::AbstractArray{<:AcousticReceiver})
   recorder(model, [tx1], rx)
 end
 
-function record(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx1::AcousticReceiver, duration, fs; start=0.0)
-  signal(dropdims(record(model, tx, [rx1], duration, fs; start=start), 2), fs)
-end
-
 function recorder(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx1::AcousticReceiver)
-  dropdims(recorder(model, tx, [rx1]), 2)
+  f = recorder(model, tx, [rx1])
+  function rec(duration, fs; start=0.0)
+    x = f(duration, fs; start=start)
+    signal(dropdims(samples(x); dims=2), framerate(x))
+  end
 end
 
 function recorder(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx::AbstractArray{<:AcousticReceiver})
   arr = [arrivals(model, tx1, rx1) for tx1 ∈ tx, rx1 ∈ rx]
   mindelay, maxdelay = extrema(Iterators.flatten([[a1.time for a1 ∈ a] for a ∈ arr]))
   function rec(duration, fs; start=0.0)
-    src = [record(tx1, duration + (maxdelay-mindelay), fs; start=start-maxdelay) for tx1 ∈ tx]
+    src = [record(tx1, duration + (maxdelay-mindelay) + 1/fs, fs; start=start-maxdelay) for tx1 ∈ tx]
     nsamples = round(Int, duration * fs)
     x = zeros(Base.promote_eltype(src...), nsamples, length(rx))
     for j = 1:length(tx)
@@ -380,8 +376,8 @@ function recorder(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, 
   end
 end
 
-function record(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx::AbstractArray{<:AcousticReceiver}, duration, fs; start=0.0)
-  record(model, tx, rx)(duration, fs; start=start)
+function record(model::PropagationModel, tx, rx, duration, fs; start=0.0)
+  recorder(model, tx, rx)(duration, fs; start=start)
 end
 
 """
@@ -397,6 +393,7 @@ function impulseresponse(arrivals::Vector{<:Arrival}, fs; reltime=true)
   ntaps = ceil(Int, (maxtime-mintime) * fs) + 1
   ir = zeros(typeof(arrivals[1].phasor), ntaps)
   for a ∈ arrivals
+    # TODO: handle arrivals between samples
     ndx = round(Int, (a.time - mintime) * fs) + 1
     ir[ndx] = a.phasor
   end

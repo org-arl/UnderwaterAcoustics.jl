@@ -54,7 +54,7 @@ struct SampledSSP{T1,T2,T3} <: SoundSpeedProfile
   f::T3
   function SampledSSP(depth, c, interp)
     if interp === :cubic
-      # FIXME: Interpolations requires depth to be a AbstractRange (uniform spacing)
+      depth isa AbstractRange || throw(ArgumentError("depth must be sampled uniformly and specified as an AbstractRange"))
       f = CubicSplineInterpolation(depth, c; extrapolation_bc=Line())
     elseif interp === :linear
       f = LinearInterpolation(depth, c; extrapolation_bc=Line())
@@ -66,8 +66,12 @@ struct SampledSSP{T1,T2,T3} <: SoundSpeedProfile
 end
 
 """
-$(SIGNATURES)
+    SampledSSP(depth, c)
+    SampledSSP(depth, c, interp)
+
 Create a sound speed profile based on measurements at discrete depths.
+`interp` may be either `:linear` or `:cubic`, and defaults to `:linear`
+if unspecified.
 """
 SampledSSP(depth, c) = SampledSSP(depth, c, :linear)
 
@@ -109,7 +113,7 @@ struct SampledDepth{T1,T2,T3} <: Bathymetry
   f::T3
   function SampledDepth(x, depth, interp)
     if interp === :cubic
-      # FIXME: Interpolations requires x to be a AbstractRange (uniform spacing)
+      x isa AbstractRange || throw(ArgumentError("x must be sampled uniformly and specified as an AbstractRange"))
       f = CubicSplineInterpolation(x, depth; extrapolation_bc=Line())
     elseif interp === :linear
       f = LinearInterpolation(x, depth; extrapolation_bc=Line())
@@ -121,8 +125,12 @@ struct SampledDepth{T1,T2,T3} <: Bathymetry
 end
 
 """
-$(SIGNATURES)
+    SampledDepth(x, depth)
+    SampledDepth(x, depth, interp)
+
 Create a bathymetry given discrete depth measurements at locations given in `x`.
+`interp` may be either `:linear` or `:cubic`, and defaults to `:linear`
+if unspecified.
 """
 SampledDepth(x, depth) = SampledDepth(x, depth, :linear)
 
@@ -218,9 +226,9 @@ struct SurfaceLoss{T} <: ReflectionModel
   windspeed::T
 end
 
-reflectioncoef(rm::SurfaceLoss, f, θ) = -surfaceloss(rm.windspeed, f, θ)
+reflectioncoef(rm::SurfaceLoss, f, θ) = complex(-surfaceloss(rm.windspeed, f, θ), 0.0)
 
-const Vacuum = ReflectionCoef(-1.0)
+const Vacuum = ReflectionCoef(complex(-1.0, 0.0))
 
 # WMO sea states
 # from APL-UW TR 9407 (1994), II-4 Table 2 (median windspeed)
@@ -327,7 +335,7 @@ AcousticSource(x, z, f; sourcelevel=db2amp(180.0), ϕ=0.0) = NarrowbandAcousticS
 location(tx::NarrowbandAcousticSource) = tx.pos
 nominalfrequency(tx::NarrowbandAcousticSource) = tx.f
 phasor(tx::NarrowbandAcousticSource) = tx.A * cis(tx.ϕ)
-record(tx::NarrowbandAcousticSource, duration, fs; start=0.0) = signal(tx.A .* cis.(2π .* tx.f .* (start:1/fs:start+duration) .+ tx.ϕ), fs)
+record(tx::NarrowbandAcousticSource, duration, fs; start=0.0) = signal(tx.A .* cis.(2π .* tx.f .* (start:1/fs:start+duration-1/fs) .+ tx.ϕ), fs)
 
 """
 $(TYPEDEF)

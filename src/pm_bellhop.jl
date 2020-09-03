@@ -33,7 +33,11 @@ Bellhop(env) = Bellhop(env, 0, -80°, 80°)
 function check(::Type{Bellhop}, env::Union{<:UnderwaterEnvironment,Missing})
   if env === missing
     mktempdir(prefix="bellhop_") do dirname
-      bellhop(dirname)
+      try
+        bellhop(dirname)
+      catch e
+        e isa BellhopError && e.details == ["Unable to execute bellhop.exe"] && throw(e)
+      end
     end
   else
     altimetry(env) isa FlatSurface || throw(ArgumentError("Non-flat altimetry not yet supported"))
@@ -107,14 +111,46 @@ rays(model::Bellhop, tx1::AcousticSource, θ, rmax) = rays(model, tx1, [θ], rma
 
 ### helper functions
 
+struct BellhopError <: Exception
+  details::Vector{String}
+end
+
+function Base.show(io::IO, e::BellhopError)
+  if length(e.details) == 1
+    println(io, e.details[1])
+  else
+    println(io, "Bellhop said:")
+    for s ∈ e.details
+      println(io, "  ", s)
+    end
+  end
+end
+
 function bellhop(dirname)
+  infilebase = joinpath(dirname, "model")
+  outfilename = joinpath(dirname, "output.txt")
   try
-    infilebase = joinpath(dirname, "model")
-    outfilename = joinpath(dirname, "output.txt")
     run(pipeline(ignorestatus(`bellhop.exe $infilebase`); stdout=outfilename, stderr=outfilename))
-    # TODO: check stdout/stderr and prt file for ERRORs
   catch
-    error("Unable to execute bellhop.exe")
+    throw(BellhopError(["Unable to execute bellhop.exe"]))
+  end
+  err = String[]
+  checkerr!(err, outfilename)
+  checkerr!(err, joinpath(dirname, "model.prt"))
+  if length(err) > 0
+    throw(BellhopError(err))
+  end
+end
+
+function checkerr!(err, filename)
+  output = false
+  open(filename) do f
+    for s in eachline(f)
+      if output || occursin("ERROR", uppercase(s))
+        push!(err, s)
+        output = true
+      end
+    end
   end
 end
 

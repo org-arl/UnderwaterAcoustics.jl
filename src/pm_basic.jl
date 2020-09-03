@@ -2,7 +2,7 @@ using Interpolations
 using SignalAnalysis
 using DSP: hilbert
 
-export IsoSSP, MunkSSP, SampledSSP, ConstantDepth, SampledDepth
+export IsoSSP, MunkSSP, SampledSSP, ConstantDepth, SampledDepth, SampledAltitude
 export ReflectionCoef, FlatSurface, Rayleigh, SurfaceLoss
 export Rock, Pebbles, SandyGravel, CoarseSand, MediumSand, FineSand, VeryFineSand
 export ClayeySand, CoarseSilt, SandySilt, Silt, FineSilt, SandyClay, SiltyClay, Clay
@@ -146,6 +146,44 @@ Altimetry for a flat surface with constant altitude of zero.
 struct FlatSurface <: Altimetry end
 
 altitude(::FlatSurface, x, y) = 0.0
+
+"""
+$(TYPEDEF)
+Altimetry based on altitude samples.
+"""
+struct SampledAltitude{T1,T2,T3} <: Altimetry
+  x::Vector{T1}
+  altitude::Vector{T2}
+  interp::Symbol
+  f::T3
+  function SampledAltitude(x, altitude, interp)
+    if interp === :cubic
+      x isa AbstractRange || throw(ArgumentError("x must be sampled uniformly and specified as an AbstractRange"))
+      f = CubicSplineInterpolation(x, altitude; extrapolation_bc=Line())
+    elseif interp === :linear
+      f = LinearInterpolation(x, altitude; extrapolation_bc=Line())
+    else
+      throw(ArgumentError("Unknown interpolation"))
+    end
+    new{eltype(x),eltype(altitude),typeof(f)}(x, altitude, interp, f)
+  end
+end
+
+"""
+    SampledAltitude(x, altitude)
+    SampledAltitude(x, altitude, interp)
+
+Create an altimetry given discrete altitude measurements at locations given in `x`.
+`interp` may be either `:linear` or `:cubic`, and defaults to `:linear`
+if unspecified.
+"""
+SampledAltitude(x, altitude) = SampledAltitude(x, altitude, :linear)
+
+altitude(a::SampledAltitude, x, y) = a.f(x)
+
+function Base.show(io::IO, a::SampledAltitude{T1,T2,T3}) where {T1,T2,T3}
+  print(io, "SampledAltitude{", T1, ",", T2, ",", a.interp, "}(", length(a.x), " points)")
+end
 
 ### reflection models
 

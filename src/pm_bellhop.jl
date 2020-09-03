@@ -11,22 +11,23 @@ struct Bellhop{T} <: PropagationModel{T}
   nbeams::Int
   minangle::Float32
   maxangle::Float32
-  function Bellhop(env, nbeams, minangle, maxangle)
+  debug::Bool
+  function Bellhop(env, nbeams, minangle, maxangle, debug)
     nbeams < 0 && (nbeams = 0)
     -π/2 ≤ minangle ≤ π/2 || throw(ArgumentError("minangle should be between -π/2 and π/2"))
     -π/2 ≤ maxangle ≤ π/2 || throw(ArgumentError("maxangle should be between -π/2 and π/2"))
     minangle < maxangle || throw(ArgumentError("maxangle should be more than minangle"))
-    new{typeof(env)}(check(Bellhop, env), nbeams, Float32(minangle), Float32(maxangle))
+    new{typeof(env)}(check(Bellhop, env), nbeams, Float32(minangle), Float32(maxangle), debug)
   end
 end
 
 """
-    Bellhop(env)
-    Bellhop(env, nbeams, minangle, maxangle)
+    Bellhop(env; debug=false)
+    Bellhop(env, nbeams, minangle, maxangle, debug)
 
 Create a Bellhop propagation model.
 """
-Bellhop(env) = Bellhop(env, 0, -80°, 80°)
+Bellhop(env; debug=false) = Bellhop(env, 0, -80°, 80°, debug)
 
 ### interface functions
 
@@ -34,7 +35,7 @@ function check(::Type{Bellhop}, env::Union{<:UnderwaterEnvironment,Missing})
   if env === missing
     mktempdir(prefix="bellhop_") do dirname
       try
-        bellhop(dirname)
+        bellhop(dirname, false)
       catch e
         e isa BellhopError && e.details == ["Unable to execute bellhop.exe"] && throw(e)
       end
@@ -50,7 +51,7 @@ end
 function arrivals(model::Bellhop, tx1::AcousticSource, rx1::AcousticReceiver)
   mktempdir(prefix="bellhop_") do dirname
     writeenv(model, [tx1], [rx1], "A", dirname)
-    bellhop(dirname)
+    bellhop(dirname, model.debug)
     readarrivals(joinpath(dirname, "model.arr"))
   end
 end
@@ -67,7 +68,7 @@ function transfercoef(model::Bellhop, tx1::AcousticSource, rx::AcousticReceiverG
   end
   mktempdir(prefix="bellhop_") do dirname
     writeenv(model, [tx1], rx, taskcode, dirname)
-    bellhop(dirname)
+    bellhop(dirname, model.debug)
     readshd(joinpath(dirname, "model.shd"))
   end
 end
@@ -84,7 +85,7 @@ function transfercoef(model::Bellhop, tx1::AcousticSource, rx1::AcousticReceiver
   end
   mktempdir(prefix="bellhop_") do dirname
     writeenv(model, [tx1], [rx1], taskcode, dirname)
-    bellhop(dirname)
+    bellhop(dirname, model.debug)
     readshd(joinpath(dirname, "model.shd"))[1]
   end
 end
@@ -92,7 +93,7 @@ end
 function eigenrays(model::Bellhop, tx1::AcousticSource, rx1::AcousticReceiver)
   mktempdir(prefix="bellhop_") do dirname
     writeenv(model, [tx1], [rx1], "E", dirname)
-    bellhop(dirname)
+    bellhop(dirname, model.debug)
     readrays(joinpath(dirname, "model.ray"))
   end
 end
@@ -102,7 +103,7 @@ function rays(model::Bellhop, tx1::AcousticSource, θ::AbstractArray, rmax)
   all(-π/2 .< θ .< π/2) || throw(ArgumentError("θ must be between -π/2 and π/2"))
   mktempdir(prefix="bellhop_") do dirname
     writeenv(model, [tx1], [AcousticReceiver(rmax, 0.0)], "R", dirname; minangle=minimum(θ), maxangle=maximum(θ), nbeams=length(θ))
-    bellhop(dirname)
+    bellhop(dirname, model.debug)
     readrays(joinpath(dirname, "model.ray"))
   end
 end
@@ -126,11 +127,15 @@ function Base.show(io::IO, e::BellhopError)
   end
 end
 
-function bellhop(dirname)
+function bellhop(dirname, debug)
   infilebase = joinpath(dirname, "model")
   outfilename = joinpath(dirname, "output.txt")
   try
     run(pipeline(ignorestatus(`bellhop.exe $infilebase`); stdout=outfilename, stderr=outfilename))
+    if debug
+      @info "Bellhop run completed in $dirname, press ENTER to delete intermediate files..."
+      readline()
+    end
   catch
     throw(BellhopError(["Unable to execute bellhop.exe"]))
   end
@@ -165,36 +170,50 @@ function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArra
     maximum(abs.(flist .- f))/f > 0.2 && @warn("Source frequency varies by more than 20% from nominal frequency")
     @printf(io, "%0.6f\n", f)
     println(io, "1")
+    if length(rx) == 1
+      maxr = sqrt(sum(abs2, location(rx[1])[1:2])) / 1000.0
+    elseif rx isa AcousticReceiverGrid2D
+      maxr = maximum(rx.xrange) / 1000.0
+    else
+      throw(ArgumentError("Receivers must be on a 2D grid"))
+    end
     ss = ssp(env)
     sspi = "S"
-    ss isa SampledSSP && ss.interp == :linear && (sspi = "C")
+    ss isa SampledSSP && ss.interp === :linear && (sspi = "C")
     print(io, "'", sspi, "VWT")
-    # TODO: support altimetry
+    alt = altimetry(env)
+    if !(alt isa FlatSurface)
+      print(io, "*")
+      createadfile(joinpath(dirname, "model.ati"), alt, altitude, maxr, f)
+    end
     println(io, "'")
     bathy = bathymetry(env)
-    depth = maxdepth(bathy)
-    @printf(io, "1 0.0 %0.6f\n", depth)
+    waterdepth = maxdepth(bathy)
+    @printf(io, "1 0.0 %0.6f\n", waterdepth)
     # TODO: support range-dependent soundspeed
     if ss isa IsoSSP
       @printf(io, "0.0 %0.6f /\n", soundspeed(ss, 0.0, 0.0, 0.0), )
-      @printf(io, "%0.6f %0.6f /\n", depth, soundspeed(ss, 0.0, 0.0, 0.0))
+      @printf(io, "%0.6f %0.6f /\n", waterdepth, soundspeed(ss, 0.0, 0.0, 0.0))
     elseif ss isa SampledSSP
       for i ∈ 1:length(ss.z)
         @printf(io, "%0.6f %0.6f /\n", -ss.z[i], ss.c[i])
       end
     else
-      for d ∈ range(0.0, depth; length=25)
+      for d ∈ range(0.0, waterdepth; length=recommendlength(waterdepth, f))
         @printf(io, "%0.6f %0.6f /\n", d, soundspeed(ss, 0.0, 0.0, -d))
       end
-      floor(depth) != depth && @printf(io, "%0.6f %0.6f /\n", depth, soundspeed(ss, 0.0, 0.0, -depth))
+      floor(waterdepth) != waterdepth && @printf(io, "%0.6f %0.6f /\n", waterdepth, soundspeed(ss, 0.0, 0.0, -waterdepth))
     end
-    # TODO: support bathymetry
-    # TODO: support bottom roughness
-    println(io, "'A' 0.0")
+    print(io, "'A")
+    if !(bathy isa ConstantDepth)
+      print(io, "*")
+      createadfile(joinpath(dirname, "model.bty"), bathy, depth, maxr, f)
+    end
+    println(io, "' 0.0")      # TODO: support bottom roughness
     bed = seabed(env)
-    c2 = soundspeed(ss, 0.0, 0.0, -depth) * bed.cᵣ
+    c2 = soundspeed(ss, 0.0, 0.0, -waterdepth) * bed.cᵣ
     α = bed.δ / (c2/(f/1000)) * 40π / log(10)       # based on APL-UW TR 9407 (1994), IV-8 equation (4)
-    @printf(io, "%0.6f %0.6f 0.0 %0.6f %0.6f /\n", depth, c2, bed.ρᵣ, α)
+    @printf(io, "%0.6f %0.6f 0.0 %0.6f %0.6f /\n", waterdepth, c2, bed.ρᵣ, α)
     for i ∈ 1:length(tx)
       p = location(tx[i])
       (p[1] == 0.0 && p[2] == 0.0) || throw(ArgumentError("Transmitters must be located at (0, 0)"))
@@ -202,20 +221,16 @@ function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArra
     printarray(io, [-location(tx1)[3] for tx1 ∈ tx])
     if length(rx) == 1
       printarray(io, [-location(rx[1])[3]])
-      maxr = sqrt(sum(abs2, location(rx[1])[1:2])) / 1000.0
       printarray(io, [maxr])
     elseif rx isa AcousticReceiverGrid2D
       printarray(io, -rx.zrange)
       printarray(io, rx.xrange ./ 1000.0)
-      maxr = maximum(rx.xrange) / 1000.0
-    else
-      throw(ArgumentError("Receivers must be on a 2D grid"))
     end
     # TODO: support source directionality
     println(io, "'", taskcode, "'")
     @printf(io, "%d\n", nbeams)
     @printf(io, "%0.6f %0.6f /\n", rad2deg(minangle), rad2deg(maxangle))
-    @printf(io, "0.0 %0.6f %0.6f\n", 1.01*depth, 1.01*maxr)
+    @printf(io, "0.0 %0.6f %0.6f\n", 1.01*waterdepth, 1.01*maxr)
   end
 end
 
@@ -225,6 +240,29 @@ function printarray(io, a::AbstractVector)
     @printf(io, "%0.6f ", a1)
   end
   println(io, "/")
+end
+
+function recommendlength(x, f)
+  # recommendation based on nominal half-wavelength spacing
+  λ = 1500.0 / f
+  clamp(round(Int, x / f) + 1, 25, 1000)
+end
+
+function createadfile(filename, data, func, maxr, f)
+  open(filename, "w") do io
+    interp = "L"
+    if data isa SampledDepth || data isa SampledAltitude
+      x = data.x
+      data.interp !== :linear && (interp = "C")
+    else
+      x = range(0.0, maxr; length=recommendlength(maxr, f))
+    end
+    println(io, "'", interp, "'")
+    println(io, length(x))
+    for i ∈ 1:length(x)
+      @printf(io, "%0.6f %0.6f\n", x[i]/1000.0, func(data, x[i], 0.0))
+    end
+  end
 end
 
 function readrays(filename)

@@ -133,6 +133,19 @@ end
 
   @test FlatSurface() isa Altimetry
   @test altitude(FlatSurface(), 0.0, 0.0) == 0.0
+  a = SampledAltitude(0.0:500.0:1000.0, [0.0, 1.0, -1.0])
+  @test a isa Altimetry
+  @test altitude(a, 0.0, 0.0) ≈ 0.0
+  @test altitude(a, 250.0, 0.0) ≈ 0.5
+  @test altitude(a, 500.0, 0.0) ≈ 1.0
+  @test altitude(a, 750.0, 0.0) ≈ 0.0
+  @test altitude(a, 1000.0, 0.0) ≈ -1.0
+  a = SampledAltitude(0.0:500.0:1000.0, [0.0, 1.0, -1.0], :cubic)
+  @test a isa Altimetry
+  @test altitude(a, 0.0, 0.0) ≈ 0.0 atol=1e-6
+  @test altitude(a, 250.0, 0.0) > 0.5
+  @test altitude(a, 500.0, 0.0) ≈ 1.0 atol=1e-6
+  @test altitude(a, 1000.0, 0.0) ≈ -1.0 atol=1e-6
 
   @test ReflectionCoef(0.5 + 0.3im) isa ReflectionModel
   @test reflectioncoef(ReflectionCoef(0.5 + 0.3im), 1000.0, 0.0) == 0.5 + 0.3im
@@ -190,7 +203,7 @@ end
 
 end
 
-@testset "pekeris" begin
+@testset "pm-pekeris" begin
 
   @test PekerisRayModel in models()
 
@@ -358,7 +371,7 @@ end
 
 end
 
-@testset "bellhop" begin
+@testset "pm-bellhop" begin
 
   if Bellhop in models()
 
@@ -457,7 +470,7 @@ end
 
 end
 
-@testset "raysolver" begin
+@testset "pm-raysolver" begin
 
   @test RaySolver in models()
 

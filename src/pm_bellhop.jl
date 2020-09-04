@@ -41,7 +41,6 @@ function check(::Type{Bellhop}, env::Union{<:UnderwaterEnvironment,Missing})
       end
     end
   else
-    altimetry(env) isa FlatSurface || throw(ArgumentError("Non-flat altimetry not yet supported"))
     seabed(env) isa Rayleigh || throw(ArgumentError("Seabed type not supported"))
     seasurface(env) === Vacuum || throw(ArgumentError("Only vacuum seasurface supported"))
   end
@@ -171,9 +170,9 @@ function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArra
     @printf(io, "%0.6f\n", f)
     println(io, "1")
     if length(rx) == 1
-      maxr = sqrt(sum(abs2, location(rx[1])[1:2])) / 1000.0
+      maxr = sqrt(sum(abs2, location(rx[1])[1:2]))
     elseif rx isa AcousticReceiverGrid2D
-      maxr = maximum(rx.xrange) / 1000.0
+      maxr = maximum(rx.xrange)
     else
       throw(ArgumentError("Receivers must be on a 2D grid"))
     end
@@ -184,7 +183,7 @@ function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArra
     alt = altimetry(env)
     if !(alt isa FlatSurface)
       print(io, "*")
-      createadfile(joinpath(dirname, "model.ati"), alt, altitude, maxr, f)
+      createadfile(joinpath(dirname, "model.ati"), alt, (p...) -> -altitude(p...), maxr, f)
     end
     println(io, "'")
     bathy = bathymetry(env)
@@ -221,7 +220,7 @@ function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArra
     printarray(io, [-location(tx1)[3] for tx1 ∈ tx])
     if length(rx) == 1
       printarray(io, [-location(rx[1])[3]])
-      printarray(io, [maxr])
+      printarray(io, [maxr / 1000.0])
     elseif rx isa AcousticReceiverGrid2D
       printarray(io, -rx.zrange)
       printarray(io, rx.xrange ./ 1000.0)
@@ -245,7 +244,7 @@ end
 function recommendlength(x, f)
   # recommendation based on nominal half-wavelength spacing
   λ = 1500.0 / f
-  clamp(round(Int, x / f) + 1, 25, 1000)
+  clamp(round(Int, 2x / λ) + 1, 25, 1000)
 end
 
 function createadfile(filename, data, func, maxr, f)

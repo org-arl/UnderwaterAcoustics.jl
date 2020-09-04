@@ -16,7 +16,7 @@ Base.@kwdef struct RaySolver{T1,T2} <: PropagationModel{T1}
   minangle::Float64 = -80°
   maxangle::Float64 = +80°
   ds::Float64 = 1.0
-  atol::Float64 = 1e-3
+  atol::Float64 = 1e-4
   rugocity::Float64 = 1.5
   athreshold::Float64 = 1e-5
   solver::T2 = Tsit5()
@@ -147,7 +147,7 @@ function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceive
     end)
   end
   rv = dropdims(sum(tc; dims=3); dims=3)
-  mode === :incoherent && (rv = sqrt.(rv) .* (π/2))      # FIXME: π/2 fudge factor
+  mode === :incoherent && (rv = sqrt.(rv))
   rv
 end
 
@@ -166,17 +166,18 @@ end
 
 function rayeqns!(du, u, params, s)
   # implementation based on COA (3.161-164, 3.58-63)
+  # assumes range-independent soundspeed
   r, z, ξ, ζ, t, p, q = u
   c, ∂c, ∂²c = params
   cᵥ = c(z)
   cᵥ² = cᵥ * cᵥ
-  c̄ₙₙ = ∂²c(z) * ξ * ξ    # FIXME: seems to cause problems with negative q
+  c̄ = ∂²c(z) * ξ * ξ
   du[1] = cᵥ * ξ
   du[2] = cᵥ * ζ
-  du[3] = 0               # TODO: support range-dependent soundspeed
+  du[3] = 0
   du[4] = -∂c(z) / cᵥ²
   du[5] = 1 / cᵥ
-  du[6] = -c̄ₙₙ * q
+  du[6] = -c̄ * q
   du[7] = cᵥ * p
 end
 
@@ -262,7 +263,7 @@ function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0;
     θ = -θ                                # FIXME: assumes flat altimetry/bathymetry
   end
   cₛ = soundspeed(ssp(model.env), p...)
-  A *= √(cₛ * cos(θ₀) / (p[1] * c₀ * q))           # based on COA (3.65)
+  A *= √abs(cₛ * cos(θ₀) / (p[1] * c₀ * q))        # based on COA (3.65)
   A *= fast_absorption(f, D, salinity(model.env))
   RayArrival(t, conj(A), s, b, θ₀, -θ, raypath)    # conj(A) needed to match with Bellhop
 end

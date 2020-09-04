@@ -39,7 +39,6 @@ function check(::Type{Bellhop}, env::Union{<:UnderwaterEnvironment,Missing})
       end
     end
   else
-    # TODO: support arbitrary reflection models for surface/seabed
     seabed(env) isa Rayleigh || throw(ArgumentError("Seabed type not supported"))
     seasurface(env) === Vacuum || throw(ArgumentError("Only vacuum seasurface supported"))
   end
@@ -192,7 +191,6 @@ function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArra
     bathy = bathymetry(env)
     waterdepth = maxdepth(bathy)
     @printf(io, "1 0.0 %0.6f\n", waterdepth)
-    # TODO: support range-dependent soundspeed
     if ss isa IsoSSP
       @printf(io, "0.0 %0.6f /\n", soundspeed(ss, 0.0, 0.0, 0.0), )
       @printf(io, "%0.6f %0.6f /\n", waterdepth, soundspeed(ss, 0.0, 0.0, 0.0))
@@ -214,7 +212,7 @@ function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArra
     println(io, "' 0.0") # bottom roughness = 0
     bed = seabed(env)
     c2 = soundspeed(ss, 0.0, 0.0, -waterdepth) * bed.cᵣ
-    α = bed.δ / (c2/(f/1000)) * 40π / log(10)       # based on APL-UW TR 9407 (1994), IV-8 equation (4)
+    α = bed.δ * 40π / log(10)      # based on APL-UW TR 9407 (1994), IV-9 equation (4)
     @printf(io, "%0.6f %0.6f 0.0 %0.6f %0.6f /\n", waterdepth, c2, bed.ρᵣ, α)
     printarray(io, [-location(tx1)[3] for tx1 ∈ tx])
     if length(rx) == 1
@@ -224,7 +222,6 @@ function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArra
       printarray(io, -rx.zrange)
       printarray(io, rx.xrange ./ 1000.0)
     end
-    # TODO: support source directionality
     println(io, "'", taskcode, "'")
     @printf(io, "%d\n", nbeams)
     @printf(io, "%0.6f %0.6f /\n", rad2deg(minangle), rad2deg(maxangle))
@@ -355,7 +352,7 @@ function readshd(filename)
       seek(io, recnum * 4r)
       temp = Array{ComplexF32}(undef, nrr)
       read!(io, temp)
-      pressure[:,ird+1] .= temp
+      pressure[:,ird+1] .= -temp    # negative because Bellhop seems to have a 180° phase inversion
     end
     pressure
   end

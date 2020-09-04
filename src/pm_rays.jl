@@ -112,9 +112,9 @@ function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceive
   c₀ = soundspeed(ssp(model.env), location(tx1)...)
   f = nominalfrequency(tx1)
   ω = 2π * f
-  G = 1 / √(2π)    # seems to be right, although not in line with COA (3.76)
+  G = 1 / (2π)^(1/4)
   Threads.@threads for θ1 ∈ θ
-    β = 2 * cos(θ1)/c₀
+    β = (mode === :incoherent ? 2 : 1) * cos(θ1)/c₀
     traceray(model, tx1, θ1, rmax, 1.0; cb = (s1, u1, s2, u2, A₀, D₀, t₀, cₛ) -> begin
       r1, z1, ξ1, ζ1, t1, _, q1 = u1
       r2, z2, ξ2, ζ2, t2, _, q2 = u2
@@ -124,7 +124,8 @@ function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceive
       rvlen = norm((ξ1, ζ1))
       tᵥ = (ξ1, ζ1) ./ rvlen
       nᵥ = (ζ1, -ξ1) ./ rvlen
-      γ = fast_absorption(f, D₀, salinity(model.env))
+      D = D₀ + (s1 + s2) / 2
+      γ = fast_absorption(f, D, salinity(model.env))
       Wmax = max(q1, q2) * δθ
       ndx2 = findall(z -> min(z1, z2) - 4*Wmax ≤ z ≤ max(z1, z2) + 4*Wmax, rx.zrange)
       for j ∈ ndx
@@ -137,10 +138,10 @@ function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceive
           t = t₀ + t1 + (t2 - t1) * α
           q = q1 + (q2 - q1) * α
           if q > 0
-            A = A₀ * G * γ * √(β * cₛ / (rz[1] * q))    # based on COA (3.76)
-            W = q * δθ                                  # COA (3.74)
+            A = A₀ * γ * G * √abs(β * cₛ / (rz[1] * q)) # COA (3.76)
+            W = abs(q * δθ)                             # COA (3.74)
             A *= exp(-(n / W)^2)
-            tc[j, i, Threads.threadid()] += mode === :coherent ? A * cis(ω * t) : Complex(abs2(A), 0.0)
+            tc[j, i, Threads.threadid()] += mode === :coherent ? conj(A) * cis(-ω * t) : Complex(abs2(A), 0.0)
           end
         end
       end
@@ -148,6 +149,7 @@ function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceive
   end
   rv = dropdims(sum(tc; dims=3); dims=3)
   mode === :incoherent && (rv = sqrt.(rv))
+  #mode === :coherent && (rv ./= √2)          # fudge factor, but makes intuitive sense
   rv
 end
 

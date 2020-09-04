@@ -3,6 +3,8 @@ General:
   ☐ Auto 3D-to-2D conversion for range-independent environments
   ☐ Scatterers
   ☐ Validate noise model (shows variability in PSD with sampling rate)
+  ☐ range-dependent soundspeed
+  ☐ source directionality
 
 RaySolver:
   ☐ Find a way to allow full derivative through a dependent θ

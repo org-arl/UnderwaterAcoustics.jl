@@ -242,8 +242,8 @@ end
   @test all([r[j].raypath[end][1] ≥ 100.0 for j ∈ 1:9])
   @test all([length(r[j].raypath) == r[j].surface + r[j].bottom + 2 for j ∈ 1:9])
 
-  ir1 = impulseresponse(arr, 10000.0; reltime=true)
-  ir2 = impulseresponse(arr, 10000.0; reltime=false)
+  ir1 = impulseresponse(arr, 10000.0; reltime=true, approx=true)
+  ir2 = impulseresponse(arr, 10000.0; reltime=false, approx=true)
   @test length(ir2) ≈ length(ir1) + round(Int, 10000.0 * arr[1].time) atol=1
   @test length(ir2) == round(Int, 10000.0 * arr[end].time) + 1
   @test sum(ir1 .!= 0.0) == 7
@@ -252,6 +252,22 @@ end
   @test (ndx .- 1) ./ 10000.0 ≈ [arr[j].time - arr[1].time for j ∈ 1:7] atol=1e-4
   ndx = findall(abs.(ir2) .> 0)
   @test (ndx .- 1) ./ 10000.0 ≈ [arr[j].time for j ∈ 1:7] atol=1e-4
+
+  ir1a = impulseresponse(arr, 10000.0; reltime=true)
+  ir2a = impulseresponse(arr, 10000.0; reltime=false)
+  @test length(ir2a) ≈ length(ir1a) + round(Int, 10000.0 * arr[1].time) atol=1
+  @test length(ir2a) ≥ length(ir2)
+  @test sum(abs2.(ir1a))/sum(abs2.(ir1)) ≈ 1.0 atol=0.05
+  @test sum(abs2.(ir2a))/sum(abs2.(ir2)) ≈ 1.0 atol=0.05
+
+  @test length(impulseresponse(arr, 10000.0, 256; reltime=true, approx=true)) == 256
+  @test length(impulseresponse(arr, 10000.0, 64; reltime=true, approx=true)) == 64
+  @test length(impulseresponse(arr, 10000.0, 256; reltime=true, approx=false)) == 256
+  @test length(impulseresponse(arr, 10000.0, 64; reltime=true, approx=false)) == 64
+  @test length(impulseresponse(arr, 10000.0, 1024; reltime=false, approx=true)) == 1024
+  @test length(impulseresponse(arr, 10000.0, 700; reltime=false, approx=true)) == 700
+  @test length(impulseresponse(arr, 10000.0, 1024; reltime=false, approx=false)) == 1024
+  @test length(impulseresponse(arr, 10000.0, 700; reltime=false, approx=false)) == 700
 
   env = UnderwaterEnvironment(ssp=IsoSSP(1500.0))
   pm = PekerisRayModel(env, 2)

@@ -1,4 +1,6 @@
 using SignalAnalysis: signal
+using FFTW: ifft!
+using DSP: nextfastfft
 
 export SoundSpeedProfile, soundspeed
 export Bathymetry, depth, maxdepth
@@ -381,19 +383,46 @@ end
 """
 $(SIGNATURES)
 Convert a vector of arrivals to a sampled impulse response time series at a
-sampling rate of `fs` Hz. If `reltime` is `true`, the impulse response start time
-is relative to the first arrival, otherwise it is relative to the absolute time.
+sampling rate of `fs` Hz. If `ntaps` is zero, the number of taps of the impulse
+response are chosen automatically.
+
+If `reltime` is `true`, the impulse response start time is relative to the
+first arrival, otherwise it is relative to the absolute time. If `approx`
+is `true`, a fast algorithm is used to generate a sparse impulse response
+that assigns an arrival to the nearest sampling time.
 """
-function impulseresponse(arrivals::Vector{<:Arrival}, fs; reltime=true)
+function impulseresponse(arrivals::Vector{<:Arrival}, fs, ntaps=0; reltime=false, approx=false)
   length(arrivals) == 0 && throw(ArgumentError("No arrivals"))
   mintime, maxtime = extrema(a.time for a ∈ arrivals)
   reltime || (mintime = zero(typeof(arrivals[1].time)))
-  ntaps = ceil(Int, (maxtime-mintime) * fs) + 1
-  ir = zeros(typeof(arrivals[1].phasor), ntaps)
-  for a ∈ arrivals
-    # TODO: handle arrivals between samples
-    ndx = round(Int, (a.time - mintime) * fs) + 1
-    ir[ndx] = a.phasor
+  mintaps = ceil(Int, (maxtime-mintime) * fs) + 1
+  if approx
+    ntaps == 0 && (ntaps = mintaps)
+    ir = zeros(typeof(arrivals[1].phasor), ntaps)
+    for a ∈ arrivals
+      ndx = round(Int, (a.time - mintime) * fs) + 1
+      ndx ≤ ntaps && (ir[ndx] = a.phasor)
+    end
+  else
+    N = nextfastfft(4*max(256, mintaps))
+    x = zeros(typeof(arrivals[1].phasor), N)
+    for a ∈ arrivals
+      δ = (a.time - mintime) * fs
+      for i ∈ 1:N
+        x[i] += a.phasor * cis(-2π * (i-1)/N * δ)
+      end
+    end
+    ifft!(x)
+    if ntaps == 0
+      ndx = findfirst(abs.(x[mintaps+1:end]) .≤ abs(arrivals[1].phasor)/100)
+      ndx === nothing && (ndx = argmin(abs.(x[mintaps+1:end])))
+      ir = x[1:mintaps+ndx]
+    elseif ntaps ≤ N/2
+      ir = x[1:ntaps]
+    else
+      Nby2 = floor(Int, N/2)
+      ir = vcat(x[1:Nby2], zeros(typeof(arrivals[1].phasor), ntaps-Nby2))
+    end
   end
   ir
 end

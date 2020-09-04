@@ -7,9 +7,6 @@ General:
 RaySolver:
   ☐ Find a way to allow full derivative through a dependent θ
 
-Bellhop:
-  ☐ Add test cases for sampled SSP, depth and altitude
-
 Docs:
   ☐ Propagation modeling guide
   ☐ Developing propagation models

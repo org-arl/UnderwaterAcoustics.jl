@@ -1,5 +1,3 @@
-using Statistics
-
 export Bellhop
 
 """
@@ -41,6 +39,7 @@ function check(::Type{Bellhop}, env::Union{<:UnderwaterEnvironment,Missing})
       end
     end
   else
+    # TODO: support arbitrary reflection models for surface/seabed
     seabed(env) isa Rayleigh || throw(ArgumentError("Seabed type not supported"))
     seasurface(env) === Vacuum || throw(ArgumentError("Only vacuum seasurface supported"))
   end
@@ -159,18 +158,22 @@ function checkerr!(err, filename)
 end
 
 function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArray{<:AcousticReceiver}, taskcode, dirname; minangle=model.minangle, maxangle=model.maxangle, nbeams=model.nbeams)
+  all(location(tx1)[1] == 0.0 for tx1 ∈ tx) || throw(ArgumentError("Bellhop requires transmitters at (0, 0, z)"))
+  all(location(tx1)[2] == 0.0 for tx1 ∈ tx) || throw(ArgumentError("Bellhop 2D requires transmitters in the x-z plane"))
+  all(location(rx1)[1] >= 0.0 for rx1 ∈ rx) || throw(ArgumentError("Bellhop requires receivers to be in the +x halfspace"))
+  all(location(rx1)[2] == 0.0 for rx1 ∈ rx) || throw(ArgumentError("Bellhop 2D requires receivers in the x-z plane"))
   env = model.env
   name = split(basename(dirname), "_")[end]
   filename = joinpath(dirname, "model.env")
   open(filename, "w") do io
     println(io, "'", name, "'")
     flist = [nominalfrequency(tx1) for tx1 ∈ tx]
-    f = mean(flist)
+    f = sum(flist) / length(flist)
     maximum(abs.(flist .- f))/f > 0.2 && @warn("Source frequency varies by more than 20% from nominal frequency")
     @printf(io, "%0.6f\n", f)
     println(io, "1")
     if length(rx) == 1
-      maxr = sqrt(sum(abs2, location(rx[1])[1:2]))
+      maxr = location(rx[1])[1]
     elseif rx isa AcousticReceiverGrid2D
       maxr = maximum(rx.xrange)
     else
@@ -208,15 +211,11 @@ function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArra
       print(io, "*")
       createadfile(joinpath(dirname, "model.bty"), bathy, depth, maxr, f)
     end
-    println(io, "' 0.0")      # TODO: support bottom roughness
+    println(io, "' 0.0") # bottom roughness = 0
     bed = seabed(env)
     c2 = soundspeed(ss, 0.0, 0.0, -waterdepth) * bed.cᵣ
     α = bed.δ / (c2/(f/1000)) * 40π / log(10)       # based on APL-UW TR 9407 (1994), IV-8 equation (4)
     @printf(io, "%0.6f %0.6f 0.0 %0.6f %0.6f /\n", waterdepth, c2, bed.ρᵣ, α)
-    for i ∈ 1:length(tx)
-      p = location(tx[i])
-      (p[1] == 0.0 && p[2] == 0.0) || throw(ArgumentError("Transmitters must be located at (0, 0)"))
-    end
     printarray(io, [-location(tx1)[3] for tx1 ∈ tx])
     if length(rx) == 1
       printarray(io, [-location(rx[1])[3]])

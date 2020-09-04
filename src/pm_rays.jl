@@ -20,7 +20,7 @@ Base.@kwdef struct RaySolver{T1,T2} <: PropagationModel{T1}
   rugocity::Float64 = 1.5
   athreshold::Float64 = 1e-5
   solver::T2 = Tsit5()
-  solvertol::Float64 = 1e-3
+  solvertol::Float64 = 1e-4
   function RaySolver(env, nbeams, minangle, maxangle, ds, atol, rugocity, athreshold, solver, solvertol)
     nbeams < 0 && (nbeams = 0)
     -π/2 ≤ minangle ≤ π/2 || throw(ArgumentError("minangle should be between -π/2 and π/2"))
@@ -79,13 +79,17 @@ function eigenrays(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver;
     elseif i > 1 && !isnan(err[i-1]) && !isnan(err[i]) && sign(err[i-1]) * sign(err[i]) == -1
       a, b = ordered(θ[i-1], θ[i])
       soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, rmax).raypath[end][3] - p2[3]), a, b; abs_tol=model.atol)
-      eray = traceray(model, tx1, soln.minimizer, rmax, ds)
-      push!(erays, eray)
+      if soln.minimum ≤ model.atol
+        eray = traceray(model, tx1, soln.minimizer, rmax, ds)
+        push!(erays, eray)
+      end
     elseif i > 2 && isnearzero(err[i-2], err[i-1], err[i])
       a, b = ordered(θ[i-2], θ[i])
       soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, rmax).raypath[end][3] - p2[3]), a, b; abs_tol=model.atol)
-      eray = traceray(model, tx1, soln.minimizer, rmax, ds)
-      push!(erays, eray)
+      if soln.minimum ≤ model.atol
+        eray = traceray(model, tx1, soln.minimizer, rmax, ds)
+        push!(erays, eray)
+      end
     end
   end
   erays
@@ -149,7 +153,6 @@ function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceive
   end
   rv = dropdims(sum(tc; dims=3); dims=3)
   mode === :incoherent && (rv = sqrt.(rv))
-  #mode === :coherent && (rv ./= √2)          # fudge factor, but makes intuitive sense
   rv
 end
 
@@ -190,7 +193,7 @@ function checkray!(out, u, s, integrator, a::Altimetry, b::Bathymetry, rmax)
   out[4] = u[3]                            # ray turned back
 end
 
-function traceray1(model, r0, z0, θ, rmax, ds, q0)
+function traceray1(model, r0, z0, θ, rmax, ds, p0, q0)
   a = altimetry(model.env)
   b = bathymetry(model.env)
   c = z -> soundspeed(ssp(model.env), 0.0, 0.0, z)
@@ -198,7 +201,7 @@ function traceray1(model, r0, z0, θ, rmax, ds, q0)
   ∂²c = z -> ForwardDiff.derivative(∂c, z)
   cᵥ = c(z0)
   T = promote_type(typeof(altitude(a, r0, 0.0)), typeof(depth(b, r0, 0.0)))
-  u0 = [r0, z0, cos(θ)/cᵥ, sin(θ)/cᵥ, zero(T), 1/cᵥ, q0]
+  u0 = [r0, z0, cos(θ)/cᵥ, sin(θ)/cᵥ, zero(T), p0, q0]
   prob = ODEProblem{true}(rayeqns!, u0, (zero(T), one(T) * model.rugocity * (rmax-r0)/cos(θ)), (c, ∂c, ∂²c))
   cb = VectorContinuousCallback(
     (out, u, s, i) -> checkray!(out, u, s, i, a, b, rmax),
@@ -209,7 +212,7 @@ function traceray1(model, r0, z0, θ, rmax, ds, q0)
     soln = solve(prob, model.solver; abstol=model.solvertol, saveat=ds, callback=cb)
   end
   s2 = soln[end]
-  soln.t[end], s2[1], s2[2], atan(s2[4], s2[3]), s2[5], s2[7], soln.u, soln.t
+  soln.t[end], s2[1], s2[2], atan(s2[4], s2[3]), s2[5], s2[6], s2[7], soln.u, soln.t
 end
 
 # FIXME: type stability issues when inputs are Dual numbers
@@ -229,9 +232,10 @@ function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0;
   t = 0.0
   D = 0.0
   q = 0.0
+  qp = 1/c₀
   first = true
   while true
-    dD, r, z, θ, dt, q, u, svec = traceray1(model, p[1], p[3], θ, rmax, ds, q)
+    dD, r, z, θ, dt, qp, q, u, svec = traceray1(model, p[1], p[3], θ, rmax, ds, qp, q)
     if first
       raypath = Array{NTuple{3,eltype(eltype(u))}}(undef, 0)
       first = false

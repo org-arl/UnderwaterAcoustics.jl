@@ -8,6 +8,8 @@ General:
 
 RaySolver:
   ☐ Find a way to allow full derivative through a dependent θ
+  ☐ Accumulate KMAH index by counting sign changes in q
+  ☐ Limit beamwidth to deal with caustics?
 
 Docs:
   ☐ Propagation modeling guide

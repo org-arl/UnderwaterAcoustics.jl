@@ -141,12 +141,10 @@ function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceive
           α = s / vlen
           t = t₀ + t1 + (t2 - t1) * α
           q = q1 + (q2 - q1) * α
-          if q > 0
-            A = A₀ * γ * G * √abs(β * cₛ / (rz[1] * q)) # COA (3.76)
-            W = abs(q * δθ)                             # COA (3.74)
-            A *= exp(-(n / W)^2)
-            tc[j, i, Threads.threadid()] += mode === :coherent ? conj(A) * cis(-ω * t) : Complex(abs2(A), 0.0)
-          end
+          A = A₀ * γ * G * √abs(β * cₛ / (rz[1] * q)) # COA (3.76)
+          W = abs(q * δθ)                             # COA (3.74)
+          A *= exp(-(n / W)^2)
+          tc[j, i, Threads.threadid()] += mode === :coherent ? conj(A) * cis(-ω * t) : Complex(abs2(A), 0.0)
         end
       end
     end)
@@ -269,7 +267,7 @@ function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0;
     θ = -θ                                # FIXME: assumes flat altimetry/bathymetry
   end
   cₛ = soundspeed(ssp(model.env), p...)
-  A *= √abs(cₛ * cos(θ₀) / (p[1] * c₀ * q))        # based on COA (3.65)
+  A *= √abs(cₛ * cos(θ₀) / (p[1] * c₀ * q))        # COA (3.65)
   A *= fast_absorption(f, D, salinity(model.env))
   RayArrival(t, conj(A), s, b, θ₀, -θ, raypath)    # conj(A) needed to match with Bellhop
 end

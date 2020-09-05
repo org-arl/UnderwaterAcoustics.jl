@@ -51,7 +51,7 @@ struct SampledSSP{T1,T2,T3} <: SoundSpeedProfile
   interp::Symbol
   f::T3
   function SampledSSP(depth, c, interp)
-    if interp === :cubic
+    if interp === :smooth
       depth isa AbstractRange || throw(ArgumentError("depth must be sampled uniformly and specified as an AbstractRange"))
       f = CubicSplineInterpolation(depth, c; extrapolation_bc=Line())
     elseif interp === :linear
@@ -68,7 +68,7 @@ end
     SampledSSP(depth, c, interp)
 
 Create a sound speed profile based on measurements at discrete depths.
-`interp` may be either `:linear` or `:cubic`, and defaults to `:linear`
+`interp` may be either `:linear` or `:smooth`, and defaults to `:linear`
 if unspecified.
 """
 SampledSSP(depth, c) = SampledSSP(depth, c, :linear)
@@ -108,7 +108,7 @@ struct SampledDepth{T1,T2,T3} <: Bathymetry
   interp::Symbol
   f::T3
   function SampledDepth(x, depth, interp)
-    if interp === :cubic
+    if interp === :smooth
       x isa AbstractRange || throw(ArgumentError("x must be sampled uniformly and specified as an AbstractRange"))
       f = CubicSplineInterpolation(x, depth; extrapolation_bc=Line())
     elseif interp === :linear
@@ -125,7 +125,7 @@ end
     SampledDepth(x, depth, interp)
 
 Create a bathymetry given discrete depth measurements at locations given in `x`.
-`interp` may be either `:linear` or `:cubic`, and defaults to `:linear`
+`interp` may be either `:linear` or `:smooth`, and defaults to `:linear`
 if unspecified.
 """
 SampledDepth(x, depth) = SampledDepth(x, depth, :linear)
@@ -157,7 +157,7 @@ struct SampledAltitude{T1,T2,T3} <: Altimetry
   interp::Symbol
   f::T3
   function SampledAltitude(x, altitude, interp)
-    if interp === :cubic
+    if interp === :smooth
       x isa AbstractRange || throw(ArgumentError("x must be sampled uniformly and specified as an AbstractRange"))
       f = CubicSplineInterpolation(x, altitude; extrapolation_bc=Line())
     elseif interp === :linear
@@ -174,7 +174,7 @@ end
     SampledAltitude(x, altitude, interp)
 
 Create an altimetry given discrete altitude measurements at locations given in `x`.
-`interp` may be either `:linear` or `:cubic`, and defaults to `:linear`
+`interp` may be either `:linear` or `:smooth`, and defaults to `:linear`
 if unspecified.
 """
 SampledAltitude(x, altitude) = SampledAltitude(x, altitude, :linear)

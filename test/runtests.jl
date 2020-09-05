@@ -103,7 +103,7 @@ end
   @test soundspeed(s, 0.0, 0.0, -500.0) ≈ 1520.0
   @test soundspeed(s, 0.0, 0.0, -750.0) ≈ 1515.0
   @test soundspeed(s, 0.0, 0.0, -1000.0) ≈ 1510.0
-  s = SampledSSP(0.0:500.0:1000.0, [1500.0, 1520.0, 1510.0], :cubic)
+  s = SampledSSP(0.0:500.0:1000.0, [1500.0, 1520.0, 1510.0], :smooth)
   @test s isa SoundSpeedProfile
   @test soundspeed(s, 0.0, 0.0, 0.0) ≈ 1500.0
   @test soundspeed(s, 0.0, 0.0, -250.0) > 1510.0
@@ -122,7 +122,7 @@ end
   @test depth(b, 750.0, 0.0) ≈ 20.0
   @test depth(b, 1000.0, 0.0) ≈ 15.0
   @test maxdepth(b) ≈ 25.0
-  b = SampledDepth(0.0:500.0:1000.0, [20.0, 25.0, 15.0], :cubic)
+  b = SampledDepth(0.0:500.0:1000.0, [20.0, 25.0, 15.0], :smooth)
   @test b isa Bathymetry
   @test depth(b, 0.0, 0.0) ≈ 20.0
   @test depth(b, 250.0, 0.0) > 22.5
@@ -140,7 +140,7 @@ end
   @test altitude(a, 500.0, 0.0) ≈ 1.0
   @test altitude(a, 750.0, 0.0) ≈ 0.0
   @test altitude(a, 1000.0, 0.0) ≈ -1.0
-  a = SampledAltitude(0.0:500.0:1000.0, [0.0, 1.0, -1.0], :cubic)
+  a = SampledAltitude(0.0:500.0:1000.0, [0.0, 1.0, -1.0], :smooth)
   @test a isa Altimetry
   @test altitude(a, 0.0, 0.0) ≈ 0.0 atol=1e-6
   @test altitude(a, 250.0, 0.0) > 0.5
@@ -603,7 +603,7 @@ end
   x = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiverGrid2D(100.0, 0.0, 1, -5.0, -5.0, 3))
   @test x isa AbstractMatrix
   @test size(x) == (1, 3)
-  @test [x1, x2] ≈ x[1:2] atol=1.3
+  @test [x1, x2] ≈ x[1:2] atol=1.5
   y = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiverGrid2D(100.0, 10.0, 3, -5.0, -5.0, 3))
   @test y isa AbstractMatrix
   @test size(y) == (3, 3)

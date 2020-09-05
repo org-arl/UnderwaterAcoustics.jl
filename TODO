@@ -1,16 +1,11 @@
 General:
   ☐ Auto 3D-to-2D conversion for range-independent environments
-  ☐ Scatterers
   ☐ Validate noise model (shows variability in PSD with sampling rate)
-  ☐ range-dependent soundspeed
-  ☐ source directionality
+  ☐ Scatterers
 
 RaySolver:
   ☐ Find a way to allow full derivative through a dependent θ
   ☐ Limit beamwidth to deal with caustics?
-
-Bellhop:
-  ☐ Iron out issues of cubic vs linear vs curvilinear
 
 Docs:
   ☐ Propagation modeling guide
@@ -18,9 +13,9 @@ Docs:
   ☐ Differentiability & Turing with propagation models
 
 Tests:
-  ☐ comparison tests between models
-  ☐ performance tests
-  ☐ differentiability tests
+  ☐ Comparison tests between models
+  ☐ Performance tests
+  ☐ Differentiability tests
   ☐ Turing tests
 
 KIV:
@@ -28,3 +23,4 @@ KIV:
   ☐ 3D RaySolver
   ☐ 2D/3D SSP
   ☐ 2D bathymetry
+  ☐ Source directionality

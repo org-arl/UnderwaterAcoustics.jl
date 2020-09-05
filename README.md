@@ -37,7 +37,7 @@ Environments are immutable, so you have to customize them during construction. F
 julia> env = UnderwaterEnvironment(
          seasurface = Vacuum,
          seabed = SandyClay,
-         ssp = SampledSSP(0.0:20.0:40.0, [1500.0, 1490.0, 1520.0], :cubic),
+         ssp = SampledSSP(0.0:20.0:40.0, [1500.0, 1490.0, 1520.0], :smooth),
          bathymetry = ConstantDepth(40.0)
        )
 BasicUnderwaterEnvironment:
@@ -59,7 +59,7 @@ Currently available options:
 * Seabed -- `ReflectionCoef(R)`, `Rayleigh(relativedensity, relativesoundspeed, attenuation)`, `Rock`, `Pebbles`, `SandyGravel`, `CoarseSand`, `MediumSand`, `FineSand`, `VeryFineSand`, `ClayeySand`, `CoarseSilt`, `SandySilt`, `Silt`, `FineSilt`, `SandyClay`, `SiltyClay`, `Clay`
 * Noise -- `RedGaussianNoise(σ)` or any other distribution that works with `rand()`
 
-and `interp` is either `:linear` or `:cubic`.
+and `interp` is either `:linear` or `:smooth`.
 
 If you have `Plots.jl` installed, you can use plot recipes to plot the environment or the soundspeed profile. For example:
 ```julia-repl

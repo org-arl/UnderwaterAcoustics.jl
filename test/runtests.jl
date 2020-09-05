@@ -603,7 +603,7 @@ end
   x = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiverGrid2D(100.0, 0.0, 1, -5.0, -5.0, 3))
   @test x isa AbstractMatrix
   @test size(x) == (1, 3)
-  @test [x1, x2] ≈ x[1:2] atol=1.0
+  @test [x1, x2] ≈ x[1:2] atol=1.3
   y = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiverGrid2D(100.0, 10.0, 3, -5.0, -5.0, 3))
   @test y isa AbstractMatrix
   @test size(y) == (3, 3)

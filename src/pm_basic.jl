@@ -490,6 +490,7 @@ Create a 2D Cartesian grid of omnidirectional acoustic receivers with `nx` × `n
 receviers starting (`xmin`, `zmin`) with step sizes `xstep` and `zstep`.
 """
 function AcousticReceiverGrid2D(xmin, xstep, nx, zmin, zstep, nz)
+  xmin, xstep, zmin, zstep = promote(xmin, xstep, zmin, zstep)
   AcousticReceiverGrid2D(StepRangeLen(xmin, xstep, nx), StepRangeLen(zmin, zstep, nz))
 end
 
@@ -513,6 +514,7 @@ Create a 3D Cartesian grid of omnidirectional acoustic receivers with `nx` × `n
 receviers starting (`xmin`, `ymin`, `zmin`) with step sizes `xstep`, `ystep`, and `zstep`.
 """
 function AcousticReceiverGrid3D(xmin, xstep, nx, ymin, ystep, ny, zmin, zstep, nz)
+  xmin, xstep, ymin, ystep, zmin, zstep = promote(xmin, xstep, ymin, ystep, zmin, zstep)
   AcousticReceiverGrid3D(StepRangeLen(xmin, xstep, nx), StepRangeLen(ymin, ystep, ny), StepRangeLen(zmin, zstep, nz))
 end
 

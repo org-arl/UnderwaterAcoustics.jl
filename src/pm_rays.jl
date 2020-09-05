@@ -109,7 +109,7 @@ function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceive
   check2d([tx1], rx)
   mode === :coherent || mode === :incoherent || throw(ArgumentError("Unknown mode :" * string(mode)))
   # implementation primarily based on ideas from COA (Computational Ocean Acoustics, 2nd ed., ch. 3)
-  tc = zeros(ComplexF64, size(rx,1), size(rx,2), Threads.nthreads())
+  tc = zeros(Complex{<:Real}, size(rx,1), size(rx,2), Threads.nthreads())   # FIXME: generic type for compatible with ForwardDiff
   rmax = maximum(rx.xrange) + 0.1
   nbeams = model.nbeams
   if nbeams == 0
@@ -215,8 +215,8 @@ function traceray1(model, r0, z0, θ, rmax, ds, p0, q0)
   ∂c = z -> ForwardDiff.derivative(c, z)
   ∂²c = z -> ForwardDiff.derivative(∂c, z)
   cᵥ = c(z0)
-  T = promote_type(typeof(altitude(a, r0, 0.0)), typeof(depth(b, r0, 0.0)))
-  u0 = [r0, z0, cos(θ)/cᵥ, sin(θ)/cᵥ, zero(T), p0, q0]
+  T = promote_type(typeof(altitude(a, r0, 0.0)), typeof(depth(b, r0, 0.0)), typeof(c(0.0)))
+  u0 = [promote(r0, rmax)[1], z0, cos(θ)/cᵥ, sin(θ)/cᵥ, zero(T), p0, q0]
   prob = ODEProblem{true}(rayeqns!, u0, (zero(T), one(T) * model.rugocity * (rmax-r0)/cos(θ)), (c, ∂c, ∂²c))
   cb = VectorContinuousCallback(
     (out, u, s, i) -> checkray!(out, u, s, i, a, b, rmax),

@@ -1,6 +1,7 @@
 using Test
 using UnderwaterAcoustics
 using UnderwaterAcoustics: amp2db, db2amp
+using ForwardDiff
 
 @testset "basic" begin
 
@@ -649,5 +650,79 @@ end
   @test size(sig) == (44100,2)
   sig = recorder(pm, tx, rx)(1.0, 44100.0; start=0.5)
   @test size(sig) == (44100,2)
+
+end
+
+@testset "pm-∂pekeris" begin
+
+  function ℳ(; D=20.0, R=100.0, d1=5.0, d2=10.0, f=5000.0, c=1500.0)
+    env = UnderwaterEnvironment(ssp=IsoSSP(c), bathymetry=ConstantDepth(D))
+    pm = PekerisRayModel(env, 7)
+    transmissionloss(pm, AcousticSource(0.0, -d1, f), AcousticReceiver(R, -d2))
+  end
+
+  ∂ₙ(f, x, ϵ) = (f(x+ϵ) - f(x-ϵ)) / (2ϵ)
+  ∂ₐ(f, x) = ForwardDiff.derivative(f, x)
+
+  @test ∂ₐ(x -> ℳ(; D=x), 10.0) ≈ ∂ₙ(x -> ℳ(; D=x), 10.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ(; D=x), 20.0) ≈ ∂ₙ(x -> ℳ(; D=x), 20.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ(; R=x), 50.0) ≈ ∂ₙ(x -> ℳ(; R=x), 50.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ(; R=x), 100.0) ≈ ∂ₙ(x -> ℳ(; R=x), 100.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ(; R=x), 200.0) ≈ ∂ₙ(x -> ℳ(; R=x), 200.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ(; d1=x), 5.0) ≈ ∂ₙ(x -> ℳ(; d1=x), 5.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ(; d1=x), 10.0) ≈ ∂ₙ(x -> ℳ(; d1=x), 10.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ(; d2=x), 5.0) ≈ ∂ₙ(x -> ℳ(; d2=x), 5.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ(; d2=x), 10.0) ≈ ∂ₙ(x -> ℳ(; d2=x), 10.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ(; f=x), 1000.0) ≈ ∂ₙ(x -> ℳ(; f=x), 1000.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ(; f=x), 5000.0) ≈ ∂ₙ(x -> ℳ(; f=x), 5000.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ(; c=x), 1500.0) ≈ ∂ₙ(x -> ℳ(; c=x), 1500.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ(; c=x), 1540.0) ≈ ∂ₙ(x -> ℳ(; c=x), 1540.0, 0.001) atol=0.1
+
+end
+
+@testset "pm-∂raysolver" begin
+
+  function ℳ₁(; D=20.0, R=100.0, d1=5.0, d2=10.0, f=5000.0, c=1500.0)
+    env = UnderwaterEnvironment(ssp=IsoSSP(c), bathymetry=ConstantDepth(D))
+    pm = RaySolver(env)
+    transmissionloss(pm, AcousticSource(0.0, -d1, f), AcousticReceiver(R, -d2))
+  end
+
+  function ℳ₂(; D=20.0, R=100.0, d1=5.0, d2=10.0, f=5000.0, c=1500.0)
+    env = UnderwaterEnvironment(ssp=IsoSSP(c), bathymetry=ConstantDepth(D))
+    pm = RaySolver(env)
+    transmissionloss(pm, AcousticSource(0.0, -d1, f), AcousticReceiverGrid2D(R, 0.0, 1, -d2, 0.0, 1))[1,1]
+  end
+
+  ∂ₙ(f, x, ϵ) = (f(x+ϵ) - f(x-ϵ)) / (2ϵ)
+  ∂ₐ(f, x) = ForwardDiff.derivative(f, x)
+
+  @test ∂ₐ(x -> ℳ₁(; D=x), 10.0) ≈ ∂ₙ(x -> ℳ₁(; D=x), 10.0, 0.0001) atol=0.1
+  @test ∂ₐ(x -> ℳ₁(; D=x), 20.0) ≈ ∂ₙ(x -> ℳ₁(; D=x), 20.0, 0.0001) atol=0.1
+  # @test ∂ₐ(x -> ℳ₁(; R=x), 50.0) ≈ ∂ₙ(x -> ℳ₁(; R=x), 50.0, 0.001) atol=0.1
+  # @test ∂ₐ(x -> ℳ₁(; R=x), 100.0) ≈ ∂ₙ(x -> ℳ₁(; R=x), 100.0, 0.001) atol=0.1
+  # @test ∂ₐ(x -> ℳ₁(; R=x), 200.0) ≈ ∂ₙ(x -> ℳ₁(; R=x), 200.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ₁(; d1=x), 5.0) ≈ ∂ₙ(x -> ℳ₁(; d1=x), 5.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ₁(; d1=x), 10.0) ≈ ∂ₙ(x -> ℳ₁(; d1=x), 10.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ₁(; d2=x), 5.0) ≈ ∂ₙ(x -> ℳ₁(; d2=x), 5.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ₁(; d2=x), 10.0) ≈ ∂ₙ(x -> ℳ₁(; d2=x), 10.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ₁(; f=x), 1000.0) ≈ ∂ₙ(x -> ℳ₁(; f=x), 1000.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ₁(; f=x), 5000.0) ≈ ∂ₙ(x -> ℳ₁(; f=x), 5000.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ₁(; c=x), 1500.0) ≈ ∂ₙ(x -> ℳ₁(; c=x), 1500.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ₁(; c=x), 1540.0) ≈ ∂ₙ(x -> ℳ₁(; c=x), 1540.0, 0.001) atol=0.1
+
+  @test ∂ₐ(x -> ℳ₂(; D=x), 10.0) ≈ ∂ₙ(x -> ℳ₂(; D=x), 10.0, 0.0001) atol=0.1
+  @test ∂ₐ(x -> ℳ₂(; D=x), 20.0) ≈ ∂ₙ(x -> ℳ₂(; D=x), 20.0, 0.0001) atol=0.1
+  @test ∂ₐ(x -> ℳ₂(; R=x), 50.0) ≈ ∂ₙ(x -> ℳ₂(; R=x), 50.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ₂(; R=x), 100.0) ≈ ∂ₙ(x -> ℳ₂(; R=x), 100.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ₂(; R=x), 200.0) ≈ ∂ₙ(x -> ℳ₂(; R=x), 200.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ₂(; d1=x), 5.0) ≈ ∂ₙ(x -> ℳ₂(; d1=x), 5.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ₂(; d1=x), 10.0) ≈ ∂ₙ(x -> ℳ₂(; d1=x), 10.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ₂(; d2=x), 5.0) ≈ ∂ₙ(x -> ℳ₂(; d2=x), 5.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ₂(; d2=x), 10.0) ≈ ∂ₙ(x -> ℳ₂(; d2=x), 10.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ₂(; f=x), 1000.0) ≈ ∂ₙ(x -> ℳ₂(; f=x), 1000.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ₂(; f=x), 5000.0) ≈ ∂ₙ(x -> ℳ₂(; f=x), 5000.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ₂(; c=x), 1500.0) ≈ ∂ₙ(x -> ℳ₂(; c=x), 1500.0, 0.001) atol=0.1
+  @test ∂ₐ(x -> ℳ₂(; c=x), 1540.0) ≈ ∂ₙ(x -> ℳ₂(; c=x), 1540.0, 0.001) atol=0.1
 
 end

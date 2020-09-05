@@ -225,7 +225,7 @@ function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArra
     println(io, "'", taskcode, "'")
     @printf(io, "%d\n", nbeams)
     @printf(io, "%0.6f %0.6f /\n", rad2deg(minangle), rad2deg(maxangle))
-    @printf(io, "0.0 %0.6f %0.6f\n", 1.01*waterdepth, 1.01*maxr)
+    @printf(io, "0.0 %0.6f %0.6f\n", 1.01*waterdepth, 1.01 * maxr / 1000.0)
   end
 end
 

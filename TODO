@@ -1,5 +1,4 @@
 General:
-  ☐ Check 3D environments and report error if unsupported
   ☐ Auto 3D-to-2D conversion for range-independent environments
   ☐ Scatterers
   ☐ Validate noise model (shows variability in PSD with sampling rate)
@@ -8,8 +7,10 @@ General:
 
 RaySolver:
   ☐ Find a way to allow full derivative through a dependent θ
-  ☐ Accumulate KMAH index by counting sign changes in q
   ☐ Limit beamwidth to deal with caustics?
+
+Bellhop:
+  ☐ Iron out issues of cubic vs linear vs curvilinear
 
 Docs:
   ☐ Propagation modeling guide

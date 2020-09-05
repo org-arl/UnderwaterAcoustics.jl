@@ -64,7 +64,7 @@ function eigenrays(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver;
     p1 = location(tx1)
     R = abs(p2[1] - p1[1])
     h = maxdepth(bathymetry(model.env))
-    nbeams = ceil(Int, 4 * (model.maxangle - model.minangle) / atan(h, R))
+    nbeams = ceil(Int, 16 * (model.maxangle - model.minangle) / atan(h, R))
   end
   θ = range(model.minangle, model.maxangle; length=nbeams)
   n = length(θ)
@@ -83,15 +83,15 @@ function eigenrays(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver;
       push!(erays, eray)
     elseif i > 1 && !isnan(err[i-1]) && !isnan(err[i]) && sign(err[i-1]) * sign(err[i]) == -1
       a, b = ordered(θ[i-1], θ[i])
-      soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, rmax).raypath[end][3] - p2[3]), a, b; abs_tol=model.atol)
-      if soln.minimum ≤ model.atol
+      soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, rmax).raypath[end][3] - p2[3]), a, b; abs_tol=1e-4)
+      if Optim.converged(soln) && soln.minimum ≤ 1e-2
         eray = traceray(model, tx1, soln.minimizer, rmax, ds)
         push!(erays, eray)
       end
     elseif i > 2 && isnearzero(err[i-2], err[i-1], err[i])
       a, b = ordered(θ[i-2], θ[i])
-      soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, rmax).raypath[end][3] - p2[3]), a, b; abs_tol=model.atol)
-      if soln.minimum ≤ model.atol
+      soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, rmax).raypath[end][3] - p2[3]), a, b; abs_tol=1e-4)
+      if Optim.converged(soln) && soln.minimum ≤ 1e-2
         eray = traceray(model, tx1, soln.minimizer, rmax, ds)
         push!(erays, eray)
       end
@@ -126,7 +126,7 @@ function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceive
   G = 1 / (2π)^(1/4)
   Threads.@threads for θ1 ∈ θ
     β = (mode === :incoherent ? 2 : 1) * cos(θ1)/c₀
-    traceray(model, tx1, θ1, rmax, 1.0; cb = (s1, u1, s2, u2, A₀, D₀, t₀, cₛ) -> begin
+    traceray(model, tx1, θ1, rmax, 1.0; cb = (s1, u1, s2, u2, A₀, D₀, t₀, cₛ, kmah1, kmah2) -> begin
       r1, z1, ξ1, ζ1, t1, _, q1 = u1
       r2, z2, ξ2, ζ2, t2, _, q2 = u2
       ndx = findall(r -> r1 ≤ r < r2, rx.xrange)
@@ -149,6 +149,8 @@ function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceive
           t = t₀ + t1 + (t2 - t1) * α
           q = q1 + (q2 - q1) * α
           A = A₀ * γ * G * √abs(β * cₛ / (rz[1] * q)) # COA (3.76)
+          kmah = round(Int, kmah1 + (kmah2 - kmah1) * α)
+          A *= cis(-π/2 * kmah)                       # COA section 3.4.1 (KMAH correction)
           W = abs(q * δθ)                             # COA (3.74)
           A *= exp(-(n / W)^2)
           tc[j, i, Threads.threadid()] += mode === :coherent ? conj(A) * cis(-ω * t) : Complex(abs2(A), 0.0)
@@ -175,7 +177,7 @@ function isnearzero(a, b, c)
 end
 
 function check2d(tx, rx)
-  # TODO: remote restrictions on coordinates
+  # TODO: remove restrictions on coordinates
   all(location(tx1)[1] == 0.0 for tx1 ∈ tx) || throw(ArgumentError("RaySolver requires transmitters at (0, 0, z)"))
   all(location(tx1)[2] == 0.0 for tx1 ∈ tx) || throw(ArgumentError("RaySolver requires transmitters in the x-z plane"))
   all(location(rx1)[1] >= 0.0 for rx1 ∈ rx) || throw(ArgumentError("RaySolver requires receivers to be in the +x halfspace"))
@@ -253,17 +255,24 @@ function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0;
       raypath = Array{NTuple{3,eltype(eltype(u))}}(undef, 0)
       first = false
     end
-    for u1 ∈ u
-      push!(raypath, (u1[1], 0.0, u1[2]))
+    oq = u[1][7]
+    kmah = 0
+    kmahhist = zeros(length(u))
+    for i ∈ 1:length(u)
+      sign(oq) * sign(u[i][7]) == -1 && (kmah += 1)
+      kmahhist[i] = kmah
+      u[i][7] != 0.0 && (oq = u[i][7])
+      push!(raypath, (u[i][1], 0.0, u[i][2]))
     end
     if cb !== nothing
       for i ∈ 2:length(u)
         cₛ = soundspeed(ssp(model.env), (u[i-1][1]+u[i][1])/2, 0.0, (u[i-1][2]+u[i][2])/2)
-        cb(svec[i-1], u[i-1], svec[i], u[i], A, D, t, cₛ)
+        cb(svec[i-1], u[i-1], svec[i], u[i], A, D, t, cₛ, kmahhist[i-1], kmahhist[i])
       end
     end
     t += dt
     D += dD
+    A *= cis(-π/2 * kmah)                 # COA section 3.4.1 (KMAH correction)
     zmin = -depth(bathymetry(model.env), r, 0.0)
     zmax = altitude(altimetry(model.env), r, 0.0)
     p = (r, 0.0, clamp(z, zmin+ϵ, zmax-ϵ))

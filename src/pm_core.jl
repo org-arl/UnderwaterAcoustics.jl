@@ -453,11 +453,11 @@ end
 function Base.show(io::IO, a::Arrival)
   if isnan(a.time) || isnan(a.phasor)
     @printf(io, "∠%5.1f° %2d↑ %2d↓%s",
-      rad2deg(a.launchangle), a.surface, a.bottom, a.raypath === missing ? "" : " ⤷")
+      rad2deg(a.launchangle), a.surface, a.bottom, a.raypath === missing || length(a.raypath) == 0 ? "" : " ⤷")
   else
     @printf(io, "∠%5.1f° %2d↑ %2d↓ ∠%5.1f° | %6.2f ms | %5.1f dB ϕ%6.1f°%s",
       rad2deg(a.launchangle), a.surface, a.bottom, rad2deg(a.arrivalangle),
       1000*a.time, amp2db(abs(a.phasor)), rad2deg(angle(a.phasor)),
-      a.raypath === missing ? "" : " ⤷")
+      a.raypath === missing || length(a.raypath) == 0 ? "" : " ⤷")
   end
 end

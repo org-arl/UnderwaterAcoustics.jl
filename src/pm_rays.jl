@@ -76,23 +76,26 @@ function eigenrays(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver;
       err[i] = ForwardDiff.value(p3[3] - p2[3])
     end
   end
-  erays = Array{RayArrival,1}(undef, 0)     # FIXME: generic type, because traceray() isn't type stable for dual numbers
+  T1 = promote_type(envrealtype(model.env), eltype(location(tx1)), eltype(nominalfrequency(tx1)), eltype(location(rx1)))
+  #T2 = T1 isa Float64 ? RayArrival{Float64,Float64} : RayArrival   # FIXME: type unstable for dual numbers
+  #erays = Array{T2,1}(undef, 0)
+  erays = Array{RayArrival{T1,T1},1}(undef, 0)
   for i ∈ 1:n
     if isapprox(err[i], 0.0; atol=model.atol)
-      eray = traceray(model, tx1, θ[i], rmax, ds)
+      eray = traceray(model, tx1, convert(T1, θ[i]), rmax, ds)
       push!(erays, eray)
     elseif i > 1 && !isnan(err[i-1]) && !isnan(err[i]) && sign(err[i-1]) * sign(err[i]) == -1
       a, b = ordered(θ[i-1], θ[i])
       soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, rmax).raypath[end][3] - p2[3]), a, b; abs_tol=1e-4)
       if Optim.converged(soln) && soln.minimum ≤ 1e-2
-        eray = traceray(model, tx1, soln.minimizer, rmax, ds)
+        eray = traceray(model, tx1, convert(T1, soln.minimizer), rmax, ds)
         push!(erays, eray)
       end
     elseif i > 2 && isnearzero(err[i-2], err[i-1], err[i])
       a, b = ordered(θ[i-2], θ[i])
       soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, rmax).raypath[end][3] - p2[3]), a, b; abs_tol=1e-4)
       if Optim.converged(soln) && soln.minimum ≤ 1e-2
-        eray = traceray(model, tx1, soln.minimizer, rmax, ds)
+        eray = traceray(model, tx1, convert(T1, soln.minimizer), rmax, ds)
         push!(erays, eray)
       end
     end
@@ -105,11 +108,12 @@ function rays(model::RaySolver, tx1::AcousticSource, θ::Real, rmax)
   traceray(model, tx1, θ, rmax, model.ds)
 end
 
-function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceiverGrid2D; mode=:coherent)
+function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceiverGrid2D{T1}; mode=:coherent) where {T1}
   check2d([tx1], rx)
   mode === :coherent || mode === :incoherent || throw(ArgumentError("Unknown mode :" * string(mode)))
   # implementation primarily based on ideas from COA (Computational Ocean Acoustics, 2nd ed., ch. 3)
-  tc = zeros(Complex{<:Real}, size(rx,1), size(rx,2), Threads.nthreads())   # FIXME: generic type for compatible with ForwardDiff
+  T = promote_type(envrealtype(model.env), eltype(location(tx1)), eltype(nominalfrequency(tx1)), T1, ComplexF64)
+  tc = zeros(T, size(rx,1), size(rx,2), Threads.nthreads())
   rmax = maximum(rx.xrange) + 0.1
   nbeams = model.nbeams
   if nbeams == 0
@@ -215,7 +219,7 @@ function traceray1(model, r0, z0, θ, rmax, ds, p0, q0)
   ∂c = z -> ForwardDiff.derivative(c, z)
   ∂²c = z -> ForwardDiff.derivative(∂c, z)
   cᵥ = c(z0)
-  T = promote_type(typeof(altitude(a, r0, 0.0)), typeof(depth(b, r0, 0.0)), typeof(c(0.0)))
+  T = envrealtype(model.env)
   u0 = [promote(r0, rmax)[1], z0, cos(θ)/cᵥ, sin(θ)/cᵥ, zero(T), p0, q0]
   prob = ODEProblem{true}(rayeqns!, u0, (zero(T), one(T) * model.rugocity * (rmax-r0)/cos(θ)), (c, ∂c, ∂²c))
   cb = VectorContinuousCallback(

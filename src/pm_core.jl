@@ -432,6 +432,16 @@ function tmap(f, itr)
   fetch.(refs)
 end
 
+function envrealtype(env::UnderwaterEnvironment)
+  a = altitude(altimetry(env), 0.0, 0.0)
+  b = depth(bathymetry(env), 0.0, 0.0)
+  c = soundspeed(ssp(env), 0.0, 0.0, 0.0)
+  s = salinity(env)
+  r1 = real(reflectioncoef(seasurface(env), 1000.0, 0.0))
+  r2 = real(reflectioncoef(seabed(env), 1000.0, 0.0))
+  promote_type(typeof(a), typeof(b), typeof(c), typeof(s), typeof(r1), typeof(r2))
+end
+
 ### pretty printing
 
 function Base.show(io::IO, env::UnderwaterEnvironment)

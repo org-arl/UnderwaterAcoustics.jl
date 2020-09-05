@@ -15,7 +15,6 @@ Docs:
 Tests:
   ☐ Comparison tests between models
   ☐ Performance tests
-  ☐ Differentiability tests
   ☐ Turing tests
 
 KIV:

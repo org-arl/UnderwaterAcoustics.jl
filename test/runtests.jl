@@ -653,76 +653,77 @@ end
 
 end
 
+function ∂(f, x, i, ϵ)
+  x1 = copy(x)
+  x1[i] = x[i] + ϵ
+  f1 = f(x1)
+  x1[i] = x[i] - ϵ
+  (f1 - f(x1)) / (2ϵ)
+end
+
 @testset "pm-∂pekeris" begin
 
-  function ℳ(; D=20.0, R=100.0, d1=5.0, d2=10.0, f=5000.0, c=1500.0)
+  function ℳ(x)
+    D, R, d1, d2, f, c = x
     env = UnderwaterEnvironment(ssp=IsoSSP(c), bathymetry=ConstantDepth(D))
     pm = PekerisRayModel(env, 7)
     transmissionloss(pm, AcousticSource(0.0, -d1, f), AcousticReceiver(R, -d2))
   end
 
-  ∂ₙ(f, x, ϵ) = (f(x+ϵ) - f(x-ϵ)) / (2ϵ)
-  ∂ₐ(f, x) = ForwardDiff.derivative(f, x)
+  x = [20.0, 100.0, 5.0, 10.0, 5000.0, 1500.0]
+  ∇ℳ = ForwardDiff.gradient(ℳ, x)
+  for i ∈ 1:length(x)
+    @test ∇ℳ[i] ≈ ∂(ℳ, x, i, 0.0001) atol=0.1
+  end
 
-  @test ∂ₐ(x -> ℳ(; D=x), 10.0) ≈ ∂ₙ(x -> ℳ(; D=x), 10.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ(; D=x), 20.0) ≈ ∂ₙ(x -> ℳ(; D=x), 20.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ(; R=x), 50.0) ≈ ∂ₙ(x -> ℳ(; R=x), 50.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ(; R=x), 100.0) ≈ ∂ₙ(x -> ℳ(; R=x), 100.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ(; R=x), 200.0) ≈ ∂ₙ(x -> ℳ(; R=x), 200.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ(; d1=x), 5.0) ≈ ∂ₙ(x -> ℳ(; d1=x), 5.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ(; d1=x), 10.0) ≈ ∂ₙ(x -> ℳ(; d1=x), 10.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ(; d2=x), 5.0) ≈ ∂ₙ(x -> ℳ(; d2=x), 5.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ(; d2=x), 10.0) ≈ ∂ₙ(x -> ℳ(; d2=x), 10.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ(; f=x), 1000.0) ≈ ∂ₙ(x -> ℳ(; f=x), 1000.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ(; f=x), 5000.0) ≈ ∂ₙ(x -> ℳ(; f=x), 5000.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ(; c=x), 1500.0) ≈ ∂ₙ(x -> ℳ(; c=x), 1500.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ(; c=x), 1540.0) ≈ ∂ₙ(x -> ℳ(; c=x), 1540.0, 0.001) atol=0.1
+  x = [25.0, 200.0, 10.0, 8.0, 1000.0, 1540.0]
+  ∇ℳ = ForwardDiff.gradient(ℳ, x)
+  for i ∈ 1:length(x)
+    @test ∇ℳ[i] ≈ ∂(ℳ, x, i, 0.0001) atol=0.1
+  end
 
 end
 
 @testset "pm-∂raysolver" begin
 
-  function ℳ₁(; D=20.0, R=100.0, d1=5.0, d2=10.0, f=5000.0, c=1500.0)
+  function ℳ₁(x)
+    D, R, d1, d2, f, c = x
     env = UnderwaterEnvironment(ssp=IsoSSP(c), bathymetry=ConstantDepth(D))
     pm = RaySolver(env)
     transmissionloss(pm, AcousticSource(0.0, -d1, f), AcousticReceiver(R, -d2))
   end
 
-  function ℳ₂(; D=20.0, R=100.0, d1=5.0, d2=10.0, f=5000.0, c=1500.0)
+  function ℳ₂(x)
+    D, R, d1, d2, f, c = x
     env = UnderwaterEnvironment(ssp=IsoSSP(c), bathymetry=ConstantDepth(D))
     pm = RaySolver(env)
     transmissionloss(pm, AcousticSource(0.0, -d1, f), AcousticReceiverGrid2D(R, 0.0, 1, -d2, 0.0, 1))[1,1]
   end
 
-  ∂ₙ(f, x, ϵ) = (f(x+ϵ) - f(x-ϵ)) / (2ϵ)
-  ∂ₐ(f, x) = ForwardDiff.derivative(f, x)
+  x = [20.0, 100.0, 5.0, 10.0, 5000.0, 1500.0]
+  ∇ℳ = ForwardDiff.gradient(ℳ₁, x)
+  for i ∈ 1:length(x)
+    # skip i = 2 because it is not yet supported
+    i != 2 && @test ∇ℳ[i] ≈ ∂(ℳ₁, x, i, 0.0001) atol=0.1
+  end
 
-  @test ∂ₐ(x -> ℳ₁(; D=x), 10.0) ≈ ∂ₙ(x -> ℳ₁(; D=x), 10.0, 0.0001) atol=0.1
-  @test ∂ₐ(x -> ℳ₁(; D=x), 20.0) ≈ ∂ₙ(x -> ℳ₁(; D=x), 20.0, 0.0001) atol=0.1
-  # @test ∂ₐ(x -> ℳ₁(; R=x), 50.0) ≈ ∂ₙ(x -> ℳ₁(; R=x), 50.0, 0.001) atol=0.1
-  # @test ∂ₐ(x -> ℳ₁(; R=x), 100.0) ≈ ∂ₙ(x -> ℳ₁(; R=x), 100.0, 0.001) atol=0.1
-  # @test ∂ₐ(x -> ℳ₁(; R=x), 200.0) ≈ ∂ₙ(x -> ℳ₁(; R=x), 200.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ₁(; d1=x), 5.0) ≈ ∂ₙ(x -> ℳ₁(; d1=x), 5.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ₁(; d1=x), 10.0) ≈ ∂ₙ(x -> ℳ₁(; d1=x), 10.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ₁(; d2=x), 5.0) ≈ ∂ₙ(x -> ℳ₁(; d2=x), 5.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ₁(; d2=x), 10.0) ≈ ∂ₙ(x -> ℳ₁(; d2=x), 10.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ₁(; f=x), 1000.0) ≈ ∂ₙ(x -> ℳ₁(; f=x), 1000.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ₁(; f=x), 5000.0) ≈ ∂ₙ(x -> ℳ₁(; f=x), 5000.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ₁(; c=x), 1500.0) ≈ ∂ₙ(x -> ℳ₁(; c=x), 1500.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ₁(; c=x), 1540.0) ≈ ∂ₙ(x -> ℳ₁(; c=x), 1540.0, 0.001) atol=0.1
+  x = [25.0, 200.0, 10.0, 8.0, 1000.0, 1540.0]
+  ∇ℳ = ForwardDiff.gradient(ℳ₁, x)
+  for i ∈ 1:length(x)
+    # skip i = 2 because it is not yet supported
+    i != 2 && @test ∇ℳ[i] ≈ ∂(ℳ₁, x, i, 0.0001) atol=0.1
+  end
 
-  @test ∂ₐ(x -> ℳ₂(; D=x), 10.0) ≈ ∂ₙ(x -> ℳ₂(; D=x), 10.0, 0.0001) atol=0.1
-  @test ∂ₐ(x -> ℳ₂(; D=x), 20.0) ≈ ∂ₙ(x -> ℳ₂(; D=x), 20.0, 0.0001) atol=0.1
-  @test ∂ₐ(x -> ℳ₂(; R=x), 50.0) ≈ ∂ₙ(x -> ℳ₂(; R=x), 50.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ₂(; R=x), 100.0) ≈ ∂ₙ(x -> ℳ₂(; R=x), 100.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ₂(; R=x), 200.0) ≈ ∂ₙ(x -> ℳ₂(; R=x), 200.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ₂(; d1=x), 5.0) ≈ ∂ₙ(x -> ℳ₂(; d1=x), 5.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ₂(; d1=x), 10.0) ≈ ∂ₙ(x -> ℳ₂(; d1=x), 10.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ₂(; d2=x), 5.0) ≈ ∂ₙ(x -> ℳ₂(; d2=x), 5.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ₂(; d2=x), 10.0) ≈ ∂ₙ(x -> ℳ₂(; d2=x), 10.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ₂(; f=x), 1000.0) ≈ ∂ₙ(x -> ℳ₂(; f=x), 1000.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ₂(; f=x), 5000.0) ≈ ∂ₙ(x -> ℳ₂(; f=x), 5000.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ₂(; c=x), 1500.0) ≈ ∂ₙ(x -> ℳ₂(; c=x), 1500.0, 0.001) atol=0.1
-  @test ∂ₐ(x -> ℳ₂(; c=x), 1540.0) ≈ ∂ₙ(x -> ℳ₂(; c=x), 1540.0, 0.001) atol=0.1
+  x = [20.0, 100.0, 5.0, 10.0, 5000.0, 1500.0]
+  ∇ℳ = ForwardDiff.gradient(ℳ₂, x)
+  for i ∈ 1:length(x)
+    @test ∇ℳ[i] ≈ ∂(ℳ₂, x, i, 0.0001) atol=0.1
+  end
+
+  x = [25.0, 200.0, 10.0, 8.0, 1000.0, 1540.0]
+  ∇ℳ = ForwardDiff.gradient(ℳ₂, x)
+  for i ∈ 1:length(x)
+    @test ∇ℳ[i] ≈ ∂(ℳ₂, x, i, 0.0001) atol=0.1
+  end
 
 end

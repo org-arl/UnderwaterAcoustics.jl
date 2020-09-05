@@ -76,26 +76,24 @@ function eigenrays(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver;
       err[i] = ForwardDiff.value(p3[3] - p2[3])
     end
   end
-  T1 = promote_type(envrealtype(model.env), eltype(location(tx1)), eltype(nominalfrequency(tx1)), eltype(location(rx1)))
-  #T2 = T1 isa Float64 ? RayArrival{Float64,Float64} : RayArrival   # FIXME: type unstable for dual numbers
-  #erays = Array{T2,1}(undef, 0)
-  erays = Array{RayArrival{T1,T1},1}(undef, 0)
+  T = promote_type(envrealtype(model.env), eltype(location(tx1)), typeof(nominalfrequency(tx1)), eltype(location(rx1)))
+  erays = Array{RayArrival{T,T},1}(undef, 0)
   for i ∈ 1:n
     if isapprox(err[i], 0.0; atol=model.atol)
-      eray = traceray(model, tx1, convert(T1, θ[i]), rmax, ds)
+      eray = traceray(model, tx1, convert(T, θ[i]), rmax, ds)
       push!(erays, eray)
     elseif i > 1 && !isnan(err[i-1]) && !isnan(err[i]) && sign(err[i-1]) * sign(err[i]) == -1
       a, b = ordered(θ[i-1], θ[i])
       soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, rmax).raypath[end][3] - p2[3]), a, b; abs_tol=1e-4)
       if Optim.converged(soln) && soln.minimum ≤ 1e-2
-        eray = traceray(model, tx1, convert(T1, soln.minimizer), rmax, ds)
+        eray = traceray(model, tx1, convert(T, soln.minimizer), rmax, ds)
         push!(erays, eray)
       end
     elseif i > 2 && isnearzero(err[i-2], err[i-1], err[i])
       a, b = ordered(θ[i-2], θ[i])
       soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, rmax).raypath[end][3] - p2[3]), a, b; abs_tol=1e-4)
       if Optim.converged(soln) && soln.minimum ≤ 1e-2
-        eray = traceray(model, tx1, convert(T1, soln.minimizer), rmax, ds)
+        eray = traceray(model, tx1, convert(T, soln.minimizer), rmax, ds)
         push!(erays, eray)
       end
     end
@@ -112,7 +110,8 @@ function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceive
   check2d([tx1], rx)
   mode === :coherent || mode === :incoherent || throw(ArgumentError("Unknown mode :" * string(mode)))
   # implementation primarily based on ideas from COA (Computational Ocean Acoustics, 2nd ed., ch. 3)
-  T = promote_type(envrealtype(model.env), eltype(location(tx1)), eltype(nominalfrequency(tx1)), T1, ComplexF64)
+  f = nominalfrequency(tx1)
+  T = promote_type(envrealtype(model.env), eltype(location(tx1)), typeof(f), T1, ComplexF64)
   tc = zeros(T, size(rx,1), size(rx,2), Threads.nthreads())
   rmax = maximum(rx.xrange) + 0.1
   nbeams = model.nbeams
@@ -125,7 +124,6 @@ function transfercoef(model::RaySolver, tx1::AcousticSource, rx::AcousticReceive
   θ = range(model.minangle, model.maxangle; length=nbeams)
   δθ = Float64(θ.step)
   c₀ = soundspeed(ssp(model.env), location(tx1)...)
-  f = nominalfrequency(tx1)
   ω = 2π * f
   G = 1 / (2π)^(1/4)
   Threads.@threads for θ1 ∈ θ
@@ -212,15 +210,14 @@ function checkray!(out, u, s, integrator, a::Altimetry, b::Bathymetry, rmax)
   out[4] = u[3]                            # ray turned back
 end
 
-function traceray1(model, r0, z0, θ, rmax, ds, p0, q0)
+function traceray1(T, model, r0, z0, θ, rmax, ds, p0, q0)
   a = altimetry(model.env)
   b = bathymetry(model.env)
   c = z -> soundspeed(ssp(model.env), 0.0, 0.0, z)
   ∂c = z -> ForwardDiff.derivative(c, z)
   ∂²c = z -> ForwardDiff.derivative(∂c, z)
   cᵥ = c(z0)
-  T = envrealtype(model.env)
-  u0 = [promote(r0, rmax)[1], z0, cos(θ)/cᵥ, sin(θ)/cᵥ, zero(T), p0, q0]
+  u0 = [convert(T, r0), z0, cos(θ)/cᵥ, sin(θ)/cᵥ, zero(T), p0, q0]
   prob = ODEProblem{true}(rayeqns!, u0, (zero(T), one(T) * model.rugocity * (rmax-r0)/cos(θ)), (c, ∂c, ∂²c))
   cb = VectorContinuousCallback(
     (out, u, s, i) -> checkray!(out, u, s, i, a, b, rmax),
@@ -234,31 +231,24 @@ function traceray1(model, r0, z0, θ, rmax, ds, p0, q0)
   soln.t[end], s2[1], s2[2], atan(s2[4], s2[3]), s2[5], s2[6], s2[7], soln.u, soln.t
 end
 
-# FIXME: type stability issues when inputs are Dual numbers
 function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0; cb=nothing)
   θ₀ = θ
   f = nominalfrequency(tx1)
   zmin = -maxdepth(bathymetry(model.env))
-  ϵ = one(typeof(zmin)) * model.solvertol
+  ϵ = one(zmin) * model.solvertol
   p = location(tx1)
   c₀ = soundspeed(ssp(model.env), p...)
-  local raypath
-  tmp1 = reflectioncoef(seasurface(model.env), f, 0.0)          # get type
-  tmp2 = reflectioncoef(seabed(model.env), f, 0.0)              # get type
-  A = convert(eltype(promote(tmp1, tmp2)), Complex(1.0, 0.0))
-  s = 0       # surface bounces
-  b = 0       # bottom bounces
-  t = 0.0     # time along ray
-  D = 0.0     # distance along ray
-  q = 0.0     # spreading factor
-  qp = 1/c₀   # spreading rate
-  first = true
+  T = promote_type(envrealtype(model.env), eltype(p), typeof(f), typeof(θ), typeof(rmax))
+  raypath = Array{NTuple{3,T}}(undef, 0)
+  A = one(Complex{T})   # phasor
+  s = 0                 # surface bounces
+  b = 0                 # bottom bounces
+  t = zero(T)           # time along ray
+  D = zero(T)           # distance along ray
+  q = zero(T)           # spreading factor
+  qp = one(T) / c₀      # spreading rate
   while true
-    dD, r, z, θ, dt, qp, q, u, svec = traceray1(model, p[1], p[3], θ, rmax, ds, qp, q)
-    if first
-      raypath = Array{NTuple{3,eltype(eltype(u))}}(undef, 0)
-      first = false
-    end
+    dD, r, z, θ, dt, qp, q, u, svec = traceray1(T, model, p[1], p[3], θ, rmax, ds, qp, q)
     oq = u[1][7]
     kmah = 0
     kmahhist = zeros(length(u))
@@ -305,5 +295,5 @@ function traceray(model::RaySolver, tx1::AcousticSource, θ::Real, rmax, ds=0.0;
   cₛ = soundspeed(ssp(model.env), p...)
   A *= √abs(cₛ * cos(θ₀) / (p[1] * c₀ * q))        # COA (3.65)
   A *= fast_absorption(f, D, salinity(model.env))
-  RayArrival(t, conj(A), s, b, θ₀, -θ, raypath)    # conj(A) needed to match with Bellhop
+  RayArrival{T,T}(t, conj(A), s, b, θ₀, -θ, raypath)    # conj(A) needed to match with Bellhop
 end

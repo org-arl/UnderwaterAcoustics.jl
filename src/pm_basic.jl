@@ -3,7 +3,7 @@ using SignalAnalysis
 using DSP: hilbert
 
 export IsoSSP, MunkSSP, SampledSSP, ConstantDepth, SampledDepth, SampledAltitude
-export ReflectionCoef, FlatSurface, Rayleigh, SurfaceLoss
+export ReflectionCoef, FlatSurface, RayleighReflectionCoef, SurfaceLoss
 export Rock, Pebbles, SandyGravel, CoarseSand, MediumSand, FineSand, VeryFineSand
 export ClayeySand, CoarseSilt, SandySilt, Silt, FineSilt, SandyClay, SiltyClay, Clay
 export Vacuum, SeaState0, SeaState1, SeaState2, SeaState3, SeaState4
@@ -209,8 +209,8 @@ Reflection model for a surface with a Rayleigh reflection coefficient.
 
 ---
 
-    Rayleigh(ρᵣ, cᵣ, δ)
-    Rayleigh(ρᵣ, cᵣ)
+    RayleighReflectionCoef(ρᵣ, cᵣ, δ)
+    RayleighReflectionCoef(ρᵣ, cᵣ)
 
 Create a reflection model for a surface with a Rayleigh reflection coefficient
 with relative density `ρᵣ`, relative sound speed `cᵣ`, and dimensionless
@@ -218,32 +218,32 @@ attentuation `δ`. If attentuation `δ` is unspecified, it is assumed to be zero
 
 See `reflectioncoef()` for more details.
 """
-struct Rayleigh{T1,T2,T3} <: ReflectionModel
+struct RayleighReflectionCoef{T1,T2,T3} <: ReflectionModel
   ρᵣ::T1
   cᵣ::T2
   δ::T3
 end
 
-Rayleigh(ρᵣ, cᵣ) = Rayleigh(ρᵣ, cᵣ, 0.0)
+RayleighReflectionCoef(ρᵣ, cᵣ) = RayleighReflectionCoef(ρᵣ, cᵣ, 0.0)
 
 # from APL-UW TR 9407 (1994), IV-6 Table 2
-const Rock = Rayleigh(2.5, 2.5, 0.01374)
-const Pebbles = Rayleigh(2.5, 1.8, 0.01374)
-const SandyGravel = Rayleigh(2.492, 1.3370, 0.01705)
-const CoarseSand = Rayleigh(2.231, 1.2503, 0.01638)
-const MediumSand = Rayleigh(1.845, 1.1782, 0.01624)
-const FineSand = Rayleigh(1.451, 1.1073, 0.01602)
-const VeryFineSand = Rayleigh(1.268, 1.0568, 0.01875)
-const ClayeySand = Rayleigh(1.224, 1.0364, 0.02019)
-const CoarseSilt = Rayleigh(1.195, 1.0179, 0.02158)
-const SandySilt = Rayleigh(1.169, 0.9999, 0.01261)
-const Silt = Rayleigh(1.149, 0.9873, 0.00386)
-const FineSilt = Rayleigh(1.148, 0.9861, 0.00306)
-const SandyClay = Rayleigh(1.147, 0.9849, 0.00242)
-const SiltyClay = Rayleigh(1.146, 0.9824, 0.00163)
-const Clay = Rayleigh(1.145, 0.98, 0.00148)
+const Rock = RayleighReflectionCoef(2.5, 2.5, 0.01374)
+const Pebbles = RayleighReflectionCoef(2.5, 1.8, 0.01374)
+const SandyGravel = RayleighReflectionCoef(2.492, 1.3370, 0.01705)
+const CoarseSand = RayleighReflectionCoef(2.231, 1.2503, 0.01638)
+const MediumSand = RayleighReflectionCoef(1.845, 1.1782, 0.01624)
+const FineSand = RayleighReflectionCoef(1.451, 1.1073, 0.01602)
+const VeryFineSand = RayleighReflectionCoef(1.268, 1.0568, 0.01875)
+const ClayeySand = RayleighReflectionCoef(1.224, 1.0364, 0.02019)
+const CoarseSilt = RayleighReflectionCoef(1.195, 1.0179, 0.02158)
+const SandySilt = RayleighReflectionCoef(1.169, 0.9999, 0.01261)
+const Silt = RayleighReflectionCoef(1.149, 0.9873, 0.00386)
+const FineSilt = RayleighReflectionCoef(1.148, 0.9861, 0.00306)
+const SandyClay = RayleighReflectionCoef(1.147, 0.9849, 0.00242)
+const SiltyClay = RayleighReflectionCoef(1.146, 0.9824, 0.00163)
+const Clay = RayleighReflectionCoef(1.145, 0.98, 0.00148)
 
-reflectioncoef(rm::Rayleigh, f, θ) = reflectioncoef(θ, rm.ρᵣ, rm.cᵣ, rm.δ)
+reflectioncoef(rm::RayleighReflectionCoef, f, θ) = reflectioncoef(θ, rm.ρᵣ, rm.cᵣ, rm.δ)
 
 """
 $(TYPEDEF)

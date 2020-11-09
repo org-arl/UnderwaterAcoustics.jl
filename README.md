@@ -28,7 +28,7 @@ BasicUnderwaterEnvironment:
   ssp = IsoSSP{Float64}(1539.0866009307247)
   salinity = 35.0
   seasurface = SurfaceLoss{Float64}(2.6)
-  seabed = Rayleigh{Float64,Float64,Float64}(1.169, 0.9999, 0.01261)
+  seabed = RayleighReflectionCoef{Float64,Float64,Float64}(1.169, 0.9999, 0.01261)
   noise = RedGaussianNoise{Float64}(1.0e6)
 ```
 
@@ -46,7 +46,7 @@ BasicUnderwaterEnvironment:
   ssp = SampledSSP{Float64,Float64,linear}(3 points)
   salinity = 35.0
   seasurface = ReflectionCoef{Float64}(-1.0)
-  seabed = Rayleigh{Float64,Float64,Float64}(1.147, 0.9849, 0.00242)
+  seabed = RayleighReflectionCoef{Float64,Float64,Float64}(1.147, 0.9849, 0.00242)
   noise = RedGaussianNoise{Float64}(1.0e6)
 ```
 
@@ -55,8 +55,8 @@ Currently available options:
 * Altimetry -- `FlatSurface()`
 * Bathymetry -- `ConstantDepth(depth)`, `SampledDepth(ranges, depths, interp)`
 * SSP -- `IsoSSP(soundspeed)`, `MunkSSP()`, `SampledSSP(depths, soundspeeds, interp)`
-* Seasurface -- `ReflectionCoef(R)`, `Rayleigh(relativedensity, relativesoundspeed, attenuation)`, `Vacuum`, `SeaState0`, `SeaState1`, `SeaState2`, `SeaState3`, `SeaState4`, `SeaState5`, `SeaState6`, `SeaState7`, `SeaState8`, `SeaState9`
-* Seabed -- `ReflectionCoef(R)`, `Rayleigh(relativedensity, relativesoundspeed, attenuation)`, `Rock`, `Pebbles`, `SandyGravel`, `CoarseSand`, `MediumSand`, `FineSand`, `VeryFineSand`, `ClayeySand`, `CoarseSilt`, `SandySilt`, `Silt`, `FineSilt`, `SandyClay`, `SiltyClay`, `Clay`
+* Seasurface -- `ReflectionCoef(R)`, `RayleighReflectionCoef(relativedensity, relativesoundspeed, attenuation)`, `Vacuum`, `SeaState0`, `SeaState1`, `SeaState2`, `SeaState3`, `SeaState4`, `SeaState5`, `SeaState6`, `SeaState7`, `SeaState8`, `SeaState9`
+* Seabed -- `ReflectionCoef(R)`, `RayleighReflectionCoef(relativedensity, relativesoundspeed, attenuation)`, `Rock`, `Pebbles`, `SandyGravel`, `CoarseSand`, `MediumSand`, `FineSand`, `VeryFineSand`, `ClayeySand`, `CoarseSilt`, `SandySilt`, `Silt`, `FineSilt`, `SandyClay`, `SiltyClay`, `Clay`
 * Noise -- `RedGaussianNoise(σ)` or any other distribution that works with `rand()`
 
 and `interp` is either `:linear` or `:smooth`.
@@ -98,7 +98,7 @@ BasicUnderwaterEnvironment:
   ssp = IsoSSP{Float64}(1539.0866009307247)
   salinity = 35.0
   seasurface = SurfaceLoss{Float64}(2.6)
-  seabed = Rayleigh{Float64,Float64,Float64}(1.169, 0.9999, 0.01261)
+  seabed = RayleighReflectionCoef{Float64,Float64,Float64}(1.169, 0.9999, 0.01261)
   noise = RedGaussianNoise{Float64}(1.0e6)
 
 julia> models(env)
@@ -128,7 +128,7 @@ PekerisRayModel with BasicUnderwaterEnvironment:
   ssp = IsoSSP{Float64}(1539.0866009307247)
   salinity = 35.0
   seasurface = SurfaceLoss{Float64}(2.6)
-  seabed = Rayleigh{Float64,Float64,Float64}(1.169, 0.9999, 0.01261)
+  seabed = RayleighReflectionCoef{Float64,Float64,Float64}(1.169, 0.9999, 0.01261)
   noise = RedGaussianNoise{Float64}(1.0e6)
 ```
 

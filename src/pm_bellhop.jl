@@ -39,7 +39,7 @@ function check(::Type{Bellhop}, env::Union{<:UnderwaterEnvironment,Missing})
       end
     end
   else
-    seabed(env) isa Rayleigh || throw(ArgumentError("Seabed type not supported"))
+    seabed(env) isa RayleighReflectionCoef || throw(ArgumentError("Seabed type not supported"))
     seasurface(env) === Vacuum || throw(ArgumentError("Only vacuum seasurface supported"))
   end
   env

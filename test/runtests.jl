@@ -150,25 +150,25 @@ end
 
   @test ReflectionCoef(0.5 + 0.3im) isa ReflectionModel
   @test reflectioncoef(ReflectionCoef(0.5 + 0.3im), 1000.0, 0.0) == 0.5 + 0.3im
-  @test Rayleigh(1.0, 1.0) isa ReflectionModel
-  @test Rayleigh(1.0, 1.0, 0.0) isa ReflectionModel
-  @test reflectioncoef(Rayleigh(1.0, 1.0, 0.0), 1000.0, 0.0) ≈ 0.0
-  @test reflectioncoef(Rayleigh(0.0, 1.0, 0.0), 1000.0, 0.0) ≈ -1.0
-  @test Rock isa Rayleigh
-  @test Pebbles isa Rayleigh
-  @test SandyGravel isa Rayleigh
-  @test CoarseSand isa Rayleigh
-  @test MediumSand isa Rayleigh
-  @test FineSand isa Rayleigh
-  @test VeryFineSand isa Rayleigh
-  @test ClayeySand isa Rayleigh
-  @test CoarseSilt isa Rayleigh
-  @test SandySilt isa Rayleigh
-  @test Silt isa Rayleigh
-  @test FineSilt isa Rayleigh
-  @test SandyClay isa Rayleigh
-  @test SiltyClay isa Rayleigh
-  @test Clay isa Rayleigh
+  @test RayleighReflectionCoef(1.0, 1.0) isa ReflectionModel
+  @test RayleighReflectionCoef(1.0, 1.0, 0.0) isa ReflectionModel
+  @test reflectioncoef(RayleighReflectionCoef(1.0, 1.0, 0.0), 1000.0, 0.0) ≈ 0.0
+  @test reflectioncoef(RayleighReflectionCoef(0.0, 1.0, 0.0), 1000.0, 0.0) ≈ -1.0
+  @test Rock isa RayleighReflectionCoef
+  @test Pebbles isa RayleighReflectionCoef
+  @test SandyGravel isa RayleighReflectionCoef
+  @test CoarseSand isa RayleighReflectionCoef
+  @test MediumSand isa RayleighReflectionCoef
+  @test FineSand isa RayleighReflectionCoef
+  @test VeryFineSand isa RayleighReflectionCoef
+  @test ClayeySand isa RayleighReflectionCoef
+  @test CoarseSilt isa RayleighReflectionCoef
+  @test SandySilt isa RayleighReflectionCoef
+  @test Silt isa RayleighReflectionCoef
+  @test FineSilt isa RayleighReflectionCoef
+  @test SandyClay isa RayleighReflectionCoef
+  @test SiltyClay isa RayleighReflectionCoef
+  @test Clay isa RayleighReflectionCoef
   @test Vacuum isa ReflectionModel
   @test reflectioncoef(Vacuum, 1000.0, 0.0) ≈ -1.0
   @test 0.0 < abs(reflectioncoef(Rock, 1000.0, 0.0)) < 1.0
@@ -562,7 +562,7 @@ end
   @test r[6].raypath[end][1] ≥ 99.9
   @test r[7].raypath[end][1] ≥ 99.9
 
-  env = UnderwaterEnvironment(ssp=IsoSSP(1500.0), seabed=Rayleigh(1.0, 1.0))
+  env = UnderwaterEnvironment(ssp=IsoSSP(1500.0), seabed=RayleighReflectionCoef(1.0, 1.0))
   pm = RaySolver(env)
   d = (√1209.0)/4.0
   x = transfercoef(pm, AcousticSource(0.0, -d, 1000.0), AcousticReceiver(100.0, -d))

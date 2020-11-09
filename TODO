@@ -2,10 +2,12 @@ General:
   ☐ Auto 3D-to-2D conversion for range-independent environments
   ☐ Validate noise model (shows variability in PSD with sampling rate)
   ☐ Scatterers
+  ☐ Add arbitrary signal source
 
 RaySolver:
   ☐ Find a way to allow full derivative through a dependent θ
   ☐ Limit beamwidth to deal with caustics?
+  ☐ Fix numerical stability problems seen in long range low frequency scenario
 
 Docs:
   ☐ Propagation modeling guide

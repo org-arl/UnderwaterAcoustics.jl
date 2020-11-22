@@ -6,6 +6,8 @@
 # UnderwaterAcoustics.jl
 ### Julia toolbox for Underwater acoustic modeling
 
+![](https://org-arl.github.io/UnderwaterAcoustics.jl/dev/images/txloss1.png)
+
 ## Highlights
 
 - Underwater acoustic propagation modeling with pluggable models

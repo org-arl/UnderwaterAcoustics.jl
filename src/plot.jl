@@ -9,7 +9,7 @@ using Colors
     size(transmissionloss) == size(receivers) || throw(ArgumentError("Mismatched receivers and transmissionloss"))
     receivers isa AcousticReceiverGrid2D || throw(ArgumentError("Receivers must be an instance of AcousticReceiverGrid2D"))
     minloss = minimum(transmissionloss)
-    clims --> (minloss - dynamicrange, minloss)
+    clims --> (-minloss+dynamicrange, -minloss)
     colorbar --> true
     cguide --> "dB"
     @series begin

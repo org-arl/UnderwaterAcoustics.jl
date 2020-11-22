@@ -91,6 +91,40 @@ end
   @test eltype(sig) <: Complex
   @test sum(abs2.(sig))/44100.0 ≈ 0.04 atol=1e-4
   @test maximum(abs2.(sig)) ≈ 1.0 atol=1e-4
+  src = SampledAcousticSource(10.0, -10.0, ones(1000); fs=1000.0, frequency=100.0)
+  @test src isa SampledAcousticSource
+  @test location(src) == (10.0, 0.0, -10.0)
+  @test nominalfrequency(src) == 100.0
+  sig = record(src, 1.0, 1000.0)
+  @test length(sig) == 1000
+  @test eltype(sig) === Float64
+  @test all(sig .== 1.0)
+  sig = record(src, 1.0, 1000.0; start=-0.5)
+  @test length(sig) == 1000
+  @test eltype(sig) === Float64
+  @test all(sig[1:500] .== 0.0)
+  @test all(sig[501:1000] .== 1.0)
+  sig = record(src, 1.0, 1000.0; start=0.5)
+  @test length(sig) == 1000
+  @test eltype(sig) === Float64
+  @test all(sig[1:500] .== 1.0)
+  @test all(sig[501:1000] .== 0.0)
+  sig = record(src, 1.0, 1000.0; start=-2.0)
+  @test length(sig) == 1000
+  @test eltype(sig) === Float64
+  @test all(sig .== 0.0)
+  sig = record(src, 1.0, 1000.0; start=2.0)
+  @test length(sig) == 1000
+  @test eltype(sig) === Float64
+  @test all(sig .== 0.0)
+  @test_throws ArgumentError record(src, 1.0, 2000.0)
+  src = SampledAcousticSource(10.0, 5.0, -10.0, cis.(2π * 1000 * (0:999) ./ 10000.0); fs=10000.0)
+  @test src isa SampledAcousticSource
+  @test location(src) == (10.0, 5.0, -10.0)
+  @test nominalfrequency(src) == 1000.0
+  sig = record(src, 0.1, 10000.0)
+  @test length(sig) == 1000
+  @test eltype(sig) === ComplexF64
 
   @test IsoSSP(1500.0) isa SoundSpeedProfile
   @test soundspeed(IsoSSP(1500.0), 100.0, 10.0, -50.0) == 1500.0

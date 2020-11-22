@@ -9,7 +9,7 @@ export ClayeySand, CoarseSilt, SandySilt, Silt, FineSilt, SandyClay, SiltyClay, 
 export Vacuum, SeaState0, SeaState1, SeaState2, SeaState3, SeaState4
 export SeaState5, SeaState6, SeaState7, SeaState8, SeaState9
 export AcousticReceiverGrid2D, AcousticReceiverGrid3D, NarrowbandAcousticSource
-export RedGaussianNoise, Pinger
+export RedGaussianNoise, Pinger, SampledAcousticSource
 
 ### sound speed profiles
 
@@ -437,6 +437,58 @@ function record(pinger::Pinger, duration, fs; start=0.0)
     end
   end
   signal(pinger.sourcelevel * x, fs)
+end
+
+"""
+$(TYPEDEF)
+Acoustic source transmitting a sampled signal.
+"""
+struct SampledAcousticSource{T1,T2,T3<:AbstractArray} <: AcousticSource
+  pos::NTuple{3,T1}
+  frequency::T2
+  signal::T3
+end
+
+"""
+    SampledAcousticSource(x, y, z, sig; fs, frequency)
+
+Create a sampled acoustic source transmitting signal `sig` at location (`x`, `y`, `z`). The
+samples are assumed to be in µPa @ 1m from the source.
+
+Additional parameters that may be specified:
+- `fs` is the sampling rate of the signal `sig`
+- nominal `frequency` in Hz (`nothing` to auto-estimate)
+"""
+function SampledAcousticSource(x, y, z, sig::AbstractArray; fs=framerate(sig), frequency=nothing)
+  s = signal(sig, fs)
+  SampledAcousticSource(promote(x, y, z), frequency === nothing ? meanfrequency(s) : frequency, s)
+end
+
+"""
+    SampledAcousticSource(x, z, sig; fs, frequency)
+
+Create a sampled acoustic source transmitting signal `sig` at location (`x`, `z`). The
+samples are assumed to be in µPa @ 1m from the source.
+
+Additional parameters that may be specified:
+- `fs` is the sampling rate of signal `sig`
+- nominal `frequency` in Hz (`nothing` to auto-estimate)
+"""
+function SampledAcousticSource(x, z, sig::AbstractArray; fs=framerate(sig), frequency=nothing)
+  s = signal(sig, fs)
+  SampledAcousticSource(promote(x, 0, z), frequency === nothing ? meanfrequency(s) : frequency, s)
+end
+
+location(tx::SampledAcousticSource) = tx.pos
+nominalfrequency(tx::SampledAcousticSource) = tx.frequency
+phasor(tx::SampledAcousticSource) = throw(ArgumentError("phasor is undefined for a SampledAcousticSource"))
+
+function record(tx::SampledAcousticSource, duration, fs=framerate(tx.signal); start=0.0)
+  fs == framerate(tx.signal) || throw(ArgumentError("Resampling of SampledAcousticSource is not supported"))
+  t1 = toframe(start, tx.signal)
+  t2 = toframe(start+duration, tx.signal) - 1
+  y = padded(tx.signal, (max(t1-1, 0), max(t2-t1+1-length(tx.signal), 0)); delay=-t1+1)
+  @view y[1:t2-t1+1]
 end
 
 """

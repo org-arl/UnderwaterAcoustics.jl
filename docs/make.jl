@@ -11,6 +11,19 @@ makedocs(
   pages = Any[
     "Home" => "index.md",
     "Manual" => Any[
+      "uw_basic.md",
+      "pm_basic.md",
+      "pm_envref.md",
+      "pm_api.md"
+    ],
+    "Propagation models" => Any[
+      "pm_pekeris.md",
+      "pm_rays.md",
+      "pm_bellhop.md"
+    ],
+    "Tutorials" => Any[
+      "tut_autodiff.md",
+      "tut_turing.md"
     ]
   ]
 )

@@ -11,7 +11,7 @@ export °
 const ° = π/180.0
 
 # basic underwater acoustics
-include("basic.jl")
+include("uw_basic.jl")
 
 # propagation modeling
 include("pm_core.jl")

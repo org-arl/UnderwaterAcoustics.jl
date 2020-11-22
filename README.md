@@ -4,12 +4,15 @@
 [![Codecov](https://codecov.io/gh/org-arl/UnderwaterAcoustics.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/org-arl/UnderwaterAcoustics.jl)
 
 # UnderwaterAcoustics.jl
-**Julia toolbox for Underwater acoustic modeling**
-(pre-release)
+### Julia toolbox for Underwater acoustic modeling
 
-## Installation
+## Highlights
 
-```julia-repl
-julia>]
-pkg> add https://github.com/org-arl/UnderwaterAcoustics.jl
-```
+- Underwater acoustic propagation modeling with pluggable models
+- 2D/3D underwater acoustic simulation tools
+- Differentiable and probabilistic underwater acoustic modeling
+- Underwater acoustics utility functions
+
+## Getting started
+
+- Propagation modeling toolkit -- [quickstart guide](https://org-arl.github.io/UnderwaterAcoustics.jl/dev/pm_basic.html)

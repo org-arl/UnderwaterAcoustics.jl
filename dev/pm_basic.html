@@ -51,15 +51,15 @@ PekerisRayModel with BasicUnderwaterEnvironment:
   seabed = RayleighReflectionCoef{Float64,Float64,Float64}(1.169, 0.9999, 0.01261)
   noise = RedGaussianNoise{Float64}(1.0e6)</code></pre><p>If you wanted the ray solver instead, you&#39;d do <code>pm = RaySolver(env)</code>, or for a Bellhop model, you&#39;d do <code>pm = Bellhop(env)</code>. Both models can take additional keyword parameters that can customize the solver.</p><h3 id="Defining-sources-and-receivers"><a class="docs-heading-anchor" href="#Defining-sources-and-receivers">Defining sources and receivers</a><a id="Defining-sources-and-receivers-1"></a><a class="docs-heading-anchor-permalink" href="#Defining-sources-and-receivers" title="Permalink"></a></h3><p>Now, we need a source and a receiver:</p><pre><code class="language-julia-repl">julia&gt; tx = AcousticSource(0.0, -5.0, 1000.0);
 julia&gt; rx = AcousticReceiver(100.0, -10.0);</code></pre><p>This defines an omnidirectional 1 kHz transmitter <code>tx</code> at a depth of 5 m at the origin, and an omnidirectional receiver at a range of 100 m and a depth of 10 m.</p><p>NOTE: All coordinates are specified in meters as (x, y, z) for 3D or (x, z) for 2D. The coordinate system has <code>x</code> and <code>y</code> axis in the horizontal plane, and <code>z</code> axis pointing upwards, with the nominal water surface being at 0 m. This means that all <code>z</code> coordinates in water are negative.</p><h3 id="Ray-tracing"><a class="docs-heading-anchor" href="#Ray-tracing">Ray tracing</a><a id="Ray-tracing-1"></a><a class="docs-heading-anchor-permalink" href="#Ray-tracing" title="Permalink"></a></h3><p>Now that we have an environment, a propation model, a transmitter and a receiver, we can modeling. First, we ask for all eigenrays between the transmitter and receiver:</p><pre><code class="language-julia-repl">julia&gt; r = eigenrays(pm, tx, rx)
-7-element Array{UnderwaterAcoustics.RayArrival{Float64,Complex{Float64},Float64,Float64,Float64},1}:
+7-element Array{UnderwaterAcoustics.RayArrival{Float64,Float64},1}:
  ∠ -2.9°  0↑  0↓ ∠  2.9° |  65.05 ms | -40.0 dB ϕ  -0.0° ⤷
- ∠  8.5°  1↑  0↓ ∠  8.5° |  65.70 ms | -41.0 dB ϕ 180.0° ⤷
+ ∠  8.5°  1↑  0↓ ∠  8.5° |  65.70 ms | -40.1 dB ϕ-180.0° ⤷
  ∠-14.0°  0↑  1↓ ∠-14.0° |  66.97 ms | -59.0 dB ϕ  60.5° ⤷
- ∠ 19.3°  1↑  1↓ ∠-19.3° |  68.84 ms | -61.7 dB ϕ-141.7° ⤷
- ∠-24.2°  1↑  1↓ ∠ 24.2° |  71.25 ms | -62.6 dB ϕ-153.8° ⤷
- ∠ 28.8°  2↑  1↓ ∠ 28.8° |  74.15 ms | -63.5 dB ϕ  19.4° ⤷
- ∠-33.0°  1↑  2↓ ∠-33.0° |  77.49 ms | -85.7 dB ϕ-149.4° ⤷</code></pre><p>For each eigenray, this shows us the launch angle, number of surface bounces, number of bottom bounces, arrival angle, travel time, transmission loss along that ray, and phase change. The last &quot;<code>⤷</code>&quot; symbol indicates that the complete ray path is also available. We can plot the ray paths:</p><pre><code class="language-julia-repl">julia&gt; plot(env; sources=[tx], receivers=[rx], rays=r)</code></pre><p><img src="images/eigenrays1.png" alt/></p><p>Th red star is the transmitter and the blue circle is the receiver. The stronger eigenrays are shown in blue, while the weaker ones are shown in red.</p><p>We might sometimes want to see all rays from the transmitter at certain angular spacing (-45°:5°:45°) and a given range (100 m):</p><pre><code class="language-julia-repl">julia&gt; r = rays(pm, tx, -45°:5°:45°, 100.0)
-19-element Array{UnderwaterAcoustics.RayArrival{Float64,Complex{Float64},Float64,Float64,Float64},1}:
+ ∠ 19.3°  1↑  1↓ ∠-19.3° |  68.84 ms | -61.3 dB ϕ-141.7° ⤷
+ ∠-24.2°  1↑  1↓ ∠ 24.2° |  71.25 ms | -62.3 dB ϕ-153.8° ⤷
+ ∠ 28.8°  2↑  1↓ ∠ 28.8° |  74.15 ms | -63.0 dB ϕ  19.4° ⤷
+ ∠-33.0°  1↑  2↓ ∠-33.0° |  77.49 ms | -85.4 dB ϕ-149.4° ⤷</code></pre><p>For each eigenray, this shows us the launch angle, number of surface bounces, number of bottom bounces, arrival angle, travel time, transmission loss along that ray, and phase change. The last &quot;<code>⤷</code>&quot; symbol indicates that the complete ray path is also available. We can plot the ray paths:</p><pre><code class="language-julia-repl">julia&gt; plot(env; sources=[tx], receivers=[rx], rays=r)</code></pre><p><img src="images/eigenrays1.png" alt/></p><p>Th red star is the transmitter and the blue circle is the receiver. The stronger eigenrays are shown in blue, while the weaker ones are shown in red.</p><p>We might sometimes want to see all rays from the transmitter at certain angular spacing (-45°:5°:45°) and a given range (100 m):</p><pre><code class="language-julia-repl">julia&gt; r = rays(pm, tx, -45°:5°:45°, 100.0)
+19-element Array{UnderwaterAcoustics.RayArrival{Float64,Float64},1}:
  ∠-45.0°  2↑  3↓ ∠-45.0° |  91.89 ms | -109.6 dB ϕ  27.5° ⤷
  ∠-40.0°  2↑  2↓ ∠ 40.0° |  84.82 ms | -86.8 dB ϕ  22.1° ⤷
  ∠-35.0°  1↑  2↓ ∠-35.0° |  79.32 ms | -85.9 dB ϕ-152.3° ⤷
@@ -77,18 +77,18 @@ julia&gt; rx = AcousticReceiver(100.0, -10.0);</code></pre><p>This defines an om
  ∠ 45.0°  3↑  2↓ ∠ 45.0° |  91.89 ms | -87.7 dB ϕ-161.7° ⤷
 
 julia&gt; plot(env; sources=[tx], rays=r)</code></pre><p><img src="images/rays1.png" alt/></p><h3 id="Arrivals-and-transmission-loss"><a class="docs-heading-anchor" href="#Arrivals-and-transmission-loss">Arrivals &amp; transmission loss</a><a id="Arrivals-and-transmission-loss-1"></a><a class="docs-heading-anchor-permalink" href="#Arrivals-and-transmission-loss" title="Permalink"></a></h3><p>Often, we are interested in the arrival structure or transmission loss at a receiver. Getting the arrivals is quite similar to getting eigenrays, but the ray paths are not stored:</p><pre><code class="language-julia-repl">julia&gt; a = arrivals(pm, tx, rx)
-7-element Array{UnderwaterAcoustics.RayArrival{Float64,Complex{Float64},Float64,Float64,Missing},1}:
+7-element Array{UnderwaterAcoustics.RayArrival{Float64,Missing},1}:
  ∠ -2.9°  0↑  0↓ ∠  2.9° |  65.05 ms | -40.0 dB ϕ  -0.0°
- ∠  8.5°  1↑  0↓ ∠  8.5° |  65.70 ms | -41.0 dB ϕ 180.0°
+ ∠  8.5°  1↑  0↓ ∠  8.5° |  65.70 ms | -40.1 dB ϕ-180.0°
  ∠-14.0°  0↑  1↓ ∠-14.0° |  66.97 ms | -59.0 dB ϕ  60.5°
- ∠ 19.3°  1↑  1↓ ∠-19.3° |  68.84 ms | -61.7 dB ϕ-141.7°
- ∠-24.2°  1↑  1↓ ∠ 24.2° |  71.25 ms | -62.6 dB ϕ-153.8°
- ∠ 28.8°  2↑  1↓ ∠ 28.8° |  74.15 ms | -63.5 dB ϕ  19.4°
- ∠-33.0°  1↑  2↓ ∠-33.0° |  77.49 ms | -85.7 dB ϕ-149.4°</code></pre><p>If we prefer, we can plot these arrivals as an impulse response (sampled at 44.1 kSa/s, in this case):</p><pre><code class="language-julia-repl">julia&gt; plot(abs.(impulseresponse(a, 44100)); xlabel=&quot;Sample #&quot;, legend=false)</code></pre><p><img src="images/ir1.png" alt/></p><p>Or we can get the complex transfer coefficient or the transmission loss in dB:</p><pre><code class="language-julia-repl">julia&gt; transfercoef(pm, tx, rx)
-0.012626450940400389 + 0.013059816794863028im
+ ∠ 19.3°  1↑  1↓ ∠-19.3° |  68.84 ms | -61.3 dB ϕ-141.7°
+ ∠-24.2°  1↑  1↓ ∠ 24.2° |  71.25 ms | -62.3 dB ϕ-153.8°
+ ∠ 28.8°  2↑  1↓ ∠ 28.8° |  74.15 ms | -63.0 dB ϕ  19.4°
+ ∠-33.0°  1↑  2↓ ∠-33.0° |  77.49 ms | -85.4 dB ϕ-149.4°</code></pre><p>If we prefer, we can plot these arrivals as an impulse response (sampled at 44.1 kSa/s, in this case):</p><pre><code class="language-julia-repl">julia&gt; plot(abs.(impulseresponse(a, 44100; reltime=true)); xlabel=&quot;Sample #&quot;, legend=false)</code></pre><p><img src="images/ir1.png" alt/></p><p>The <code>reltime=true</code> option generates an impulse response with time relative to the first arrival (default is relative to transmission time).</p><p>If we want, we can also get the complex transfer coefficient or the transmission loss in dB:</p><pre><code class="language-julia-repl">julia&gt; transfercoef(pm, tx, rx)
+0.013183979186458052 - 0.012267750240848727im
 
 julia&gt; transmissionloss(pm, tx, rx)
-34.81504382385067</code></pre><p>You can also pass in arrays of sources and receivers, if you want many transmission losses to be computed simultanously. Some models are able to compute transmission loss on a Cartesion grid very efficiently. This is useful to plot transmission loss as a function of space.</p><p>To define a 1000×200 Cartesion grid with 0.1 m spacing:</p><pre><code class="language-julia-repl">julia&gt; rx = AcousticReceiverGrid2D(1.0, 0.1, 1000, -20.0, 0.1, 200)
+34.89032959932541</code></pre><p>You can also pass in arrays of sources and receivers, if you want many transmission losses to be computed simultanously. Some models are able to compute transmission loss on a Cartesion grid very efficiently. This is useful to plot transmission loss as a function of space.</p><p>To define a 1000×200 Cartesion grid with 0.1 m spacing:</p><pre><code class="language-julia-repl">julia&gt; rx = AcousticReceiverGrid2D(1.0, 0.1, 1000, -20.0, 0.1, 200)
 1000×200 AcousticReceiverGrid2D{Float64}:
  BasicAcousticReceiver((1.0, 0.0, -20.0))    …  BasicAcousticReceiver((1.0, 0.0, -0.1))
  BasicAcousticReceiver((1.1, 0.0, -20.0))       BasicAcousticReceiver((1.1, 0.0, -0.1))
@@ -98,15 +98,15 @@ julia&gt; transmissionloss(pm, tx, rx)
  BasicAcousticReceiver((100.8, 0.0, -20.0))     BasicAcousticReceiver((100.8, 0.0, -0.1))
  BasicAcousticReceiver((100.9, 0.0, -20.0))     BasicAcousticReceiver((100.9, 0.0, -0.1))</code></pre><p>We can then compute the transmission loss over the grid:</p><pre><code class="language-julia-repl">julia&gt; x = transmissionloss(pm, tx, rx)
 1000×200 Array{Float64,2}:
- 19.0615  19.2409  19.7973  18.9816  …  10.3091  11.5716   9.09088  16.5205
- 19.0662  19.2454  19.8034  18.9854     10.4667  11.5171   9.09217  16.5845
- 19.0924  19.2709  19.8367  19.0079  …  11.2588  11.2684   9.09648  16.881
- 19.1011  19.2794  19.8477  19.0158     11.499   11.2005   9.09736  16.9633
-  ⋮                 ⋮                ⋱   ⋮                 ⋮
- 36.537   36.8455  38.2986  39.8524     46.4645  50.3007  51.5835   53.2666
- 36.6307  36.9485  38.4409  40.0359  …  46.7645  50.7011  51.9972   53.3554
- 36.6801  37.0024  38.5142  40.1293     46.9185  50.9075  52.2096   53.3968
- 36.838   37.174   38.7423  40.4151     47.396   51.5509  52.8682   53.5073
+ 19.0129  19.12    19.5288  …   9.02602   8.23644   8.86055  11.1436  16.4536
+ 19.017   19.1239  19.5324      9.02506   8.26487   8.90641  11.2     16.5155
+ 19.0217  19.1284  19.5366  …   9.02392   8.29514   8.95536  11.2602  16.5817
+ 19.0271  19.1336  19.5415      9.0226    8.32706   9.00713  11.3239  16.6519
+  ⋮                 ⋮       ⋱              ⋮                           ⋮
+ 35.5238  35.4909  35.4954     56.1556   57.7909   59.9858   63.1631  68.5643
+ 35.5742  35.5448  35.5526  …  56.5185   58.1488   60.3365   63.5039  68.8852
+ 35.6261  35.6     35.611      56.8971   58.522    60.7023   63.8594  69.2206
+ 35.6793  35.6565  35.6704     57.2926   58.9118   61.0841   64.2306  69.5712
 
 julia&gt; plot(env; receivers=rx, transmissionloss=x)</code></pre><p><img src="images/txloss1.png" alt/></p><h3 id="Acoustic-simulations"><a class="docs-heading-anchor" href="#Acoustic-simulations">Acoustic simulations</a><a id="Acoustic-simulations-1"></a><a class="docs-heading-anchor-permalink" href="#Acoustic-simulations" title="Permalink"></a></h3><p>Apart from propagation modeling, we can also setup a simulation with various sources and receviers.</p><p>We demonstrate this by setting up a scenario with two pingers (1 kHz, 10 ms pulse with 1 Hz PRR; 2 kHz, 20 ms pulse with 2 Hz PRR) with a source level of 170 dB re µPa @ 1m, at two locations, and deploying two omnidirectional receviers to record them:</p><pre><code class="language-julia-repl">julia&gt; using DSP: db2amp
 julia&gt; tx = [
@@ -134,4 +134,4 @@ SampledSignal @ 8000.0 Hz, 16000×2 Array{Float64,2}:
    66193.3  -497239.0
  -144031.0  -321312.0
  -260200.0  -235680.0</code></pre><p>To visualize the recording, we plot a spectrogram of the signal at the first receiver with the <code>SignalAnalysis.jl</code> package:</p><pre><code class="language-julia-repl">julia&gt; using SignalAnalysis
-julia&gt; specgram(s[:,1])</code></pre><p><img src="images/spec1.png" alt/></p><p>We can clearly see the two pingers, as well as the ambient noise generated with the noise model defined in the environment description.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="uw_basic.html">« Underwater acoustics</a><a class="docs-footer-nextpage" href="pm_envref.html">Environmental model reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Sunday 22 November 2020 18:56">Sunday 22 November 2020</span>. Using Julia version 1.3.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+julia&gt; specgram(s[:,1])</code></pre><p><img src="images/spec1.png" alt/></p><p>We can clearly see the two pingers, as well as the ambient noise generated with the noise model defined in the environment description.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="uw_basic.html">« Underwater acoustics</a><a class="docs-footer-nextpage" href="pm_envref.html">Environmental model reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Monday 23 November 2020 08:14">Monday 23 November 2020</span>. Using Julia version 1.3.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

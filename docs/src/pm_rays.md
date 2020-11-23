@@ -31,12 +31,12 @@ using Plots
 env = UnderwaterEnvironment(
   seasurface = SeaState2,
   seabed = SandyClay,
-  ssp = SampledSSP(0.0:20.0:40.0, [1540.0, 1510.0, 1520.0], :smooth),
-  bathymetry = SampledDepth(0.0:50.0:100.0, [40.0, 35.0, 38.0], :linear)
+  ssp = SampledSSP(0.0:20.0:40.0, [1540.0, 1510.0, 1510.0], :linear),
+  bathymetry = SampledDepth(0.0:100.0:200.0, [40.0, 35.0, 38.0], :linear)
 )
-pm = RaySolver(env; solvertol=1e-5)
+pm = RaySolver(env; nbeams=1000)
 tx = AcousticSource(0.0, -5.0, 1000.0)
-rx = AcousticReceiver(100.0, -10.0)
+rx = AcousticReceiver(200.0, -20.0)
 r = eigenrays(pm, tx, rx)
 plot(env; sources=[tx], receivers=[rx], rays=r)
 ```

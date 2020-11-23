@@ -13,8 +13,8 @@ The RaySolver is a differentiable 2½D Gaussian beam tracer. It is similar to [B
 Additional options available with [`RaySolver`](@ref):
 
 - `nbeams` -- number of beams used for ray tracing (default: auto)
-- `minangle` -- minimum beam angle in degrees (default: -80°)
-- `maxangle` -- maximum beam angle in degrees (default: 80°)
+- `minangle` -- minimum beam angle in radians (default: -80°)
+- `maxangle` -- maximum beam angle in radians (default: 80°)
 - `ds` -- ray trace step size in meters (default: 1.0)
 - `atol` -- absolute tolerence of differential equation solver (default: 1e-4)
 - `rugocity` -- measure of small-scale variations of surfaces (default: 1.5)

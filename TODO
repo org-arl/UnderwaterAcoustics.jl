@@ -4,6 +4,9 @@ General:
   ☐ Scatterers
   ☐ Add arbitrary signal source
 
+Bellhop:
+  ✔ Add support for Gaussian beams @done(20-11-23 13:29)
+
 RaySolver:
   ☐ Find a way to allow full derivative through a dependent θ
   ☐ Limit beamwidth to deal with caustics?

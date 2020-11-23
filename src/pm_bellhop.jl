@@ -9,23 +9,24 @@ struct Bellhop{T} <: PropagationModel{T}
   nbeams::Int
   minangle::Float32
   maxangle::Float32
+  gaussian::Bool
   debug::Bool
-  function Bellhop(env, nbeams, minangle, maxangle, debug)
+  function Bellhop(env, nbeams, minangle, maxangle, gaussian, debug)
     nbeams < 0 && (nbeams = 0)
     -π/2 ≤ minangle ≤ π/2 || throw(ArgumentError("minangle should be between -π/2 and π/2"))
     -π/2 ≤ maxangle ≤ π/2 || throw(ArgumentError("maxangle should be between -π/2 and π/2"))
     minangle < maxangle || throw(ArgumentError("maxangle should be more than minangle"))
-    new{typeof(env)}(check(Bellhop, env), nbeams, Float32(minangle), Float32(maxangle), debug)
+    new{typeof(env)}(check(Bellhop, env), nbeams, Float32(minangle), Float32(maxangle), gaussian, debug)
   end
 end
 
 """
-    Bellhop(env; debug=false)
-    Bellhop(env, nbeams, minangle, maxangle, debug)
+    Bellhop(env; gaussian=false, debug=false)
+    Bellhop(env, nbeams, minangle, maxangle, gaussian, debug)
 
 Create a Bellhop propagation model.
 """
-Bellhop(env; debug=false) = Bellhop(env, 0, -80°, 80°, debug)
+Bellhop(env; gaussian=false, debug=false) = Bellhop(env, 0, -80°, 80°, gaussian, debug)
 
 ### interface functions
 
@@ -222,7 +223,7 @@ function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArra
       printarray(io, -rx.zrange)
       printarray(io, rx.xrange ./ 1000.0)
     end
-    println(io, "'", taskcode, "'")
+    println(io, "'", taskcode, model.gaussian ? "B'" : "'")
     @printf(io, "%d\n", nbeams)
     @printf(io, "%0.6f %0.6f /\n", rad2deg(minangle), rad2deg(maxangle))
     @printf(io, "0.0 %0.6f %0.6f\n", 1.01*waterdepth, 1.01 * maxr / 1000.0)

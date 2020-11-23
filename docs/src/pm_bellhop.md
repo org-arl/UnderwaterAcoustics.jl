@@ -21,8 +21,9 @@ julia> models()
 Additional options available with [`Bellhop`](@ref):
 
 - `nbeams` -- number of beams used for ray tracing (default: auto)
-- `minangle` -- minimum beam angle in degrees (default: auto)
-- `maxangle` -- maximum beam angle in degrees (default: auto)
+- `minangle` -- minimum beam angle in radians (default: -80°)
+- `maxangle` -- maximum beam angle in radians (default: 80°)
+- `gaussian` -- geometric rays if `false`, Gaussian beams if `true` (default: `false`)
 - `debug` -- if `true`, intermediate Bellhop files are made available for user inspection (default: `false`)
 
 **Example:**
@@ -37,10 +38,11 @@ env = UnderwaterEnvironment(
   ssp = SampledSSP(0.0:20.0:40.0, [1540.0, 1510.0, 1520.0], :smooth),
   bathymetry = SampledDepth(0.0:50.0:100.0, [40.0, 35.0, 38.0], :linear)
 )
-pm = Bellhop(env)
+pm = Bellhop(env; gaussian=true)
 tx = AcousticSource(0.0, -5.0, 1000.0)
-r = rays(pm, tx, -60°:2°:60°, 100.0)
-plot(env; sources=[tx], rays=r)
+rx = AcousticReceiverGrid2D(1.0, 0.1, 1000, -40.0, 0.2, 200)
+x = transmissionloss(pm, tx, rx)
+plot(env; receivers=rx, transmissionloss=x)
 ```
 
-![](images/rays2.png)
+![](images/txloss2.png)

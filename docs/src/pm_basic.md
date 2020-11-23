@@ -133,14 +133,14 @@ NOTE: All coordinates are specified in meters as (x, y, z) for 3D or (x, z) for 
 Now that we have an environment, a propation model, a transmitter and a receiver, we can modeling. First, we ask for all eigenrays between the transmitter and receiver:
 ```julia-repl
 julia> r = eigenrays(pm, tx, rx)
-7-element Array{UnderwaterAcoustics.RayArrival{Float64,Complex{Float64},Float64,Float64,Float64},1}:
+7-element Array{UnderwaterAcoustics.RayArrival{Float64,Float64},1}:
  ∠ -2.9°  0↑  0↓ ∠  2.9° |  65.05 ms | -40.0 dB ϕ  -0.0° ⤷
- ∠  8.5°  1↑  0↓ ∠  8.5° |  65.70 ms | -41.0 dB ϕ 180.0° ⤷
+ ∠  8.5°  1↑  0↓ ∠  8.5° |  65.70 ms | -40.1 dB ϕ-180.0° ⤷
  ∠-14.0°  0↑  1↓ ∠-14.0° |  66.97 ms | -59.0 dB ϕ  60.5° ⤷
- ∠ 19.3°  1↑  1↓ ∠-19.3° |  68.84 ms | -61.7 dB ϕ-141.7° ⤷
- ∠-24.2°  1↑  1↓ ∠ 24.2° |  71.25 ms | -62.6 dB ϕ-153.8° ⤷
- ∠ 28.8°  2↑  1↓ ∠ 28.8° |  74.15 ms | -63.5 dB ϕ  19.4° ⤷
- ∠-33.0°  1↑  2↓ ∠-33.0° |  77.49 ms | -85.7 dB ϕ-149.4° ⤷
+ ∠ 19.3°  1↑  1↓ ∠-19.3° |  68.84 ms | -61.3 dB ϕ-141.7° ⤷
+ ∠-24.2°  1↑  1↓ ∠ 24.2° |  71.25 ms | -62.3 dB ϕ-153.8° ⤷
+ ∠ 28.8°  2↑  1↓ ∠ 28.8° |  74.15 ms | -63.0 dB ϕ  19.4° ⤷
+ ∠-33.0°  1↑  2↓ ∠-33.0° |  77.49 ms | -85.4 dB ϕ-149.4° ⤷
 ```
 
 For each eigenray, this shows us the launch angle, number of surface bounces, number of bottom bounces, arrival angle, travel time, transmission loss along that ray, and phase change. The last "`⤷`" symbol indicates that the complete ray path is also available. We can plot the ray paths:
@@ -154,7 +154,7 @@ Th red star is the transmitter and the blue circle is the receiver. The stronger
 We might sometimes want to see all rays from the transmitter at certain angular spacing (-45°:5°:45°) and a given range (100 m):
 ```julia-repl
 julia> r = rays(pm, tx, -45°:5°:45°, 100.0)
-19-element Array{UnderwaterAcoustics.RayArrival{Float64,Complex{Float64},Float64,Float64,Float64},1}:
+19-element Array{UnderwaterAcoustics.RayArrival{Float64,Float64},1}:
  ∠-45.0°  2↑  3↓ ∠-45.0° |  91.89 ms | -109.6 dB ϕ  27.5° ⤷
  ∠-40.0°  2↑  2↓ ∠ 40.0° |  84.82 ms | -86.8 dB ϕ  22.1° ⤷
  ∠-35.0°  1↑  2↓ ∠-35.0° |  79.32 ms | -85.9 dB ϕ-152.3° ⤷
@@ -180,29 +180,31 @@ julia> plot(env; sources=[tx], rays=r)
 Often, we are interested in the arrival structure or transmission loss at a receiver. Getting the arrivals is quite similar to getting eigenrays, but the ray paths are not stored:
 ```julia-repl
 julia> a = arrivals(pm, tx, rx)
-7-element Array{UnderwaterAcoustics.RayArrival{Float64,Complex{Float64},Float64,Float64,Missing},1}:
+7-element Array{UnderwaterAcoustics.RayArrival{Float64,Missing},1}:
  ∠ -2.9°  0↑  0↓ ∠  2.9° |  65.05 ms | -40.0 dB ϕ  -0.0°
- ∠  8.5°  1↑  0↓ ∠  8.5° |  65.70 ms | -41.0 dB ϕ 180.0°
+ ∠  8.5°  1↑  0↓ ∠  8.5° |  65.70 ms | -40.1 dB ϕ-180.0°
  ∠-14.0°  0↑  1↓ ∠-14.0° |  66.97 ms | -59.0 dB ϕ  60.5°
- ∠ 19.3°  1↑  1↓ ∠-19.3° |  68.84 ms | -61.7 dB ϕ-141.7°
- ∠-24.2°  1↑  1↓ ∠ 24.2° |  71.25 ms | -62.6 dB ϕ-153.8°
- ∠ 28.8°  2↑  1↓ ∠ 28.8° |  74.15 ms | -63.5 dB ϕ  19.4°
- ∠-33.0°  1↑  2↓ ∠-33.0° |  77.49 ms | -85.7 dB ϕ-149.4°
+ ∠ 19.3°  1↑  1↓ ∠-19.3° |  68.84 ms | -61.3 dB ϕ-141.7°
+ ∠-24.2°  1↑  1↓ ∠ 24.2° |  71.25 ms | -62.3 dB ϕ-153.8°
+ ∠ 28.8°  2↑  1↓ ∠ 28.8° |  74.15 ms | -63.0 dB ϕ  19.4°
+ ∠-33.0°  1↑  2↓ ∠-33.0° |  77.49 ms | -85.4 dB ϕ-149.4°
 ```
 
 If we prefer, we can plot these arrivals as an impulse response (sampled at 44.1 kSa/s, in this case):
 ```julia-repl
-julia> plot(abs.(impulseresponse(a, 44100)); xlabel="Sample #", legend=false)
+julia> plot(abs.(impulseresponse(a, 44100; reltime=true)); xlabel="Sample #", legend=false)
 ```
 ![](images/ir1.png)
 
-Or we can get the complex transfer coefficient or the transmission loss in dB:
+The `reltime=true` option generates an impulse response with time relative to the first arrival (default is relative to transmission time).
+
+If we want, we can also get the complex transfer coefficient or the transmission loss in dB:
 ```julia-repl
 julia> transfercoef(pm, tx, rx)
-0.012626450940400389 + 0.013059816794863028im
+0.013183979186458052 - 0.012267750240848727im
 
 julia> transmissionloss(pm, tx, rx)
-34.81504382385067
+34.89032959932541
 ```
 
 You can also pass in arrays of sources and receivers, if you want many transmission losses to be computed simultanously. Some models are able to compute transmission loss on a Cartesion grid very efficiently. This is useful to plot transmission loss as a function of space.
@@ -224,15 +226,15 @@ We can then compute the transmission loss over the grid:
 ```julia-repl
 julia> x = transmissionloss(pm, tx, rx)
 1000×200 Array{Float64,2}:
- 19.0615  19.2409  19.7973  18.9816  …  10.3091  11.5716   9.09088  16.5205
- 19.0662  19.2454  19.8034  18.9854     10.4667  11.5171   9.09217  16.5845
- 19.0924  19.2709  19.8367  19.0079  …  11.2588  11.2684   9.09648  16.881
- 19.1011  19.2794  19.8477  19.0158     11.499   11.2005   9.09736  16.9633
-  ⋮                 ⋮                ⋱   ⋮                 ⋮
- 36.537   36.8455  38.2986  39.8524     46.4645  50.3007  51.5835   53.2666
- 36.6307  36.9485  38.4409  40.0359  …  46.7645  50.7011  51.9972   53.3554
- 36.6801  37.0024  38.5142  40.1293     46.9185  50.9075  52.2096   53.3968
- 36.838   37.174   38.7423  40.4151     47.396   51.5509  52.8682   53.5073
+ 19.0129  19.12    19.5288  …   9.02602   8.23644   8.86055  11.1436  16.4536
+ 19.017   19.1239  19.5324      9.02506   8.26487   8.90641  11.2     16.5155
+ 19.0217  19.1284  19.5366  …   9.02392   8.29514   8.95536  11.2602  16.5817
+ 19.0271  19.1336  19.5415      9.0226    8.32706   9.00713  11.3239  16.6519
+  ⋮                 ⋮       ⋱              ⋮                           ⋮
+ 35.5238  35.4909  35.4954     56.1556   57.7909   59.9858   63.1631  68.5643
+ 35.5742  35.5448  35.5526  …  56.5185   58.1488   60.3365   63.5039  68.8852
+ 35.6261  35.6     35.611      56.8971   58.522    60.7023   63.8594  69.2206
+ 35.6793  35.6565  35.6704     57.2926   58.9118   61.0841   64.2306  69.5712
 
 julia> plot(env; receivers=rx, transmissionloss=x)
 ```

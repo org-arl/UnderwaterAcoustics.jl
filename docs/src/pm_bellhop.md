@@ -4,7 +4,11 @@
 CurrentModule = UnderwaterAcoustics
 ```
 
-Bellhop is an interface to the [OALIB Bellhop](http://oalib.hlsresearch.com/AcousticsToolbox/) 2D Gaussian beam tracer. To use Bellhop, you first need to install [OALIB Bellhop](http://oalib.hlsresearch.com/AcousticsToolbox/) and ensure you have it available on your `PATH`. If `UnderwaterAcoustics` can find Bellhop, it will be available in the list of models:
+!!! note
+
+    To use Bellhop, you first need to install [OALIB Bellhop](http://oalib.hlsresearch.com/AcousticsToolbox/) and ensure you have `bellhop.exe` available on your `PATH`.
+
+Bellhop is an interface to the [OALIB Bellhop](http://oalib.hlsresearch.com/AcousticsToolbox/) 2D Gaussian beam tracer. If `UnderwaterAcoustics` can find `bellhop.exe`, the Bellhop model will be available:
 
 ```julia-repl
 julia> models()

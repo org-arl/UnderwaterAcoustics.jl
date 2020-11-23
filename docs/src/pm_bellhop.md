@@ -29,11 +29,18 @@ Additional options available with [`Bellhop`](@ref):
 
 ```julia
 using UnderwaterAcoustics
+using Plots
 
-env = UnderwaterEnvironment(seasurface=Vacuum)
-pm = Bellhop(env; nbeams=180)
+env = UnderwaterEnvironment(
+  seasurface = Vacuum,
+  seabed = SandyClay,
+  ssp = SampledSSP(0.0:20.0:40.0, [1540.0, 1510.0, 1520.0], :smooth),
+  bathymetry = SampledDepth(0.0:50.0:100.0, [40.0, 35.0, 38.0], :linear)
+)
+pm = Bellhop(env)
 tx = AcousticSource(0.0, -5.0, 1000.0)
-rx = AcousticReceiver(100.0, -10.0)
-loss = transmissionloss(pm, tx, rx)
+r = rays(pm, tx, -60°:2°:60°, 100.0)
+plot(env; sources=[tx], rays=r)
 ```
 
+![](images/rays2.png)

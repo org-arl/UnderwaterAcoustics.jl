@@ -1,5 +1,5 @@
 # UnderwaterAcoustics.jl
-### Julia toolbox for Underwater acoustic modeling
+### Julia toolbox for underwater acoustic modeling
 
 ```@meta
 CurrentModule = UnderwaterAcoustics

@@ -10,10 +10,17 @@ The Pekeris ray model is a very fast fully differentiable 2D/3D ray model for is
 
 ```julia
 using UnderwaterAcoustics
+using Plots
 
-env = UnderwaterEnvironment()
+env = UnderwaterEnvironment(
+  seasurface = SeaState2,
+  seabed = SandyClay
+)
 pm = PekerisRayModel(env, 7)    # 7-ray model
 tx = AcousticSource(0.0, -5.0, 1000.0)
 rx = AcousticReceiver(100.0, -10.0)
-loss = transmissionloss(pm, tx, rx)
+r = eigenrays(pm, tx, rx)
+plot(env; sources=[tx], receivers=[rx], rays=r)
 ```
+
+![](images/eigenrays1.png)

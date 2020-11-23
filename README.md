@@ -4,7 +4,7 @@
 [![Codecov](https://codecov.io/gh/org-arl/UnderwaterAcoustics.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/org-arl/UnderwaterAcoustics.jl)
 
 # UnderwaterAcoustics.jl
-### Julia toolbox for Underwater acoustic modeling
+### Julia toolbox for underwater acoustic modeling
 
 ![](https://org-arl.github.io/UnderwaterAcoustics.jl/dev/images/txloss1.png)
 

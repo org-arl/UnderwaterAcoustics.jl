@@ -26,10 +26,19 @@ Additional options available with [`RaySolver`](@ref):
 
 ```julia
 using UnderwaterAcoustics
+using Plots
 
-env = UnderwaterEnvironment()
+env = UnderwaterEnvironment(
+  seasurface = SeaState2,
+  seabed = SandyClay,
+  ssp = SampledSSP(0.0:20.0:40.0, [1540.0, 1510.0, 1520.0], :smooth),
+  bathymetry = SampledDepth(0.0:50.0:100.0, [40.0, 35.0, 38.0], :linear)
+)
 pm = RaySolver(env; solvertol=1e-5)
 tx = AcousticSource(0.0, -5.0, 1000.0)
 rx = AcousticReceiver(100.0, -10.0)
-loss = transmissionloss(pm, tx, rx)
+r = eigenrays(pm, tx, rx)
+plot(env; sources=[tx], receivers=[rx], rays=r)
 ```
+
+![](images/eigenrays2.png)

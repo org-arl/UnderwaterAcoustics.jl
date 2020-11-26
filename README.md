@@ -24,4 +24,4 @@ pkg> add UnderwaterAcoustics
 
 ## Getting started
 
-- Propagation modeling toolkit -- [quickstart guide](https://org-arl.github.io/UnderwaterAcoustics.jl/dev/pm_basic.html)
+- Propagation modeling toolkit -- [quickstart guide](https://org-arl.github.io/UnderwaterAcoustics.jl/stable/pm_basic.html)

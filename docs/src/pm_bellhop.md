@@ -46,3 +46,5 @@ plot(env; receivers=rx, transmissionloss=x)
 ```
 
 ![](images/txloss2.png)
+
+For more information on how to use the propagation models, see [Propagation modeling toolkit](@ref).

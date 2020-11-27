@@ -42,3 +42,5 @@ plot(env; sources=[tx], receivers=[rx], rays=r)
 ```
 
 ![](images/eigenrays2.png)
+
+For more information on how to use the propagation models, see [Propagation modeling toolkit](@ref).

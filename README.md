@@ -25,3 +25,9 @@ pkg> add UnderwaterAcoustics
 ## Getting started
 
 - Propagation modeling toolkit -- [quickstart guide](https://org-arl.github.io/UnderwaterAcoustics.jl/stable/pm_basic.html)
+- Probabilistic propagation modeling -- [tutorial](https://org-arl.github.io/UnderwaterAcoustics.jl/stable/tut_turing.html)
+- Differentiable propagation modeling -- [tutorial](https://org-arl.github.io/UnderwaterAcoustics.jl/stable/tut_autodiff.html)
+
+## Talks & publications
+
+- Mandar Chite, "[Underwater Acoustics in the age of differentiable and probabilistic programming](https://bit.ly/3qrkUJT)", UComms 2020 webinar, 3 December 2020.

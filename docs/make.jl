@@ -22,8 +22,8 @@ makedocs(
       "pm_bellhop.md"
     ],
     "Tutorials" => Any[
-      "tut_autodiff.md",
-      "tut_turing.md"
+      "tut_turing.md",
+      "tut_autodiff.md"
     ]
   ]
 )

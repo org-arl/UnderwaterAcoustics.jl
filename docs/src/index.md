@@ -23,3 +23,7 @@ pkg> add UnderwaterAcoustics
 
 - [Propagation modeling toolkit](@ref) quickstart guide.
 - [Underwater acoustics](@ref) utility functions.
+
+## Talks & publications
+
+- Mandar Chite, "[Underwater Acoustics in the age of differentiable and probabilistic programming](https://bit.ly/3qrkUJT)", UComms 2020 webinar, 3 December 2020.

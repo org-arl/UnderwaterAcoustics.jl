@@ -30,4 +30,4 @@ pkg> add UnderwaterAcoustics
 
 ## Talks & publications
 
-- Mandar Chite, "[Underwater Acoustics in the age of differentiable and probabilistic programming](https://bit.ly/3qrkUJT)", UComms 2020 webinar, 3 December 2020.
+- Mandar Chite, "[Underwater Acoustics in the age of differentiable and probabilistic programming](https://www.facebook.com/watch/live/?v=2473971036238315)", UComms 2020 webinar, 3 December 2020.

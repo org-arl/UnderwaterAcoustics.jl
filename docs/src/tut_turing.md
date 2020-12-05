@@ -2,7 +2,7 @@
 
 !!! note
 
-    This tutorial is based on the example presented in the UComms 2020 webinar talk "[Underwater Acoustics in the age of differentiable and probabilistic programming](https://bit.ly/3qrkUJT)".
+    This tutorial is based on the example presented in the UComms 2020 webinar talk "[Underwater Acoustics in the age of differentiable and probabilistic programming](https://www.facebook.com/watch/live/?v=2473971036238315)".
 
 ## Problem statement
 

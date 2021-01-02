@@ -57,7 +57,7 @@ function chparams(data)
   θ = [100.0, 7.0]    # known initial location
   for row ∈ eachrow(data)
     err(θ) = sum(abs2, pilots(θ[1], θ[2]) .- row.pilots)  # error model
-    soln = optimize(err, θ, GradientDescent(), Optim.Options(iterations=10))
+    soln = optimize(err, θ, GradientDescent(), Optim.Options(iterations=10), autodiff = :forward)
     θ = soln.minimizer
     push!(history, (range=θ[1], depth=θ[2]))
   end

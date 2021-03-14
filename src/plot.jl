@@ -1,4 +1,4 @@
-using Plots
+using RecipesBase
 using Colors
 
 @recipe function plot(env::UnderwaterEnvironment;

@@ -17,11 +17,11 @@ Base.@kwdef struct RaySolver{T1,T2} <: PropagationModel{T1}
   maxangle::Float64 = +80°
   ds::Float64 = 1.0
   atol::Float64 = 1e-4
-  rugocity::Float64 = 1.5
+  rugosity::Float64 = 1.5
   athreshold::Float64 = 1e-5
   solver::T2 = missing
   solvertol::Float64 = 1e-4
-  function RaySolver(env, nbeams, minangle, maxangle, ds, atol, rugocity, athreshold, solver, solvertol)
+  function RaySolver(env, nbeams, minangle, maxangle, ds, atol, rugosity, athreshold, solver, solvertol)
     nbeams < 0 && (nbeams = 0)
     -π/2 ≤ minangle ≤ π/2 || throw(ArgumentError("minangle should be between -π/2 and π/2"))
     -π/2 ≤ maxangle ≤ π/2 || throw(ArgumentError("maxangle should be between -π/2 and π/2"))
@@ -33,12 +33,12 @@ Base.@kwdef struct RaySolver{T1,T2} <: PropagationModel{T1}
         solver = Rodas5()
       end
     end
-    new{typeof(env),typeof(solver)}(check(RaySolver, env), nbeams, minangle, maxangle, ds, atol, rugocity, athreshold, solver, solvertol)
+    new{typeof(env),typeof(solver)}(check(RaySolver, env), nbeams, minangle, maxangle, ds, atol, rugosity, athreshold, solver, solvertol)
   end
 end
 
 """
-    RaySolver(env; nbeams, minangle, maxangle, ds, atol, rugocity, athreshold, solver, solvertol)
+    RaySolver(env; nbeams, minangle, maxangle, ds, atol, rugosity, athreshold, solver, solvertol)
 
 Create a RaySolver propagation model.
 """
@@ -218,7 +218,7 @@ function traceray1(T, model, r0, z0, θ, rmax, ds, p0, q0)
   ∂²c = z -> ForwardDiff.derivative(∂c, z)
   cᵥ = c(z0)
   u0 = [convert(T, r0), z0, cos(θ)/cᵥ, sin(θ)/cᵥ, zero(T), p0, q0]
-  prob = ODEProblem{true}(rayeqns!, u0, (zero(T), one(T) * model.rugocity * (rmax-r0)/cos(θ)), (c, ∂c, ∂²c))
+  prob = ODEProblem{true}(rayeqns!, u0, (zero(T), one(T) * model.rugosity * (rmax-r0)/cos(θ)), (c, ∂c, ∂²c))
   cb = VectorContinuousCallback(
     (out, u, s, i) -> checkray!(out, u, s, i, a, b, rmax),
     (i, ndx) -> terminate!(i), 4; rootfind=true)

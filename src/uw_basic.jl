@@ -123,15 +123,15 @@ $(SIGNATURES)
 Compute resonance frequency of a freely oscillating has bubble in water, given:
 - bubble `radius` in meters
 - `depth` of bubble in water in meters
-- γ : gas ratio of specific heats. Default 1.4 for air 
-- p0: atmospheric pressure. Default 1.013e5 Pa
-- ρ_water: Density of water. Default 1022.476 kg/m³
+- gas ratio of specific heats 'γ', default: 1.4 (for air)
+- atmospheric pressure 'p0', default: 1.013e5
+- density of water 'ρ' in kg/m³, default: 1022.476
 
 This ignores surface-tension, thermal, viscous and acoustic damping effects, and the pressure-volume relationship is taken to be adiabatic.
 Implementation based on Medwin & Clay (1998).
 """
-function bubbleresonance(radius, depth=0.0, γ = 1.4, p0 = 1.013e5, ρ_water = 1022.476)
+function bubbleresonance(radius, depth=0.0, γ=1.4, p0=1.013e5, ρ=1022.476)
   g = 9.80665 #acceleration due to gravity
-  p_air = p0 + ρ_water*g*depth
-  1/(2*π*radius)* √(3*γ*p_air/ρ_water)
+  pₐ = p0 + ρ*g*depth
+  1 / (2π * radius) * √(3γ * pₐ/ρ)
 end

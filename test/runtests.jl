@@ -33,9 +33,9 @@ using ForwardDiff
   @test doppler(10.0, 50000.0) ≈ 50325 atol=0.5
   @test doppler(-10.0, 50000.0) ≈ 49675 atol=0.5
 
-  @test bubbleresonance(100e-6) ≈ 32500.0 atol=0.1
-  @test bubbleresonance(32e-6) ≈ 101562.5 atol=0.1
-  @test bubbleresonance(100e-6, 10.0) ≈ 45962.0 atol=0.1
+  @test bubbleresonance(100e-6) ≈ 32465.562964 atol=0.1
+  @test bubbleresonance(32e-6) ≈ 101454.8842 atol=0.1
+  @test bubbleresonance(100e-6, 10.0) ≈ 45796.45437634176 atol=0.1
 
 end
 

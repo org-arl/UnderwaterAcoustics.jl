@@ -140,7 +140,7 @@ end
 $(SIGNATURES)
 Compute bubble resonant frequency and damping constants. Uses Prosperetti (1977) equations to compute damping coefficients and natural frequency.
 (Thermal effects and damping mechanisms in the forced radial oscillations of gas bubbles in liquids).
-  
+
 Parameters:
 - bubble 'radius' in meters
 - frequency 'f' in Hz
@@ -156,8 +156,7 @@ Returns a 1x4 Array{Float64}
 - b_th : thermal damping coefficient in /s
 - b_ac : radiation damping coefficient in /s
 - b_vs : viscous damping coefficient in /s
-"""  
-using LinearAlgebra
+"""
 function bubble_resonance_and_damping(radius::Real, f::Real; z::Real=0., T::Real=293.15, p0=1.013e5, gas::Integer = 1, c::Real=1500., ρ::Real=1022.476)
     ## Set up the physical constants
     g::Float64 = 9.80665;        # acceleration due to gravity
@@ -170,7 +169,7 @@ function bubble_resonance_and_damping(radius::Real, f::Real; z::Real=0., T::Real
     Dw::Float64 = 1.45e-7;       # thermal diffusivity of water in m^2 s^-1
     μ::Float64 = 1e-3;          # viscosity of water in Pa.s
     σ::Float64 = 0.072;        # water surface tension in N m
-  
+
     # Ambient pressure and internal, equilibrium bubble pressure at depth
     pamb::Float64 = p0 + z*ρ*g; # ambient water pressure - pamb is denoted as p0 in prosperetti 76a
     pineq::Float64 = pamb .+ 2σ./radius; #pg 3. below eq 6
@@ -204,15 +203,15 @@ function bubble_resonance_and_damping(radius::Real, f::Real; z::Real=0., T::Real
       # Specific Heat Ratio for air.  http://www.efunda.com/Materials/common_matl/show_gas.cfm?MatlName=AiradiusC
       # Thermal conductivity of air. This is assumed to be independent of
       # pressure. http://home.worldonline.dk/jsrsw/Tcondvspressure.html
-      M = 0.02896;       # air molecular weight in kg mol^-1 
+      M = 0.02896;       # air molecular weight in kg mol^-1
       Kg = 0.0254;        # thermal conductivity air W/m/K
       Cp = 1.00e3;        # specific heat capacity of air in J Kg^-1 K^-1
       γ = 1.40;       # ratio of specific heats
     end
-    
+
     # Compute bubble gas density from the internal, equilibrium pressure
     ρg::Float64 = M*pineq/(Rg*T);
-    # Compute thermal diffusivity of gas. Note Prosperetti (1976a, p.19) has a 
+    # Compute thermal diffusivity of gas. Note Prosperetti (1976a, p.19) has a
     # typo: Cv,g should be Cp,g as used beloω.
     Dg::Float64 = Kg/(ρg*Cp);
     ## Losses versus frequency for fixed radius and depth.
@@ -221,17 +220,17 @@ function bubble_resonance_and_damping(radius::Real, f::Real; z::Real=0., T::Real
     G3::Float64 = ω.*(radius.^2)./Dw; #pg 19
     F::Number = 1 .+ (1+1im)*.√(0.5*G3);
     kratio::Float64 = Kw/Kg;
-  
+
     β1::Number = .√(0.5γ*G2.* (1im .- G1 .+ .√((1im .- G1).^2 .+ 4im*G1/γ)));
     β2::Number = .√(0.5γ*G2.* (1im .- G1 .- .√((1im .- G1).^2 .+ 4im*G1/γ)));
     λ1::Number = β1.*coth.(β1) .- 1;
     λ2::Number = β2.*coth.(β2) .- 1;
     Γ1::Number = 1im .+ G1 .+ .√((1im .- G1).^2 .+ 4im*G1/γ);
     Γ2::Number = 1im .+ G1 .- .√((1im .- G1).^2 .+ 4im*G1/γ);
-    ψ::Number = (kratio*F.*(Γ2 .- Γ1) .+ λ2.*Γ2 .- λ1.*Γ1)./(kratio.*F.*(λ2.*Γ1 .- λ1.*Γ2)- λ1.*λ2.*(Γ2.-Γ1)); 
-  
-    μth::Float64 = 1/4*(ω.*ρg.*radius.^2).*imag.(ψ);#effective thermal viscosity. 
-    κ::Float64 = 1/3*((ω.^2).*ρg.*radius.^2 ./pineq).*real.(ψ); #polytropic exponent. 
+    ψ::Number = (kratio*F.*(Γ2 .- Γ1) .+ λ2.*Γ2 .- λ1.*Γ1)./(kratio.*F.*(λ2.*Γ1 .- λ1.*Γ2)- λ1.*λ2.*(Γ2.-Γ1));
+
+    μth::Float64 = 1/4*(ω.*ρg.*radius.^2).*imag.(ψ);#effective thermal viscosity.
+    κ::Float64 = 1/3*((ω.^2).*ρg.*radius.^2 ./pineq).*real.(ψ); #polytropic exponent.
     b_th::Float64 = 2μth./(ρ.*radius.^2); #thermal damping
     b_ac::Float64 = 1/2 .* ω.* (ω.*radius/c)./(1 .+ (ω.*radius/c).^2); #acoustic damping
     # b_vs = repeat([2μ./(ρ*radius.^2)], outer = [1,length(ω)]); #viscous damping
@@ -240,14 +239,14 @@ function bubble_resonance_and_damping(radius::Real, f::Real; z::Real=0., T::Real
     return [ω0,b_th, b_ac, b_vs]
 end
 
-""" 
+"""
 $(SIGNATURES)
-Compute Scattering coefficient due to bubble suspended in water. 
+Compute Scattering coefficient due to bubble suspended in water.
 Damping effects are included, and no assumptions about spherical nature of bubbles made.
 
 Parameters:
 - bubble 'radius' in meters
-- frequency vector 'f' in Hz 
+- frequency vector 'f' in Hz
 - bubble 'depth' default: 0 m
 - water temperature 'T' in Kelvin. default 293.15K
 - atmospheric pressure 'p0' in Pa. default: 1.013e5 Pa

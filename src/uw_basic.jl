@@ -124,14 +124,147 @@ Compute resonance frequency of a freely oscillating has bubble in water, given:
 - bubble `radius` in meters
 - `depth` of bubble in water in meters
 - gas ratio of specific heats 'γ', default: 1.4 (for air)
-- atmospheric pressure 'p0', default: 1.013e5
+- atmospheric pressure 'p0' in Pa, default: 1.013e5
 - density of water 'ρ' in kg/m³, default: 1022.476
 
 This ignores surface-tension, thermal, viscous and acoustic damping effects, and the pressure-volume relationship is taken to be adiabatic.
 Implementation based on Medwin & Clay (1998).
 """
-function bubbleresonance(radius, depth=0.0, γ=1.4, p0=1.013e5, ρ=1022.476)
+function bubbleresonance(radius::Real, depth::Real=0.0, γ::Real=1.4, p0::Real=1.013e5, ρ::Real=1022.476)
   g = 9.80665 #acceleration due to gravity
   pₐ = p0 + ρ*g*depth
   1 / (2π * radius) * √(3γ * pₐ/ρ)
+end
+
+"""
+$(SIGNATURES)
+Compute bubble resonant frequency and damping constants. Uses Prosperetti (1977) equations to compute damping coefficients and natural frequency.
+(Thermal effects and damping mechanisms in the forced radial oscillations of gas bubbles in liquids).
+  
+Parameters:
+- bubble 'radius' in meters
+- frequency 'f' in Hz
+- water depth 'z' in meters. default: 0
+- bubble gas and water temperature 'T' in Kelvin. default: 293.15
+- atmospheric pressure 'p0' in Pa. default: 101.3e5
+- 'gas' number. If 2: Oxygen, 3: Nitrogen, 4: Methane, any other number: Air. default: 1
+- Soundspeed 'c' in m/s. default: 1500
+- seawater density 'ρ' in kg m^-3. default: 1022.476
+
+Returns a 1x4 Array{Float64}
+- ω0   : bubble natural frequency in radians/s
+- b_th : thermal damping coefficient in /s
+- b_ac : radiation damping coefficient in /s
+- b_vs : viscous damping coefficient in /s
+"""  
+using LinearAlgebra
+function bubble_resonance_and_damping(radius::Real, f::Real; z::Real=0., T::Real=293.15, p0=1.013e5, gas::Integer = 1, c::Real=1500., ρ::Real=1022.476)
+    ## Set up the physical constants
+    g::Float64 = 9.80665;        # acceleration due to gravity
+    Rg::Float64 = 8.314472;      # universal gas constant in Joules K^-1 mol^-1
+    # Water Properties. These are assumed independent of pressure
+    # Seawater density.
+    # http://www.es.flinders.edu.au/~mattom/Utilities/density.html
+    # T = 20 Celsius, salinity = 32 ppt, pressure = 0
+    Kw::Float64 = 0.58;          # thermal conductivity water W/m/K
+    Dw::Float64 = 1.45e-7;       # thermal diffusivity of water in m^2 s^-1
+    μ::Float64 = 1e-3;          # viscosity of water in Pa.s
+    σ::Float64 = 0.072;        # water surface tension in N m
+  
+    # Ambient pressure and internal, equilibrium bubble pressure at depth
+    pamb::Float64 = p0 + z*ρ*g; # ambient water pressure - pamb is denoted as p0 in prosperetti 76a
+    pineq::Float64 = pamb .+ 2σ./radius; #pg 3. below eq 6
+    ω::Float64 = 2π*f;
+    k::Float64 = ω/c;
+    # Set up the gas values
+    # The thermal conductivity and ratio of specific heats came from:
+    # http://www.engineeringtoolbox.com/oxygen-d_978.html
+    # The thermal conductivity came from:
+    # http://www.webelements.com/webelements/elements/text/O/heat.html
+    # M::Float64
+    # Kg::Float64
+    # Cp::Float64
+    # γ::Float64
+    if gas == 2 # Oxygen
+      M = 0.0320;     # Molecular weight Oxygen Kg / mol
+      Kg = 0.02658;    # Thermal conductivity Oxygen W /m /K
+      Cp = 915 + (918-915)/(300-275)*(290-275);     # J/Kg/K (290 K)
+      γ = 1.4;     # ratio of specific heats
+    elseif gas == 3 # Nitrogen
+      M =  0.02802;  # Molecular weight Nitrogen Kg / mol
+      Kg = 0.02583;  # Thermal conductivity Nitrogen W /m /K
+      Cp = 1039 + (1040-1039)/(300-275)*(290-275); # J/Kg/K (290 K)
+      γ = 1.4;   # ratio of specific hetas
+    elseif gas == 4  #Methane
+      M = 0.016;  # Molecular weight methane Kg / mol
+      Kg = 0.0332; # Thermal conductivity methane W /m /K (290 K)
+      Cp = 2191 + (2226-2191)/(300-275)*(290-275);  # J/Kg/K (290 K)
+      γ = 1.31;   # ratio of specific hetas
+    else  #Air
+      # Specific Heat Ratio for air.  http://www.efunda.com/Materials/common_matl/show_gas.cfm?MatlName=AiradiusC
+      # Thermal conductivity of air. This is assumed to be independent of
+      # pressure. http://home.worldonline.dk/jsrsw/Tcondvspressure.html
+      M = 0.02896;       # air molecular weight in kg mol^-1 
+      Kg = 0.0254;        # thermal conductivity air W/m/K
+      Cp = 1.00e3;        # specific heat capacity of air in J Kg^-1 K^-1
+      γ = 1.40;       # ratio of specific heats
+    end
+    
+    # Compute bubble gas density from the internal, equilibrium pressure
+    ρg::Float64 = M*pineq/(Rg*T);
+    # Compute thermal diffusivity of gas. Note Prosperetti (1976a, p.19) has a 
+    # typo: Cv,g should be Cp,g as used beloω.
+    Dg::Float64 = Kg/(ρg*Cp);
+    ## Losses versus frequency for fixed radius and depth.
+    G1::Float64 = M*Dg*ω/(γ*Rg*T); #pg 19
+    G2::Float64 = ω.*(radius.^2)./Dg; #pg 19. essentialy the square of the ratio between the bubble tabus and the thermal penetration depth
+    G3::Float64 = ω.*(radius.^2)./Dw; #pg 19
+    F::Number = 1 .+ (1+1im)*.√(0.5*G3);
+    kratio::Float64 = Kw/Kg;
+  
+    β1::Number = .√(0.5γ*G2.* (1im .- G1 .+ .√((1im .- G1).^2 .+ 4im*G1/γ)));
+    β2::Number = .√(0.5γ*G2.* (1im .- G1 .- .√((1im .- G1).^2 .+ 4im*G1/γ)));
+    λ1::Number = β1.*coth.(β1) .- 1;
+    λ2::Number = β2.*coth.(β2) .- 1;
+    Γ1::Number = 1im .+ G1 .+ .√((1im .- G1).^2 .+ 4im*G1/γ);
+    Γ2::Number = 1im .+ G1 .- .√((1im .- G1).^2 .+ 4im*G1/γ);
+    ψ::Number = (kratio*F.*(Γ2 .- Γ1) .+ λ2.*Γ2 .- λ1.*Γ1)./(kratio.*F.*(λ2.*Γ1 .- λ1.*Γ2)- λ1.*λ2.*(Γ2.-Γ1)); 
+  
+    μth::Float64 = 1/4*(ω.*ρg.*radius.^2).*imag.(ψ);#effective thermal viscosity. 
+    κ::Float64 = 1/3*((ω.^2).*ρg.*radius.^2 ./pineq).*real.(ψ); #polytropic exponent. 
+    b_th::Float64 = 2μth./(ρ.*radius.^2); #thermal damping
+    b_ac::Float64 = 1/2 .* ω.* (ω.*radius/c)./(1 .+ (ω.*radius/c).^2); #acoustic damping
+    # b_vs = repeat([2μ./(ρ*radius.^2)], outer = [1,length(ω)]); #viscous damping
+    b_vs::Float64 = 2μ./(ρ.*radius.^2); #viscous damping
+    ω0::Float64 = .√(3κ .* pineq./(ρ.*radius.^2) .- 2σ./(ρ.*(radius.^3)))# + (k.^2).*(radius.^2)./(1 .+ (k.^2).*(radius.^2)).*(ω.^2) );
+    return [ω0,b_th, b_ac, b_vs]
+end
+
+""" 
+$(SIGNATURES)
+Compute Scattering coefficient due to bubble suspended in water. 
+Damping effects are included, and no assumptions about spherical nature of bubbles made.
+
+Parameters:
+- bubble 'radius' in meters
+- frequency vector 'f' in Hz 
+- bubble 'depth' default: 0 m
+- water temperature 'T' in Kelvin. default 293.15K
+- atmospheric pressure 'p0' in Pa. default: 1.013e5 Pa
+- gas number. If 2: Oxygen, 3: Nitrogen, 4: Methane, any other number: Air. Default is 1.
+- soundspeed 'c' in m/s. default: 1500
+- seawater density 'ρ' in kg m^-3. default: 1022.476
+"""
+function scattering_coeff(radius::Real, f::Real; depth::Real=0, T::Real=293.15, p0::Real=1.013e5, gas::Integer=1, c::Real=1500, ρ::Real=1022.476)
+  ω = 2π*f
+
+  bubbleparams = bubble_resonance_and_damping(radius, f, z=depth, T=T, p0=p0, gas=gas, c=c)
+  ω0 = bubbleparams[1]
+  b_th = bubbleparams[2]
+  b_ac = bubbleparams[3]
+  b_vs = bubbleparams[4]
+  β = b_th .+ b_ac .+ b_vs #sum of all 3 types of damping - thermal, viscous and acoustic
+  denom = (ω0./ω).^2 .- 1 .+ 2im*β.*(1 ./ω)
+  gscat = radius./denom
+  return gscat
 end

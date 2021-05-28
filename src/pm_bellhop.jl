@@ -181,7 +181,7 @@ function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArra
     end
     ss = ssp(env)
     sspi = "S"
-    ss isa SampledSSP && ss.interp === :linear && (sspi = "C")
+    ss isa SampledSSP1D && ss.interp === :linear && (sspi = "C")
     print(io, "'", sspi, "VWT")
     alt = altimetry(env)
     if !(alt isa FlatSurface)
@@ -195,7 +195,7 @@ function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArra
     if ss isa IsoSSP
       @printf(io, "0.0 %0.6f /\n", soundspeed(ss, 0.0, 0.0, 0.0), )
       @printf(io, "%0.6f %0.6f /\n", waterdepth, soundspeed(ss, 0.0, 0.0, 0.0))
-    elseif ss isa SampledSSP
+    elseif ss isa SampledSSP1D
       for i ∈ 1:length(ss.z)
         @printf(io, "%0.6f %0.6f /\n", -ss.z[i], ss.c[i])
       end

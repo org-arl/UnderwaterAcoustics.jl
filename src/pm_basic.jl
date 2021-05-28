@@ -43,14 +43,20 @@ end
 
 """
 $(TYPEDEF)
+Sound speed profile based on discrete measurements.
+"""
+abstract type SampledSSP <: SoundSpeedProfile end
+
+"""
+$(TYPEDEF)
 Sound speed profile based on measurements at discrete depths.
 """
-struct SampledSSP{T1,T2,T3} <: SoundSpeedProfile
+struct SampledSSP1D{T1,T2,T3} <: SampledSSP
   z::Vector{T1}
   c::Vector{T2}
   interp::Symbol
   f::T3
-  function SampledSSP(depth, c, interp)
+  function SampledSSP1D(depth, c, interp)
     if interp === :smooth
       depth isa AbstractRange || throw(ArgumentError("depth must be sampled uniformly and specified as an AbstractRange"))
       f = CubicSplineInterpolation(depth, c; extrapolation_bc=Line())
@@ -64,19 +70,50 @@ struct SampledSSP{T1,T2,T3} <: SoundSpeedProfile
 end
 
 """
+$(TYPEDEF)
+Sound speed profile based on measurements at discrete depths and ranges.
+"""
+struct SampledSSP2D{T1,T2,T3,T4} <: SampledSSP
+  x::Vector{T1}
+  z::Vector{T2}
+  c::Matrix{T3}
+  interp::Symbol
+  f::T4
+  function SampledSSP2D(range, depth, c, interp)
+    if interp === :linear
+      f = extrapolate(interpolate((range, depth), c, Gridded(Linear())), Line())
+    else
+      throw(ArgumentError("Unknown interpolation"))
+    end
+    new{eltype(range),eltype(depth),eltype(c),typeof(f)}(range, -depth, c, interp, f)
+  end
+end
+
+"""
     SampledSSP(depth, c)
     SampledSSP(depth, c, interp)
+    SampledSSP(range, depth, c)
+    SampledSSP(range, depth, c, interp)
 
 Create a sound speed profile based on measurements at discrete depths.
 `interp` may be either `:linear` or `:smooth`, and defaults to `:linear`
-if unspecified.
+if unspecified. `:smooth` is currently only supported for range-independent
+sound speed profiles.
 """
-SampledSSP(depth, c) = SampledSSP(depth, c, :linear)
+SampledSSP(depth, c) = SampledSSP1D(depth, c, :linear)
+SampledSSP(depth, c, interp::Symbol) = SampledSSP1D(depth, c, interp)
+SampledSSP(range, depth, c) = SampledSSP2D(range, depth, c, :linear)
+SampledSSP(range, depth, c, interp::Symbol) = SampledSSP2D(range, depth, c, interp)
 
-soundspeed(ssp::SampledSSP, x, y, z) = ssp.f(-z)
+soundspeed(ssp::SampledSSP1D, x, y, z) = ssp.f(-z)
+soundspeed(ssp::SampledSSP2D, x, y, z) = ssp.f(x, -z)
 
-function Base.show(io::IO, ssp::SampledSSP{T1,T2,T3}) where {T1,T2,T3}
-  print(io, "SampledSSP{", T1, ",", T2, ",", ssp.interp, "}(", length(ssp.z), " points)")
+function Base.show(io::IO, ssp::SampledSSP1D{T1,T2,T3}) where {T1,T2,T3}
+  print(io, "SampledSSP1D{", T1, ",", T2, ",", ssp.interp, "}(", length(ssp.z), " points)")
+end
+
+function Base.show(io::IO, ssp::SampledSSP2D{T1,T2,T3,T4}) where {T1,T2,T3,T4}
+  print(io, "SampledSSP2D{", T1, ",", T2, ",", T3, ",", ssp.interp, "}(", length(ssp.x), " × ", length(ssp.z), " points)")
 end
 
 ### bathymetry models

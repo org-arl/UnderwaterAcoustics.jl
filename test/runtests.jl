@@ -145,6 +145,18 @@ end
   @test soundspeed(s, 0.0, 0.0, -500.0) ≈ 1520.0
   @test soundspeed(s, 0.0, 0.0, -750.0) > 1515.0
   @test soundspeed(s, 0.0, 0.0, -1000.0) ≈ 1510.0
+  s = SampledSSP(0.0:50.0:100.0, 0.0:500.0:1000.0, [1400.0 1420.0 1410.0; 1500.0 1520.0 1510.0; 1300.0 1320.0 1310.0])
+  @test s isa SoundSpeedProfile
+  @test soundspeed(s, 50.0, 0.0, 0.0) ≈ 1500.0
+  @test soundspeed(s, 50.0, 0.0, -250.0) ≈ 1510.0
+  @test soundspeed(s, 50.0, 0.0, -500.0) ≈ 1520.0
+  @test soundspeed(s, 50.0, 0.0, -750.0) ≈ 1515.0
+  @test soundspeed(s, 50.0, 0.0, -1000.0) ≈ 1510.0
+  @test soundspeed(s, 0.0, 0.0, 0.0) ≈ 1400.0
+  @test soundspeed(s, 0.0, 0.0, -250.0) ≈ 1410.0
+  @test soundspeed(s, 0.0, 0.0, -500.0) ≈ 1420.0
+  @test soundspeed(s, 0.0, 0.0, -750.0) ≈ 1415.0
+  @test soundspeed(s, 0.0, 0.0, -1000.0) ≈ 1410.0
 
   @test ConstantDepth(20.0) isa Bathymetry
   @test depth(ConstantDepth(20.0), 0.0, 0.0) == 20.0

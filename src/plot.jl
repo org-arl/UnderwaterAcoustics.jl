@@ -81,7 +81,7 @@ using Colors
   end
 end
 
-@recipe function plot(ssp::SoundSpeedProfile; maxdepth=missing)
+@recipe function plot(ssp::SoundSpeedProfile; maxdepth=missing, x=0.0)
   D = 10.0
   if maxdepth === missing
     ssp isa SampledSSP && (D = maximum(-ssp.z))
@@ -89,7 +89,7 @@ end
     D = maxdepth
   end
   d = 0.0:-0.1:-D
-  c = [soundspeed(ssp, 0.0, 0.0, d1) for d1 ∈ d]
+  c = [soundspeed(ssp, x, 0.0, d1) for d1 ∈ d]
   clim = extrema(c)
   if clim[2] - clim[1] > 50.0
     clim = (round(clim[1]-5.0), round(clim[2]+5.0))

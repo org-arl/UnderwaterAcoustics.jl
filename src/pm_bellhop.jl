@@ -220,7 +220,7 @@ function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArra
       printarray(io, [-location(rx[1])[3]])
       printarray(io, [maxr / 1000.0])
     elseif rx isa AcousticReceiverGrid2D
-      printarray(io, -rx.zrange)
+      printarray(io, reverse(-rx.zrange))
       printarray(io, rx.xrange ./ 1000.0)
     end
     println(io, "'", taskcode, model.gaussian ? "B'" : "'")
@@ -355,6 +355,6 @@ function readshd(filename)
       read!(io, temp)
       pressure[:,ird+1] .= -temp    # negative because Bellhop seems to have a 180° phase inversion
     end
-    pressure
+    reverse(pressure; dims=2)
   end
 end

@@ -67,7 +67,7 @@ function transfercoef(model::Bellhop, tx1::AcousticSource, rx::AcousticReceiverG
   mktempdir(prefix="bellhop_") do dirname
     xrev, zrev = writeenv(model, [tx1], rx, taskcode, dirname)
     bellhop(dirname, model.debug)
-    readshd(joinpath(dirname, "model.shd"); xrev, zrev)
+    readshd(joinpath(dirname, "model.shd"); xrev=xrev, zrev=zrev)
   end
 end
 

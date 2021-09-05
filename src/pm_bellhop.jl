@@ -65,9 +65,9 @@ function transfercoef(model::Bellhop, tx1::AcousticSource, rx::AcousticReceiverG
     throw(ArgumentError("Unknown mode :" * string(mode)))
   end
   mktempdir(prefix="bellhop_") do dirname
-    writeenv(model, [tx1], rx, taskcode, dirname)
+    xrev, zrev = writeenv(model, [tx1], rx, taskcode, dirname)
     bellhop(dirname, model.debug)
-    readshd(joinpath(dirname, "model.shd"))
+    readshd(joinpath(dirname, "model.shd"); xrev, zrev)
   end
 end
 
@@ -162,6 +162,8 @@ function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArra
   all(location(tx1)[2] == 0.0 for tx1 ∈ tx) || throw(ArgumentError("Bellhop 2D requires transmitters in the x-z plane"))
   all(location(rx1)[1] >= 0.0 for rx1 ∈ rx) || throw(ArgumentError("Bellhop requires receivers to be in the +x halfspace"))
   all(location(rx1)[2] == 0.0 for rx1 ∈ rx) || throw(ArgumentError("Bellhop 2D requires receivers in the x-z plane"))
+  xrev = false
+  zrev = false
   env = model.env
   name = split(basename(dirname), "_")[end]
   filename = joinpath(dirname, "model.env")
@@ -220,14 +222,25 @@ function writeenv(model::Bellhop, tx::Vector{<:AcousticSource}, rx::AbstractArra
       printarray(io, [-location(rx[1])[3]])
       printarray(io, [maxr / 1000.0])
     elseif rx isa AcousticReceiverGrid2D
-      printarray(io, reverse(-rx.zrange))
-      printarray(io, rx.xrange ./ 1000.0)
+      d = reverse(-rx.zrange)
+      if first(d) > last(d)
+       d = reverse(d)
+       zrev = true
+      end
+      r = rx.xrange ./ 1000.0
+      if first(r) > last(r)
+       r = reverse(r)
+       xrev = true
+      end
+      printarray(io, d)
+      printarray(io, r)
     end
     println(io, "'", taskcode, model.gaussian ? "B'" : "'")
     @printf(io, "%d\n", nbeams)
     @printf(io, "%0.6f %0.6f /\n", rad2deg(minangle), rad2deg(maxangle))
     @printf(io, "0.0 %0.6f %0.6f\n", 1.01*waterdepth, 1.01 * maxr / 1000.0)
   end
+  xrev, zrev
 end
 
 function printarray(io, a::AbstractVector)
@@ -329,7 +342,7 @@ function readarrivals(filename)
   sort(arrivals; by = a -> a.time)
 end
 
-function readshd(filename)
+function readshd(filename; xrev=false, zrev=false)
   open(filename, "r") do io
     r = read(io, UInt32)
     seek(io, 4r)
@@ -355,6 +368,8 @@ function readshd(filename)
       read!(io, temp)
       pressure[:,ird+1] .= -temp    # negative because Bellhop seems to have a 180° phase inversion
     end
-    reverse(pressure; dims=2)
+    xrev && (pressure = reverse(pressure; dims=1))
+    zrev || (pressure = reverse(pressure; dims=2))
+    pressure
   end
 end

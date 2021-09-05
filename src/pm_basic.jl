@@ -579,8 +579,6 @@ Create a 2D Cartesian grid of omnidirectional acoustic receivers with `nx` × `n
 receviers starting (`xmin`, `zmin`) with step sizes `xstep` and `zstep`.
 """
 function AcousticReceiverGrid2D(xmin, xstep, nx, zmin, zstep, nz)
-  xstep ≥ 0 || throw(ArgumentError("xstep must be non-negative"))
-  zstep ≥ 0 || throw(ArgumentError("zstep must be non-negative"))
   xmin, xstep, zmin, zstep = promote(xmin, xstep, zmin, zstep)
   AcousticReceiverGrid2D(StepRangeLen(xmin, xstep, nx), StepRangeLen(zmin, zstep, nz))
 end

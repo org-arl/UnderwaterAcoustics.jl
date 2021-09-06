@@ -1,12 +1,14 @@
 using SignalAnalysis: signal
 using FFTW: ifft!
 using DSP: nextfastfft
+#using NCDatasets
 
 export SoundSpeedProfile, soundspeed
 export Bathymetry, depth, maxdepth
 export Altimetry, altitude
 export ReflectionModel, reflectioncoef
 export UnderwaterEnvironment, altimetry, bathymetry, ssp, salinity, seasurface, seabed, noise
+export store, load_environment
 export AcousticSource, AcousticReceiver, location, nominalfrequency, phasor, record, recorder
 export PropagationModel, arrivals, transfercoef, transmissionloss, eigenrays, rays
 export NoiseModel
@@ -471,3 +473,33 @@ function Base.show(io::IO, a::Arrival)
       a.raypath === missing || length(a.raypath) == 0 ? "" : " ⤷")
   end
 end
+
+### I/O
+
+"""
+...
+"""
+function store(env::UnderwaterEnvironment, file; mode="c")
+  ds = NCDataset(file,mode)
+  # Define global attributes
+  ds.attrib["title"] = "UnderwaterEnvironment file"
+  close(ds)
+  # store altimetry, ...
+  store(env.altimetry, file, mode="a")
+end
+
+"""
+...
+"""
+function load_environment(file::String)
+  ds = NCDataset(file,"r")
+  if "Altimetry" in ds.attrib
+    if ds.attrib["Altimetry"]=="flat"
+      alti = FlatSurface()
+    end
+  end
+  env = UnderwaterEnvironment(altimetry=alti)
+  close(ds)
+  env
+end
+

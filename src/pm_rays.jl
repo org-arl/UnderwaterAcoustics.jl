@@ -84,14 +84,14 @@ function eigenrays(model::RaySolver, tx1::AcousticSource, rx1::AcousticReceiver;
       push!(erays, eray)
     elseif i > 1 && !isnan(err[i-1]) && !isnan(err[i]) && sign(err[i-1]) * sign(err[i]) == -1
       a, b = ordered(θ[i-1], θ[i])
-      soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, rmax).raypath[end][3] - p2[3]), a, b; abs_tol=1e-6)
+      soln = Optim.optimize(ϕ -> abs2(traceray(model, tx1, ϕ, rmax).raypath[end][3] - p2[3]), a, b; abs_tol=1e-6)
       if Optim.converged(soln) && soln.minimum ≤ 1e-2
         eray = traceray(model, tx1, convert(T, soln.minimizer), rmax, ds)
         push!(erays, eray)
       end
     elseif i > 2 && isnearzero(err[i-2], err[i-1], err[i])
       a, b = ordered(θ[i-2], θ[i])
-      soln = optimize(ϕ -> abs2(traceray(model, tx1, ϕ, rmax).raypath[end][3] - p2[3]), a, b; abs_tol=1e-6)
+      soln = Optim.optimize(ϕ -> abs2(traceray(model, tx1, ϕ, rmax).raypath[end][3] - p2[3]), a, b; abs_tol=1e-6)
       if Optim.converged(soln) && soln.minimum ≤ 1e-2
         eray = traceray(model, tx1, convert(T, soln.minimizer), rmax, ds)
         push!(erays, eray)

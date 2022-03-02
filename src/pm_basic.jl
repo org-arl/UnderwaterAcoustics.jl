@@ -1,6 +1,7 @@
 using Interpolations
 using SignalAnalysis
 using DSP: hilbert
+using NCDatasets
 
 export IsoSSP, MunkSSP, SampledSSP, ConstantDepth, SampledDepth, SampledAltitude
 export ReflectionCoef, FlatSurface, RayleighReflectionCoef, SurfaceLoss
@@ -183,6 +184,12 @@ Altimetry for a flat surface with constant altitude of zero.
 struct FlatSurface <: Altimetry end
 
 altitude(::FlatSurface, x, y) = 0.0
+
+function store(::FlatSurface, file::String; mode="c")
+  ds = NCDataset(file, mode)
+  ds.attrib["Altimetry"] = "flat"
+  close(ds)
+end
 
 """
 $(TYPEDEF)

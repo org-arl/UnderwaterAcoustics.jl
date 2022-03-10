@@ -147,6 +147,26 @@ function kraken(dirname, debug)
   end
 end
 
+function field(dirname, debug)
+  infilebase = joinpath(dirname, "model")
+  outfilename = joinpath(dirname, "output.txt")
+  try
+    run(pipeline(ignorestatus(Cmd(`field.exe $infilebase`; dir=dirname)); stdout=outfilename, stderr=outfilename))
+    if debug
+      @info "Field run completed in $dirname, press ENTER to delete intermediate files..."
+      readline()
+    end
+  catch
+    throw(KrakenError(["Unable to execute field.exe"]))
+  end
+  err = String[]
+  checkerr!(err, outfilename)
+  checkerr!(err, joinpath(dirname, "field.prt"))
+  if length(err) > 0
+    throw(KrakenError(err))
+  end
+end
+
 function checkerr!(err, filename)
   output = false
   open(filename) do f

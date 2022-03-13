@@ -3,7 +3,8 @@ export models
 const allmodels = [
   PekerisRayModel,
   RaySolver,
-  Bellhop
+  Bellhop,
+  Kraken
 ]
 
 """

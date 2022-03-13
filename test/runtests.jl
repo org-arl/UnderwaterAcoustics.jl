@@ -568,6 +568,80 @@ end
 
 end
 
+@testset "pm-kraken" begin
+
+  if Kraken in models()
+
+    env = UnderwaterEnvironment(seasurface=Vacuum)
+    pm = Kraken(env)
+    @test pm isa Kraken
+    x = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -5.0))
+    @test x isa Complex
+    y = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -5.0))
+    @test -10 * log10(abs2(x)) ≈ y atol=0.1
+    x = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -5.0); mode=:incoherent)
+    @test x isa Complex
+    @test imag(x) == 0.0
+    y = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -5.0); mode=:incoherent)
+    @test -10 * log10(abs2(x)) ≈ y atol=0.1
+    x1 = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -5.0))
+    x2 = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -10.0))
+    x3 = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -15.0))
+    x = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), [AcousticReceiver(100.0, -d) for d ∈ 5.0:5.0:15.0])
+    @test x isa AbstractVector
+    @test [x1, x2, x3] == x
+    x = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiverGrid2D(100.0, 0.0, 1, -5.0, -5.0, 3))
+    @test x isa AbstractMatrix
+    @test size(x) == (1, 3)
+    @test [x1 x2 x3] ≈ x
+    x = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiverGrid2D(100.0, 10.0, 3, -5.0, -5.0, 3))
+    @test x isa AbstractMatrix
+    @test size(x) == (3, 3)
+    @test [x1, x2, x3] ≈ x[1,:]
+    x1 = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -5.0))
+    x2 = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -10.0))
+    x3 = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -15.0))
+    x = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), [AcousticReceiver(100.0, -d) for d ∈ 5.0:5.0:15.0])
+    @test x isa AbstractVector
+    @test [x1, x2, x3] == x
+    x = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiverGrid2D(100.0, 0.0, 1, -5.0, -5.0, 3))
+    @test x isa AbstractMatrix
+    @test size(x) == (1, 3)
+    @test [x1 x2 x3] == x
+    x = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiverGrid2D(100.0, 10.0, 3, -5.0, -5.0, 3))
+    @test x isa AbstractMatrix
+    @test size(x) == (3, 3)
+    @test [x1, x2, x3] ≈ x[1,:]
+    env = UnderwaterEnvironment(
+      seasurface=Vacuum,
+      ssp=SampledSSP(0.0:5.0:20.0, [1500.0, 1490.0, 1500.0, 1505.0, 1507.0]),
+      altimetry=SampledAltitude(0.0:25.0:100.0, [0.0, -1.0, 0.0, -1.0, 0.0])    )
+    pm = Kraken(env)
+    @test pm isa Kraken
+    x = transmissionloss(pm, AcousticSource(0.0, -5.0, 5000.0), AcousticReceiverGrid2D(1.0, 1.0, 100, 0.0, -1.0, 20))
+    @test x isa AbstractMatrix
+    @test size(x) == (100, 20)
+
+    struct TestAlt <: Altimetry end
+    UnderwaterAcoustics.altitude(::TestAlt, x, y) = -1.0 + sin(2π*x/10.0)
+
+    env = UnderwaterEnvironment(
+      seasurface=Vacuum,
+      ssp=MunkSSP(),
+      altimetry=TestAlt(),
+    )
+    pm = Kraken(env)
+    @test pm isa Kraken
+    x = transmissionloss(pm, AcousticSource(0.0, -5.0, 5000.0), AcousticReceiverGrid2D(1.0, 1.0, 100, 0.0, -1.0, 20))
+    @test x isa AbstractMatrix
+    @test size(x) == (100, 20)
+
+  else
+    @test_skip true
+  end
+
+end
+
 @testset "pm-raysolver" begin
 
   @test RaySolver in models()

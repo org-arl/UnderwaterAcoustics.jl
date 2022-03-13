@@ -6,27 +6,24 @@ A propagation model based on an external FORTRAN Kraken executable.
 """
 struct Kraken{T} <: PropagationModel{T}
   env::T
-  nbeams::Int
-  minangle::Float32
-  maxangle::Float32
-  gaussian::Bool
+  nmodes::Int
+  nmedia::Int  # number of media (<20)
+  nmesh::Int
   debug::Bool
-  function Kraken(env, nbeams, minangle, maxangle, gaussian, debug)
-    nbeams < 0 && (nbeams = 0)
-    -π/2 ≤ minangle ≤ π/2 || throw(ArgumentError("minangle should be between -π/2 and π/2"))
-    -π/2 ≤ maxangle ≤ π/2 || throw(ArgumentError("maxangle should be between -π/2 and π/2"))
-    minangle < maxangle || throw(ArgumentError("maxangle should be more than minangle"))
-    new{typeof(env)}(check(Kraken, env), nbeams, Float32(minangle), Float32(maxangle), gaussian, debug)
+  function Kraken(env, nmodes, nmedia, nmesh, debug)
+    nmodes > 1 || throw(ArgumentError("number of modes should be a postive integer"))
+    nmedia < 20 || throw(ArgumentError("number of media is recommended to be smaller than 20"))
+    new{typeof(env)}(check(Kraken, env), nmodes, nmedia, nmesh, debug)
   end
 end
 
 """
-    Kraken(env; gaussian=false, debug=false)
-    Kraken(env, nbeams, minangle, maxangle, gaussian, debug)
+    Kraken(env; debug=false)
+    Kraken(env, nbeams, debug)
 
 Create a Kraken propagation model.
 """
-Kraken(env; gaussian=false, debug=false) = Kraken(env, 0, -80°, 80°, gaussian, debug)
+Kraken(env; debug=false) = Kraken(env, 9999, 1, 0,  debug)
 
 ### interface functions
 
@@ -40,36 +37,27 @@ function check(::Type{Kraken}, env::Union{<:UnderwaterEnvironment,Missing})
       end
     end
   else
-    seabed(env) isa RayleighReflectionCoef || throw(ArgumentError("Seabed type not supported"))
-    seasurface(env) === Vacuum || throw(ArgumentError("Only vacuum seasurface supported"))
+    # seabed(env) isa RayleighReflectionCoef || throw(ArgumentError("Seabed type not supported"))
+    # seasurface(env) === Vacuum || throw(ArgumentError("Only vacuum seasurface supported"))  #TODO: check is there is other constraints to check 
   end
   env
 end
 
-function arrivals(model::Kraken, tx1::AcousticSource, rx1::AcousticReceiver)
-  mktempdir(prefix="kraken_") do dirname
-    writeenv(model, [tx1], [rx1], "A", dirname)
-    kraken(dirname, model.debug)
-    readarrivals(joinpath(dirname, "model.arr"))
-  end
-end
 
 function transfercoef(model::Kraken, tx1::AcousticSource, rx::AcousticReceiverGrid2D; mode=:coherent)
   if mode === :coherent
     taskcode = "C"
   elseif mode === :incoherent
     taskcode = "I"
-  elseif mode === :semicoherent
-    taskcode = "S"
   else
     throw(ArgumentError("Unknown mode :" * string(mode)))
   end
   mktempdir(prefix="kraken_") do dirname
-    xrev, zrev = writeenv(model, [tx1], rx, taskcode, dirname)
-    writeflp(...)
+    xrev, zrev = writeenv(model, [tx1], rx, dirname)
+    writeflp(model, [tx1], rx, taskcode, dirname)
     kraken(dirname, model.debug)
     field(dirname, model.debug)
-    readshd(joinpath(dirname, "model.shd"); xrev=xrev, zrev=zrev)
+    readshd_kraken(joinpath(dirname, "model.shd"); xrev=xrev, zrev=zrev, taskcode = taskcode)
   end
 end
 
@@ -78,37 +66,17 @@ function transfercoef(model::Kraken, tx1::AcousticSource, rx1::AcousticReceiver;
     taskcode = "C"
   elseif mode === :incoherent
     taskcode = "I"
-  elseif mode === :semicoherent
-    taskcode = "S"
   else
     throw(ArgumentError("Unknown mode :" * string(mode)))
   end
   mktempdir(prefix="kraken_") do dirname
-    writeenv(model, [tx1], [rx1], taskcode, dirname)
+    writeenv(model, [tx1], [rx1], dirname)
+    writeflp(model, [tx1], [rx1], taskcode, dirname)
     kraken(dirname, model.debug)
-    readshd(joinpath(dirname, "model.shd"))[1]
+    field(dirname, model.debug)
+    readshd_kraken(joinpath(dirname, "model.shd");taskcode = taskcode)[1]
   end
 end
-
-function eigenrays(model::Kraken, tx1::AcousticSource, rx1::AcousticReceiver)
-  mktempdir(prefix="kraken_") do dirname
-    writeenv(model, [tx1], [rx1], "E", dirname)
-    kraken(dirname, model.debug)
-    readrays(joinpath(dirname, "model.ray"))
-  end
-end
-
-function rays(model::Kraken, tx1::AcousticSource, θ::AbstractArray, rmax)
-  θ isa AbstractRange || length(θ) == 1 || throw(ArgumentError("Kraken only supports uniformly spaced angles"))
-  all(-π/2 .< θ .< π/2) || throw(ArgumentError("θ must be between -π/2 and π/2"))
-  mktempdir(prefix="kraken_") do dirname
-    writeenv(model, [tx1], [AcousticReceiver(rmax, 0.0)], "R", dirname; minangle=minimum(θ), maxangle=maximum(θ), nbeams=length(θ))
-    kraken(dirname, model.debug)
-    readrays(joinpath(dirname, "model.ray"))
-  end
-end
-
-rays(model::Kraken, tx1::AcousticSource, θ, rmax) = rays(model, tx1, [θ], rmax)[1]
 
 ### helper functions
 
@@ -140,8 +108,8 @@ function kraken(dirname, debug)
     throw(KrakenError(["Unable to execute kraken.exe"]))
   end
   err = String[]
-  checkerr!(err, outfilename)
-  checkerr!(err, joinpath(dirname, "model.prt"))
+  checkerr_kraken!(err, outfilename)
+  checkerr_kraken!(err, joinpath(dirname, "model.prt"))
   if length(err) > 0
     throw(KrakenError(err))
   end
@@ -160,14 +128,14 @@ function field(dirname, debug)
     throw(KrakenError(["Unable to execute field.exe"]))
   end
   err = String[]
-  checkerr!(err, outfilename)
-  checkerr!(err, joinpath(dirname, "field.prt"))
+  checkerr_kraken!(err, outfilename)
+  checkerr_kraken!(err, joinpath(dirname, "field.prt"))
   if length(err) > 0
     throw(KrakenError(err))
   end
 end
 
-function checkerr!(err, filename)
+function checkerr_kraken!(err, filename)
   output = false
   open(filename) do f
     for s in eachline(f)
@@ -179,8 +147,16 @@ function checkerr!(err, filename)
   end
 end
 
-function writeenv(model::Kraken, tx::Vector{<:AcousticSource}, rx::AbstractArray{<:AcousticReceiver}, taskcode, dirname; minangle=model.minangle, maxangle=model.maxangle, nbeams=model.nbeams)
-  all(location(tx1)[1] == 0.0 for tx1 ∈ tx) || throw(ArgumentError("Kraken requires transmitters at (0, 0, z)"))
+function print_distance(io, a::AbstractVector)
+  println(io, length(a))
+  @printf(io, "%0.6f ", a[1])
+  (length(a) > 1) && @printf(io, "%0.6f ", a[end])
+  println(io, "/")
+end
+
+# Implementation of env file is based on Kraken user manual 4.2.2 p79:
+function writeenv(model::Kraken, tx::Vector{<:AcousticSource}, rx::AbstractArray{<:AcousticReceiver}, dirname; nmedia=model.nmedia, nmesh = model.nmesh)
+  all(location(tx1)[1] == 0.0 for tx1 ∈ tx) || throw(ArgumentError("Kraken requires transmitters at (0, 0, z)")) #TODO: check 
   all(location(tx1)[2] == 0.0 for tx1 ∈ tx) || throw(ArgumentError("Kraken 2D requires transmitters in the x-z plane"))
   all(location(rx1)[1] >= 0.0 for rx1 ∈ rx) || throw(ArgumentError("Kraken requires receivers to be in the +x halfspace"))
   all(location(rx1)[2] == 0.0 for rx1 ∈ rx) || throw(ArgumentError("Kraken 2D requires receivers in the x-z plane"))
@@ -190,34 +166,34 @@ function writeenv(model::Kraken, tx::Vector{<:AcousticSource}, rx::AbstractArray
   name = split(basename(dirname), "_")[end]
   filename = joinpath(dirname, "model.env")
   open(filename, "w") do io
-    println(io, "'", name, "'")
-    flist = [nominalfrequency(tx1) for tx1 ∈ tx]
+    println(io, "'", name, "'")                   # 1) title                
+    flist = [nominalfrequency(tx1) for tx1 ∈ tx]    #TODO: check multiple tx in Kraken
     f = sum(flist) / length(flist)
     maximum(abs.(flist .- f))/f > 0.2 && @warn("Source frequency varies by more than 20% from nominal frequency")
-    @printf(io, "%0.6f\n", f)
-    println(io, "1")
-    if length(rx) == 1
+    @printf(io, "%0.6f\n", f) # 2) frequency (Hz)
+    @printf(io, "%i\n", nmedia)    # 3) number of media
+    if length(rx) == 1 #TODO: check whether we need this block
       maxr = location(rx[1])[1]
     elseif rx isa AcousticReceiverGrid2D
       maxr = maximum(rx.xrange)
     else
       throw(ArgumentError("Receivers must be on a 2D grid"))
     end
-    ss = ssp(env)
-    sspi = "S"
+    ss = ssp(env) 
+    sspi = "S" #TODO: add warnings for "S"  
     ss isa SampledSSP1D && ss.interp === :linear && (sspi = "C")
-    print(io, "'", sspi, "VWT")
+    print(io, "'", sspi, "VWT")   #4) options  #TODO: allow options for other halfspace properties
     alt = altimetry(env)
-    if !(alt isa FlatSurface)
+    if !(alt isa FlatSurface) #TODO: check
       print(io, "*")
       createadfile(joinpath(dirname, "model.ati"), alt, (p...) -> -altitude(p...), maxr, f)
     end
     println(io, "'")
     bathy = bathymetry(env)
     waterdepth = maxdepth(bathy)
-    @printf(io, "1 0.0 %0.6f\n", waterdepth)
+    @printf(io, "%i 0.0 %0.6f\n", nmesh, waterdepth) # 5) medium info
     if ss isa IsoSSP
-      @printf(io, "0.0 %0.6f /\n", soundspeed(ss, 0.0, 0.0, 0.0), )
+      @printf(io, "0.0 %0.6f /\n", soundspeed(ss, 0.0, 0.0, 0.0), )   # 5a) SSP
       @printf(io, "%0.6f %0.6f /\n", waterdepth, soundspeed(ss, 0.0, 0.0, 0.0))
     elseif ss isa SampledSSP1D
       for i ∈ 1:length(ss.z)
@@ -229,20 +205,23 @@ function writeenv(model::Kraken, tx::Vector{<:AcousticSource}, rx::AbstractArray
       end
       floor(waterdepth) != waterdepth && @printf(io, "%0.6f %0.6f /\n", waterdepth, soundspeed(ss, 0.0, 0.0, -waterdepth))
     end
-    print(io, "'A")
-    if !(bathy isa ConstantDepth)
-      print(io, "*")
-      createadfile(joinpath(dirname, "model.bty"), bathy, depth, maxr, f)
-    end
+    print(io, "'A")  # 6) Bottom boundary condition #TODO: check other options
     println(io, "' 0.0") # bottom roughness = 0
     bed = seabed(env)
     c2 = soundspeed(ss, 0.0, 0.0, -waterdepth) * bed.cᵣ
     α = bed.δ * 40π / log(10)      # based on APL-UW TR 9407 (1994), IV-9 equation (4)
-    @printf(io, "%0.6f %0.6f 0.0 %0.6f %0.6f /\n", waterdepth, c2, bed.ρᵣ, α)
-    printarray(io, [-location(tx1)[3] for tx1 ∈ tx])
+    
+    @printf(io, "%0.6f %0.6f 0.0 %0.6f %0.6f 0.0/\n", waterdepth, c2, bed.ρᵣ, α) #additional line because "A" in 6)
+    if !(bathy isa ConstantDepth)  #TODO: Coupled mode
+      #print(io, "*")
+      #createadfile(joinpath(dirname, "model.bty"), bathy, depth, maxr, f)
+      throw(ArgumentError("only range independent batheymetry is allowed"))
+    end
+    @printf(io, "0  %0.6f\n", c2+30)  #7) phase speed limit: CLOW and CHIGH (m/s) #TODO: check how to choose values or make them variales
+    @printf(io,  "%0.6f\n", maxr / 1000.0) # 8) maximum range (km)
+    print_distance(io, [-location(tx1)[3] for tx1 ∈ tx])  # 9) number of source depth, source depths (m)
     if length(rx) == 1
-      printarray(io, [-location(rx[1])[3]])
-      printarray(io, [maxr / 1000.0])
+      print_distance(io, [-location(rx[1])[3]]) # 9) number of receiver depth, receiver depths (m)
     elseif rx isa AcousticReceiverGrid2D
       d = reverse(-rx.zrange)
       if first(d) > last(d)
@@ -254,140 +233,87 @@ function writeenv(model::Kraken, tx::Vector{<:AcousticSource}, rx::AbstractArray
        r = reverse(r)
        xrev = true
       end
-      printarray(io, d)
-      printarray(io, r)
+      print_distance(io, d) # 9) receiver depths (m)
     end
-    println(io, "'", taskcode, model.gaussian ? "B'" : "'")
-    @printf(io, "%d\n", nbeams)
-    @printf(io, "%0.6f %0.6f /\n", rad2deg(minangle), rad2deg(maxangle))
-    @printf(io, "0.0 %0.6f %0.6f\n", 1.01*waterdepth, 1.01 * maxr / 1000.0)
   end
   xrev, zrev
 end
 
-function printarray(io, a::AbstractVector)
-  println(io, length(a))
-  for a1 ∈ a
-    @printf(io, "%0.6f ", a1)
-  end
-  println(io, "/")
-end
 
-function recommendlength(x, f)
-  # recommendation based on nominal half-wavelength spacing
-  λ = 1500.0 / f
-  clamp(round(Int, 2x / λ) + 1, 25, 1000)
-end
-
-function createadfile(filename, data, func, maxr, f)
+#Implementation of .flp file is based on Kraken manual 4.3.1 p93
+function writeflp(model::Kraken, tx::Vector{<:AcousticSource}, rx::AbstractArray{<:AcousticReceiver}, taskcode, dirname; nmodes=model.nmodes)
+  filename = joinpath(dirname, "model.flp")
+  name = split(basename(dirname), "_")[end]
   open(filename, "w") do io
-    interp = "L"
-    if data isa SampledDepth || data isa SampledAltitude
-      x = data.x
-      data.interp !== :linear && (interp = "C")
-    else
-      x = range(0.0, maxr; length=recommendlength(maxr, f))
-    end
-    println(io, "'", interp, "'")
-    println(io, length(x))
-    for i ∈ 1:length(x)
-      @printf(io, "%0.6f %0.6f\n", x[i]/1000.0, func(data, x[i], 0.0))
-    end
-  end
-end
-
-function readrays(filename)
-  rays = RayArrival{Float64,Float64}[]
-  open(filename, "r") do io
-    [readline(io) for i ∈ 1:7]
-    while !eof(io)
-      s = strip(readline(io))
-      length(s) == 0 && break
-      aod = parse(Float64, s)
-      pts, sb, bb = parse.(Int, split(strip(readline(io)) ,r" +"))
-      raypath = Array{NTuple{3,Float64}}(undef, pts)
-      for k ∈ 1:pts
-        x, d = parse.(Float64, split(strip(readline(io)) ,r" +"))
-        raypath[k] = (x, 0.0, -d)
+    println(io, "'", name, "'")        # 1) title                
+    (length(tx) > 1) && (src = "X")  # 2) line source
+    (length(tx) == 1) && (src = "R")  # 2) point source
+    # 2)  Adiabatic mode thoery TODO: add coupled model
+    #TODO: check why coherent option cause error
+    # print(io, "'", src, "A", taskcode, "'\n") #2) Coherent / incoherent mode addition
+    print(io, "'", src, "A", "'\n") #2) Coherent / incoherent mode addition
+    @printf(io, "%i\n", nmodes) #3) Number of modes
+    println(io, "1") #4) Number of profile  #TODO: hardcoded, check for general setting
+    println(io, "0.0") #4) Profile ranges (km)  #TODO: hardcoded, check for general setting
+    if length(rx) == 1
+      print_distance(io, [location(rx[1])[1]./ 1000.0] )  # 6)receiver ranges(km)
+      print_distance(io, [-location(tx1)[3] for tx1 ∈ tx])  # Source depth (m) #TODO: check multiple sources how
+      print_distance(io, [-location(rx1)[3] for rx1 ∈ rx] )  # 6)receiver depth(m)
+      #printarray(io, [0.0])# Number of receiver range displacement (same as NRD)
+      nr = 1
+    elseif rx isa AcousticReceiverGrid2D
+      d = reverse(-rx.zrange)
+      if first(d) > last(d)
+       d = reverse(d)
+       zrev = true
       end
-      push!(rays, RayArrival(NaN64, NaN64, sb, bb, -deg2rad(aod), NaN64, raypath))
-    end
-  end
-  rays
-end
-
-function readarrivals(filename)
-  arrivals = RayArrival{Float64,Missing}[]
-  open(filename, "r") do io
-    s = strip(readline(io))
-    if occursin("2D", s)
-      f = parse(Float64, strip(readline(io)))
-      v = split(strip(readline(io)) ,r" +")
-      n = parse(Int, v[1])
-      txdepth = parse.(Float64, v[2:end])
-      n == length(txdepth) || error("Wrong number of txdepth entries in arrivals")
-      v = split(strip(readline(io)) ,r" +")
-      n = parse(Int, v[1])
-      rxdepth = parse.(Float64, v[2:end])
-      n == length(rxdepth) || error("Wrong number of rxdepth entries in arrivals")
-      v = split(strip(readline(io)) ,r" +")
-      n = parse(Int, v[1])
-      rxrange = parse.(Float64, v[2:end])
-      n == length(rxrange) || error("Wrong number of rxrange entries in arrivals")
-    else
-      v = split(s ,r" +")
-      f = parse(Float64, v[1])
-      n1, n2, n3 = parse.(Int, v[2:4])
-      txdepth = parse.(Float64, split(strip(readline(io)) ,r" +"))
-      rxdepth = parse.(Float64, split(strip(readline(io)) ,r" +"))
-      rxrange = parse.(Float64, split(strip(readline(io)) ,r" +"))
-      n1 == length(txdepth) || error("Wrong number of txdepth entries in arrivals")
-      n2 == length(rxdepth) || error("Wrong number of rxdepth entries in arrivals")
-      n3 == length(rxrange) || error("Wrong number of rxrange entries in arrivals")
-    end
-    for j ∈ 1:length(txdepth)
-      readline(io)
-      for k ∈ 1:length(rxdepth)
-        for m ∈ 1:length(rxrange)
-          count = parse(Int, strip(readline(io)))
-          for n ∈ 1:count
-            v = split(strip(readline(io)) ,r" +")
-            length(v) == 8 || error("Wrong number of data entries in arrivals")
-            A, ph, t, _, aod, aoa = parse.(Float64, v[1:6])
-            sb, bb = parse.(Int, v[7:8])
-            push!(arrivals, RayArrival(t, A * cis(deg2rad(ph)), sb, bb, -deg2rad(aod), deg2rad(aoa)))
-          end
-        end
+      r = rx.xrange ./ 1000.0
+      if first(r) > last(r)
+       r = reverse(r)
+       xrev = true
       end
+      print_distance(io, r)  # Receiver ranges (km)
+      print_distance(io, [-location(tx1)[3] for tx1 ∈ tx])  # Source depth (m)
+      print_distance(io, d)  # 6)receiver depth(m)
+      nr = length(d)
+      #printarray(io, zeros(size(location.(rx))[2]))# Number of receiver range displacement (same as NRD)
     end
+    print_distance(io, zeros(nr))# Number of receiver range displacement (same as NRD)
+    # receiver displacement (M) #TODO: check how to set
   end
-  sort(arrivals; by = a -> a.time)
 end
 
-function readshd(filename; xrev=false, zrev=false)
+
+
+function readshd_kraken(filename; xrev=false, zrev=false, taskcode = "C")
   open(filename, "r") do io
-    r = read(io, UInt32)
+    r = read(io, Int32)#read(io, UInt32)
     seek(io, 4r)
     b = Array{UInt8}(undef, 10)
     read!(io, b)
-    strip(String(b)) == "" || error("Bad shd file format: incorrect ptype")
+    #strip(String(b)) == "" || error("Bad shd file format: incorrect ptype")
     seek(io, 8r)
-    nfreq = read(io, UInt32)
+    nfreq = read(io, Int32)
     nfreq == 1 || error("Bad shd file format: incorrect nfreq")
-    nθ = read(io, UInt32)
+    nθ = read(io, Int32)
     nθ == 1 || error("Bad shd file format: incorrect nθ")
-    nsx = read(io, UInt32)
-    nsy = read(io, UInt32)
-    nsd = read(io, UInt32)
+    nsx = read(io, Int32)
+    nsy = read(io, Int32)
+    nsd = read(io, Int32)
     nsd == 1 || error("Bad shd file format: incorrect nsd")
-    nrd = read(io, UInt32)
-    nrr = read(io, UInt32)
+    nrd = read(io, Int32)
+    nrr = read(io, Int32)
     pressure = Array{ComplexF32}(undef, nrr, nrd)
     for ird ∈ 0:nrd-1
       recnum = 10 + ird
       seek(io, recnum * 4r)
-      temp = Array{ComplexF32}(undef, nrr)
+      temp = Array{Float32}(undef, nrr * 2)
       read!(io, temp)
+      if taskcode == "I"
+        pressure[:,ird+1] .= complex.(temp[1 : 2 : nrr * 2], 0.0) #TODO: WRONG!!
+      else
+        pressure[:,ird+1] .= complex.(temp[1 : 2 : nrr * 2], temp[2 : 2:  nrr * 2])
+      end
     end
     xrev && (pressure = reverse(pressure; dims=1))
     zrev || (pressure = reverse(pressure; dims=2))

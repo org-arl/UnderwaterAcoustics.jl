@@ -11,6 +11,7 @@ Available models:
 | [PekerisRayModel](@ref) | Analytical ray model for Pekeris waveguides | Julia | Fast, differentiable, multi-threaded | Isovelocity, range independent |
 | [RaySolver](@ref) | Ray/Gaussian beam model | Julia | Differentiable, multi-threaded | Tell us and we'll fix them! |
 | [Bellhop](@ref) | Interface to [OALIB Bellhop model](http://oalib.hlsresearch.com/AcousticsToolbox/) | FORTRAN | Well established benchmark model | Does not support automatic differentiation |
+| [Kraken](@ref) | Normal mode model, interface to [OALIB Kraken model](http://oalib.hlsresearch.com/AcousticsToolbox/) | FORTRAN | Allow modeling for low-frequency applications| Does not support automatic differentiation and range-dependent bathymetry |
 
 ## Quickstart guide
 
@@ -65,13 +66,14 @@ julia> plot(ssp(env))
 Once you have an environment, you need to select a propagation model. To get a list of all available models:
 ```julia-repl
 julia> models()
-3-element Array{Any,1}:
+4-element Array{Any,1}:
  PekerisRayModel
  RaySolver
  Bellhop
+ Kraken
 ```
 
-NOTE: `Bellhop` will only be available if you have a working copy of OALIB `bellhop.exe` available on your PATH.
+NOTE: `Bellhop` will only be available if you have a working copy of OALIB `bellhop.exe` available on your PATH. `Kraken` will only be available if you have a working copy of OALIB `kraken.exe` and `field.exe` available on your PATH.
 
 Once you have an environment, you can select a model that can work with that environment:
 ```julia-repl

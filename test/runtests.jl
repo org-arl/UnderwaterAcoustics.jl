@@ -579,11 +579,6 @@ end
     @test x isa Complex
     y = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -5.0))
     @test -10 * log10(abs2(x)) ≈ y atol=0.1
-    x = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -5.0); mode=:incoherent)
-    @test x isa Complex
-    @test imag(x) == 0.0
-    y = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -5.0); mode=:incoherent)
-    @test -10 * log10(abs2(x)) ≈ y atol=0.1
     x1 = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -5.0))
     x2 = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -10.0))
     x3 = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -15.0))
@@ -593,11 +588,11 @@ end
     x = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiverGrid2D(100.0, 0.0, 1, -5.0, -5.0, 3))
     @test x isa AbstractMatrix
     @test size(x) == (1, 3)
-    @test [x1 x2 x3] ≈ x
+    @test [x1 x2 x3] ≈ x 
     x = transfercoef(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiverGrid2D(100.0, 10.0, 3, -5.0, -5.0, 3))
     @test x isa AbstractMatrix
     @test size(x) == (3, 3)
-    @test [x1, x2, x3] ≈ x[1,:]
+    @test [x1, x2, x3] ≈ x[1,:] 
     x1 = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -5.0))
     x2 = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -10.0))
     x3 = transmissionloss(pm, AcousticSource(0.0, -5.0, 1000.0), AcousticReceiver(100.0, -15.0))

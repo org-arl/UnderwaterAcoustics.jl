@@ -25,5 +25,5 @@ Pages   = ["pm_basic.jl"]
 
 ```@autodocs
 Modules = [UnderwaterAcoustics]
-Pages   = ["pm_pekeris.jl", "pm_rays.jl", "pm_bellhop.jl"]
+Pages   = ["pm_pekeris.jl", "pm_rays.jl", "pm_bellhop.jl", "pm_kraken.jl"]
 ```

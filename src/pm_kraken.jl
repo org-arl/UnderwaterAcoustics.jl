@@ -8,22 +8,26 @@ struct Kraken{T} <: PropagationModel{T}
   env::T
   nmodes::Int
   nmedia::Int  # number of media (<20)
-  nmesh::Int
+  nmesh::Int #set to 0 to allow kraken automarucally calculate
+  clow::Float64 #lower speed limit
+  chigh::Float64 # upper phase speed limit. 
   debug::Bool
-  function Kraken(env, nmodes, nmedia, nmesh, debug)
+  function Kraken(env, nmodes, nmedia, nmesh, clow, chigh,  debug)
     nmodes > 1 || throw(ArgumentError("number of modes should be a postive integer"))
     nmedia < 20 || throw(ArgumentError("number of media is recommended to be smaller than 20"))
-    new{typeof(env)}(check(Kraken, env), nmodes, nmedia, nmesh, debug)
+    new{typeof(env)}(check(Kraken, env), nmodes, nmedia, nmesh, clow, chigh, debug)
   end
 end
 
 """
     Kraken(env; debug=false)
-    Kraken(env, nbeams, debug)
+    Kraken(env, nmodes, nmedia, nmesh, clow, chigh, debug)
+    Kraken(env, chigh; debug=false )
 
 Create a Kraken propagation model.
 """
-Kraken(env; debug=false) = Kraken(env, 9999, 1, 0,  debug)
+Kraken(env; debug=false) = Kraken(env, 9999, 1, 0,  0.0, 1600.0, debug)
+Kraken(env, chigh; debug=false) = Kraken(env, 9999, 1, 0,  0.0, chigh, debug)
 
 ### interface functions
 
@@ -37,8 +41,8 @@ function check(::Type{Kraken}, env::Union{<:UnderwaterEnvironment,Missing})
       end
     end
   else
-    # seabed(env) isa RayleighReflectionCoef || throw(ArgumentError("Seabed type not supported"))
-    # seasurface(env) === Vacuum || throw(ArgumentError("Only vacuum seasurface supported"))  #TODO: check is there is other constraints to check 
+    seabed(env) isa RayleighReflectionCoef || throw(ArgumentError("Seabed type not supported"))
+    seasurface(env) === Vacuum || throw(ArgumentError("Only vacuum seasurface supported"))  #TODO: incoperate other surface types 
   end
   env
 end
@@ -48,16 +52,17 @@ function transfercoef(model::Kraken, tx1::AcousticSource, rx::AcousticReceiverGr
   if mode === :coherent
     taskcode = "C"
   elseif mode === :incoherent
+    throw(ArgumentError("Incoherent mode addition is not yet supported")) #TODO: incoherent mode addition
     taskcode = "I"
   else
     throw(ArgumentError("Unknown mode :" * string(mode)))
   end
   mktempdir(prefix="kraken_") do dirname
     xrev, zrev = writeenv(model, [tx1], rx, dirname)
-    writeflp(model, [tx1], rx, taskcode, dirname)
+    writeflp(model, [tx1], rx, dirname)
     kraken(dirname, model.debug)
     field(dirname, model.debug)
-    readshd_kraken(joinpath(dirname, "model.shd"); xrev=xrev, zrev=zrev, taskcode = taskcode)
+    readshd_kraken(joinpath(dirname, "model.shd"); xrev=xrev, zrev=zrev)
   end
 end
 
@@ -65,16 +70,17 @@ function transfercoef(model::Kraken, tx1::AcousticSource, rx1::AcousticReceiver;
   if mode === :coherent
     taskcode = "C"
   elseif mode === :incoherent
+    throw(ArgumentError("Incoherent mode addition is not yet supported")) #TODO: incoherent mode addition
     taskcode = "I"
   else
     throw(ArgumentError("Unknown mode :" * string(mode)))
   end
   mktempdir(prefix="kraken_") do dirname
     writeenv(model, [tx1], [rx1], dirname)
-    writeflp(model, [tx1], [rx1], taskcode, dirname)
+    writeflp(model, [tx1], [rx1], dirname)
     kraken(dirname, model.debug)
     field(dirname, model.debug)
-    readshd_kraken(joinpath(dirname, "model.shd");taskcode = taskcode)[1]
+    readshd_kraken(joinpath(dirname, "model.shd"))[1]
   end
 end
 
@@ -147,16 +153,16 @@ function checkerr_kraken!(err, filename)
   end
 end
 
-function print_distance(io, a::AbstractVector)
+function print_distance(io, a::AbstractVector) #prints start and end values in an array
   println(io, length(a))
   @printf(io, "%0.6f ", a[1])
   (length(a) > 1) && @printf(io, "%0.6f ", a[end])
   println(io, "/")
 end
 
-# Implementation of env file is based on Kraken user manual 4.2.2 p79:
-function writeenv(model::Kraken, tx::Vector{<:AcousticSource}, rx::AbstractArray{<:AcousticReceiver}, dirname; nmedia=model.nmedia, nmesh = model.nmesh)
-  all(location(tx1)[1] == 0.0 for tx1 ∈ tx) || throw(ArgumentError("Kraken requires transmitters at (0, 0, z)")) #TODO: check 
+# Implementation of env file is based on Kraken user manual section 4.2.2 on p79:
+function writeenv(model::Kraken, tx::Vector{<:AcousticSource}, rx::AbstractArray{<:AcousticReceiver}, dirname; nmedia=model.nmedia, nmesh = model.nmesh, clow = model.clow, chigh = model.chigh)
+  all(location(tx1)[1] == 0.0 for tx1 ∈ tx) || throw(ArgumentError("Kraken requires transmitters at (0, 0, z)")) 
   all(location(tx1)[2] == 0.0 for tx1 ∈ tx) || throw(ArgumentError("Kraken 2D requires transmitters in the x-z plane"))
   all(location(rx1)[1] >= 0.0 for rx1 ∈ rx) || throw(ArgumentError("Kraken requires receivers to be in the +x halfspace"))
   all(location(rx1)[2] == 0.0 for rx1 ∈ rx) || throw(ArgumentError("Kraken 2D requires receivers in the x-z plane"))
@@ -167,12 +173,12 @@ function writeenv(model::Kraken, tx::Vector{<:AcousticSource}, rx::AbstractArray
   filename = joinpath(dirname, "model.env")
   open(filename, "w") do io
     println(io, "'", name, "'")                   # 1) title                
-    flist = [nominalfrequency(tx1) for tx1 ∈ tx]    #TODO: check multiple tx in Kraken
+    flist = [nominalfrequency(tx1) for tx1 ∈ tx]    
     f = sum(flist) / length(flist)
     maximum(abs.(flist .- f))/f > 0.2 && @warn("Source frequency varies by more than 20% from nominal frequency")
     @printf(io, "%0.6f\n", f) # 2) frequency (Hz)
     @printf(io, "%i\n", nmedia)    # 3) number of media
-    if length(rx) == 1 #TODO: check whether we need this block
+    if length(rx) == 1 
       maxr = location(rx[1])[1]
     elseif rx isa AcousticReceiverGrid2D
       maxr = maximum(rx.xrange)
@@ -180,15 +186,9 @@ function writeenv(model::Kraken, tx::Vector{<:AcousticSource}, rx::AbstractArray
       throw(ArgumentError("Receivers must be on a 2D grid"))
     end
     ss = ssp(env) 
-    sspi = "S" #TODO: add warnings for "S"  
+    sspi = "S" 
     ss isa SampledSSP1D && ss.interp === :linear && (sspi = "C")
-    print(io, "'", sspi, "VWT")   #4) options  #TODO: allow options for other halfspace properties
-    alt = altimetry(env)
-    if !(alt isa FlatSurface) #TODO: check
-      print(io, "*")
-      createadfile(joinpath(dirname, "model.ati"), alt, (p...) -> -altitude(p...), maxr, f)
-    end
-    println(io, "'")
+    print(io, "'", sspi, "VWT'\n")   #4) options  #TODO: allow options for other halfspace properties
     bathy = bathymetry(env)
     waterdepth = maxdepth(bathy)
     @printf(io, "%i 0.0 %0.6f\n", nmesh, waterdepth) # 5) medium info
@@ -196,6 +196,8 @@ function writeenv(model::Kraken, tx::Vector{<:AcousticSource}, rx::AbstractArray
       @printf(io, "0.0 %0.6f /\n", soundspeed(ss, 0.0, 0.0, 0.0), )   # 5a) SSP
       @printf(io, "%0.6f %0.6f /\n", waterdepth, soundspeed(ss, 0.0, 0.0, 0.0))
     elseif ss isa SampledSSP1D
+      (abs(ss.z[1]) == 0.0) || (throw(ArgumentError("user defined ssp should start at depth = 0")))
+      (abs(ss.z[end]) == waterdepth)  || (throw(ArgumentError("end poiont of user defined ssp should not be smaller than water depth")))
       for i ∈ 1:length(ss.z)
         @printf(io, "%0.6f %0.6f /\n", -ss.z[i], ss.c[i])
       end
@@ -205,19 +207,16 @@ function writeenv(model::Kraken, tx::Vector{<:AcousticSource}, rx::AbstractArray
       end
       floor(waterdepth) != waterdepth && @printf(io, "%0.6f %0.6f /\n", waterdepth, soundspeed(ss, 0.0, 0.0, -waterdepth))
     end
-    print(io, "'A")  # 6) Bottom boundary condition #TODO: check other options
+    print(io, "'A")  # 6) Bottom boundary condition #TODO: allow other options
     println(io, "' 0.0") # bottom roughness = 0
     bed = seabed(env)
     c2 = soundspeed(ss, 0.0, 0.0, -waterdepth) * bed.cᵣ
     α = bed.δ * 40π / log(10)      # based on APL-UW TR 9407 (1994), IV-9 equation (4)
-    
     @printf(io, "%0.6f %0.6f 0.0 %0.6f %0.6f 0.0/\n", waterdepth, c2, bed.ρᵣ, α) #additional line because "A" in 6)
     if !(bathy isa ConstantDepth)  #TODO: Coupled mode
-      #print(io, "*")
-      #createadfile(joinpath(dirname, "model.bty"), bathy, depth, maxr, f)
-      throw(ArgumentError("only range independent batheymetry is allowed"))
+      throw(ArgumentError("only range-independent batheymetry is allowed"))
     end
-    @printf(io, "0  %0.6f\n", c2+30)  #7) phase speed limit: CLOW and CHIGH (m/s) #TODO: check how to choose values or make them variales
+    @printf(io, "%0.6f  %0.6f\n",clow, chigh)  #7) phase speed limit: CLOW and CHIGH (m/s) 
     @printf(io,  "%0.6f\n", maxr / 1000.0) # 8) maximum range (km)
     print_distance(io, [-location(tx1)[3] for tx1 ∈ tx])  # 9) number of source depth, source depths (m)
     if length(rx) == 1
@@ -240,8 +239,8 @@ function writeenv(model::Kraken, tx::Vector{<:AcousticSource}, rx::AbstractArray
 end
 
 
-#Implementation of .flp file is based on Kraken manual 4.3.1 p93
-function writeflp(model::Kraken, tx::Vector{<:AcousticSource}, rx::AbstractArray{<:AcousticReceiver}, taskcode, dirname; nmodes=model.nmodes)
+#Implementation of .flp file is based on Kraken manual section 4.3.1 on p93
+function writeflp(model::Kraken, tx::Vector{<:AcousticSource}, rx::AbstractArray{<:AcousticReceiver}, dirname; nmodes=model.nmodes)
   filename = joinpath(dirname, "model.flp")
   name = split(basename(dirname), "_")[end]
   open(filename, "w") do io
@@ -250,7 +249,6 @@ function writeflp(model::Kraken, tx::Vector{<:AcousticSource}, rx::AbstractArray
     (length(tx) == 1) && (src = "R")  # 2) point source
     # 2)  Adiabatic mode thoery TODO: add coupled model
     #TODO: check why coherent option cause error
-    # print(io, "'", src, "A", taskcode, "'\n") #2) Coherent / incoherent mode addition
     print(io, "'", src, "A", "'\n") #2) Coherent / incoherent mode addition
     @printf(io, "%i\n", nmodes) #3) Number of modes
     println(io, "1") #4) Number of profile  #TODO: hardcoded, check for general setting
@@ -259,7 +257,6 @@ function writeflp(model::Kraken, tx::Vector{<:AcousticSource}, rx::AbstractArray
       print_distance(io, [location(rx[1])[1]./ 1000.0] )  # 6)receiver ranges(km)
       print_distance(io, [-location(tx1)[3] for tx1 ∈ tx])  # Source depth (m) #TODO: check multiple sources how
       print_distance(io, [-location(rx1)[3] for rx1 ∈ rx] )  # 6)receiver depth(m)
-      #printarray(io, [0.0])# Number of receiver range displacement (same as NRD)
       nr = 1
     elseif rx isa AcousticReceiverGrid2D
       d = reverse(-rx.zrange)
@@ -276,22 +273,19 @@ function writeflp(model::Kraken, tx::Vector{<:AcousticSource}, rx::AbstractArray
       print_distance(io, [-location(tx1)[3] for tx1 ∈ tx])  # Source depth (m)
       print_distance(io, d)  # 6)receiver depth(m)
       nr = length(d)
-      #printarray(io, zeros(size(location.(rx))[2]))# Number of receiver range displacement (same as NRD)
     end
     print_distance(io, zeros(nr))# Number of receiver range displacement (same as NRD)
-    # receiver displacement (M) #TODO: check how to set
   end
 end
 
 
 
-function readshd_kraken(filename; xrev=false, zrev=false, taskcode = "C")
+function readshd_kraken(filename; xrev=false, zrev=false)
   open(filename, "r") do io
     r = read(io, Int32)#read(io, UInt32)
     seek(io, 4r)
     b = Array{UInt8}(undef, 10)
     read!(io, b)
-    #strip(String(b)) == "" || error("Bad shd file format: incorrect ptype")
     seek(io, 8r)
     nfreq = read(io, Int32)
     nfreq == 1 || error("Bad shd file format: incorrect nfreq")
@@ -309,11 +303,7 @@ function readshd_kraken(filename; xrev=false, zrev=false, taskcode = "C")
       seek(io, recnum * 4r)
       temp = Array{Float32}(undef, nrr * 2)
       read!(io, temp)
-      if taskcode == "I"
-        pressure[:,ird+1] .= complex.(temp[1 : 2 : nrr * 2], 0.0) #TODO: WRONG!!
-      else
-        pressure[:,ird+1] .= complex.(temp[1 : 2 : nrr * 2], temp[2 : 2:  nrr * 2])
-      end
+      pressure[:,ird+1] .= complex.(temp[1 : 2 : nrr * 2], temp[2 : 2:  nrr * 2])
     end
     xrev && (pressure = reverse(pressure; dims=1))
     zrev || (pressure = reverse(pressure; dims=2))

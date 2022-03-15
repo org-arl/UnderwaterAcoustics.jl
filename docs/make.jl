@@ -19,7 +19,8 @@ makedocs(
     "Propagation models" => Any[
       "pm_pekeris.md",
       "pm_rays.md",
-      "pm_bellhop.md"
+      "pm_bellhop.md",
+      "pm_kraken.md"
     ],
     "Tutorials" => Any[
       "tut_turing.md",

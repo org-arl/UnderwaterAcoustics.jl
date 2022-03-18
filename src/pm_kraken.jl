@@ -7,10 +7,10 @@ A propagation model based on an external FORTRAN Kraken executable.
 struct Kraken{T} <: PropagationModel{T}
   env::T
   nmodes::Int
-  nmedia::Int  # number of media (<20)
-  nmesh::Int #set to 0 to allow kraken automarucally calculate
-  clow::Float64 #lower speed limit
-  chigh::Float64 # upper phase speed limit. 
+  nmedia::Int    # number of media (<20)
+  nmesh::Int     # set to 0 to allow Kraken to automatically calculate
+  clow::Float64  # lower phase speed limit
+  chigh::Float64 # upper phase speed limit
   debug::Bool
   function Kraken(env, nmodes, nmedia, nmesh, clow, chigh,  debug)
     nmodes > 1 || throw(ArgumentError("number of modes should be a postive integer"))
@@ -21,8 +21,8 @@ end
 
 """
     Kraken(env; debug=false)
+    Kraken(env, chigh; debug=false)
     Kraken(env, nmodes, nmedia, nmesh, clow, chigh, debug)
-    Kraken(env, chigh; debug=false )
 
 Create a Kraken propagation model.
 """

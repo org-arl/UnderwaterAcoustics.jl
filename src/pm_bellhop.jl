@@ -282,10 +282,11 @@ function readrays(filename)
       s = strip(readline(io))
       length(s) == 0 && break
       aod = parse(Float64, s)
-      pts, sb, bb = parse.(Int, split(strip(readline(io)) ,r" +"))
+      pts, sb, bb = parse.(Int, split(strip(readline(io)), r" +"))
       raypath = Array{NTuple{3,Float64}}(undef, pts)
       for k ∈ 1:pts
-        x, d = parse.(Float64, split(strip(readline(io)) ,r" +"))
+        eof(io) && break
+        x, d = parse.(Float64, split(strip(readline(io)), r" +"))
         raypath[k] = (x, 0.0, -d)
       end
       push!(rays, RayArrival(NaN64, NaN64, sb, bb, -deg2rad(aod), NaN64, raypath))

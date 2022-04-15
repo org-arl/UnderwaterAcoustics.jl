@@ -444,7 +444,8 @@ end
 ### pretty printing
 
 function Base.show(io::IO, env::UnderwaterEnvironment)
-  println(io, split(string(typeof(env).name), ".")[end], ":")
+  s = replace(string(typeof(env)), r"\{.*$" => "", r"^[^\.]*\." => "")
+  println(io, s, ":")
   println(io, "  altimetry = ", altimetry(env))
   println(io, "  bathymetry = ", bathymetry(env))
   println(io, "  ssp = ", ssp(env))
@@ -455,7 +456,8 @@ function Base.show(io::IO, env::UnderwaterEnvironment)
 end
 
 function Base.show(io::IO, model::PropagationModel)
-  print(io, split(string(typeof(model).name), ".")[end], " with ")
+  s = replace(string(typeof(model)), r"\{.*$" => "")
+  print(io, s, " with ")
   show(io, environment(model))
 end
 

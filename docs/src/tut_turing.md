@@ -40,7 +40,7 @@ data = DataFrame(vec(data))
 
 ## Probabilistic model
 
-We use some very loose uniform priors for `ρ`, `c` and `δ`, and etimate the transmission loss using the same model 𝒴, as used in the data generation, but without information on the actual seabed parameters. We assume that the measurements of transmission loss are normally distributed around the modeled transmission loss, with a covariance of 0.5 dB.
+We use some very loose uniform priors for `ρ`, `c` and `δ`, and estimate the transmission loss using the same model 𝒴, as used in the data generation, but without information on the actual seabed parameters. We assume that the measurements of transmission loss are normally distributed around the modeled transmission loss, with a covariance of 0.5 dB.
 
 We define the probabilistic model as a [`Turing.jl`](https://github.com/TuringLang/Turing.jl) model:
 
@@ -80,7 +80,7 @@ julia> mean(rand(q, 10000); dims=2)
  0.001139531366600336
 ```
 
-We see that the esimtated parameter means for `ρ`, `c` and `δ` are quite close to the actual values used in generating the data.
+We see that the estimated parameter means for `ρ`, `c` and `δ` are quite close to the actual values used in generating the data.
 
 We can also plot the conditional distributions of each parameter:
 

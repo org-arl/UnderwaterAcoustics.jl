@@ -315,26 +315,19 @@ function transfercoef(model::PropagationModel, tx1::AcousticSource, rx1::Acousti
 end
 
 function transfercoef(model::PropagationModel, tx1::AcousticSource, rx::AbstractArray{<:AcousticReceiver}; mode=:coherent)
-  # threaded version of [transfercoef(model, tx1, rx1; mode=mode) for rx1 ∈ rx], seems to be faster than tmap()
-  rx1 = first(rx)
-  tc1 = transfercoef(model, tx1, rx1; mode=mode)
-  tc = Array{typeof(tc1)}(undef, size(rx))
-  Threads.@threads for i ∈ eachindex(rx)
-    tc[i] = rx1 === rx[i] ? tc1 : transfercoef(model, tx1, rx[i]; mode=mode)
-  end
-  tc
+  tmap(rx1 -> transfercoef(model, tx1, rx1; mode), rx)
 end
 
 function rays(model::PropagationModel, tx1::AcousticSource, θ::AbstractArray, rmax)
   tmap(θ1 -> rays(model, tx1, θ1, rmax), θ)
 end
 
-transmissionloss(model, tx, rx; mode=:coherent) = -amp2db.(abs.(transfercoef(model, tx, rx; mode=mode)))
+transmissionloss(model, tx, rx; mode=:coherent) = -amp2db.(abs.(transfercoef(model, tx, rx; mode)))
 
 function recorder(model::PropagationModel, tx1::AcousticSource, rx1::AcousticReceiver)
   f = recorder(model, [tx1], [rx1])
   function rec(duration, fs; start=0.0)
-    x = f(duration, fs; start=start)
+    x = f(duration, fs; start)
     signal(dropdims(samples(x); dims=2), framerate(x))
   end
 end
@@ -346,7 +339,7 @@ end
 function recorder(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx1::AcousticReceiver)
   f = recorder(model, tx, [rx1])
   function rec(duration, fs; start=0.0)
-    x = f(duration, fs; start=start)
+    x = f(duration, fs; start)
     signal(dropdims(samples(x); dims=2), framerate(x))
   end
 end
@@ -369,7 +362,7 @@ function recorder(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, 
     noisemodel = noise(environment(model))
     if noisemodel !== missing
       for k = 1:length(rx)
-        x[:,k] .+= record(noisemodel, duration, fs; start=start)
+        x[:,k] .+= record(noisemodel, duration, fs; start)
       end
     end
     signal(x, fs)
@@ -377,7 +370,7 @@ function recorder(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, 
 end
 
 function record(model::PropagationModel, tx, rx, duration, fs; start=0.0)
-  recorder(model, tx, rx)(duration, fs; start=start)
+  recorder(model, tx, rx)(duration, fs; start)
 end
 
 """
@@ -427,9 +420,15 @@ function impulseresponse(arrivals::Vector{<:Arrival}, fs, ntaps=0; reltime=false
   ir
 end
 
-function tmap(f, itr)
-  refs = [Threads.@spawn(f(i)) for i ∈ itr]
-  fetch.(refs)
+# fast threaded map, assuming all entries have the same result type
+function tmap(f, x)
+  x1 = first(x)
+  y1 = f(x1)
+  y = Array{typeof(y1)}(undef, size(x))
+  Threads.@threads for i ∈ eachindex(x)
+    y[i] = x1 === x[i] ? y1 : f(x[i])
+  end
+  y
 end
 
 function envrealtype(env::UnderwaterEnvironment)

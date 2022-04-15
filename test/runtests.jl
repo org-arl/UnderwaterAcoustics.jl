@@ -550,4 +550,24 @@ end
     @test ∇ℳ[i] ≈ ∂(ℳ, x, i, 0.0001) atol=0.1
   end
 
+  function ℳ2(x)
+    D, R, d1, d2, f, c = x
+    env = UnderwaterEnvironment(ssp=IsoSSP(c), bathymetry=ConstantDepth(D))
+    pm = PekerisRayModel(env, 7)
+    # FIXME: approx=true needed because FFT is not yet differentiable
+    X = channelmatrix(arrivals(pm, AcousticSource(0.0, -d1, f), AcousticReceiver(R, -d2)), 44100.0, 500; approx=true)
+    sum(abs2, X)
+  end
+
+  x = [25.0, 200.0, 10.0, 8.0, 1000.0, 1540.0]
+  ∇ℳ = ForwardDiff.gradient(ℳ2, x)
+  for i ∈ 1:length(x)
+    @test ∇ℳ[i] ≈ ∂(ℳ2, x, i, 0.0001) atol=0.1
+  end
+  ∇ℳ = ReverseDiff.gradient(ℳ2, x)
+  for i ∈ 1:length(x)
+    @test ∇ℳ[i] ≈ ∂(ℳ2, x, i, 0.0001) atol=0.1
+  end
+  # FIXME: Zygote.gradient fails due to mutation in impulseresponse() and no adjoint for TriangularToeplitz
+
 end

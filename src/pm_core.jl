@@ -324,49 +324,56 @@ end
 
 transmissionloss(model, tx, rx; mode=:coherent) = -amp2db.(abs.(transfercoef(model, tx, rx; mode)))
 
-function recorder(model::PropagationModel, tx1::AcousticSource, rx1::AcousticReceiver)
-  f = recorder(model, [tx1], [rx1])
-  function rec(duration, fs; start=0.0)
-    x = f(duration, fs; start)
-    signal(dropdims(samples(x); dims=2), framerate(x))
+struct Recorder{T1,T2,T3,T4}
+  noisemodel::T1
+  tx::T2  # always an array of sources
+  rx::T3  # could be an array or a single recevier
+  arr::Matrix{T4}
+end
+
+function (rec::Recorder)(duration, fs; start=0.0)
+  mindelay, maxdelay = extrema(Iterators.flatten([[a1.time for a1 ∈ a] for a ∈ rec.arr]))
+  src = [record(tx1, duration + (maxdelay-mindelay) + 1/fs, fs; start=start-maxdelay) for tx1 ∈ rec.tx]
+  nsamples = round(Int, duration * fs)
+  x = zeros(Base.promote_eltype(src...), nsamples, size(rec.arr, 2))
+  for j = 1:size(rec.arr, 1)
+    for k = 1:size(rec.arr, 2)
+      for a ∈ rec.arr[j,k]
+        t = round(Int, (maxdelay - a.time) * fs)
+        x[:,k] .+= a.phasor .* src[j][t+1:t+nsamples]
+      end
+    end
+  end
+  if rec.noisemodel !== missing
+    for k = 1:size(rec.arr, 2)
+      x[:,k] .+= record(rec.noisemodel, duration, fs; start)
+    end
+  end
+  if rec.rx isa AbstractArray
+    signal(x, fs)
+  else
+    signal(dropdims(x; dims=2), fs)
   end
 end
 
-function recorder(model::PropagationModel, tx1::AcousticSource, rx::AbstractArray{<:AcousticReceiver})
-  recorder(model, [tx1], rx)
+function recorder(model::PropagationModel, tx::AcousticSource, rx::AcousticReceiver)
+  arr = [arrivals(model, tx1, rx1) for tx1 ∈ [tx], rx1 ∈ [rx]]
+  Recorder(noise(environment(model)), [tx], rx, arr)
 end
 
-function recorder(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx1::AcousticReceiver)
-  f = recorder(model, tx, [rx1])
-  function rec(duration, fs; start=0.0)
-    x = f(duration, fs; start)
-    signal(dropdims(samples(x); dims=2), framerate(x))
-  end
+function recorder(model::PropagationModel, tx::AcousticSource, rx::AbstractArray{<:AcousticReceiver})
+  arr = [arrivals(model, tx1, rx1) for tx1 ∈ [tx], rx1 ∈ rx]
+  Recorder(noise(environment(model)), [tx], rx, arr)
+end
+
+function recorder(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx::AcousticReceiver)
+  arr = [arrivals(model, tx1, rx1) for tx1 ∈ tx, rx1 ∈ [rx]]
+  Recorder(noise(environment(model)), tx, rx, arr)
 end
 
 function recorder(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, rx::AbstractArray{<:AcousticReceiver})
   arr = [arrivals(model, tx1, rx1) for tx1 ∈ tx, rx1 ∈ rx]
-  mindelay, maxdelay = extrema(Iterators.flatten([[a1.time for a1 ∈ a] for a ∈ arr]))
-  function rec(duration, fs; start=0.0)
-    src = [record(tx1, duration + (maxdelay-mindelay) + 1/fs, fs; start=start-maxdelay) for tx1 ∈ tx]
-    nsamples = round(Int, duration * fs)
-    x = zeros(Base.promote_eltype(src...), nsamples, length(rx))
-    for j = 1:length(tx)
-      for k = 1:length(rx)
-        for a ∈ arr[j,k]
-          t = round(Int, (maxdelay - a.time) * fs)
-          x[:,k] .+= a.phasor .* src[j][t+1:t+nsamples]
-        end
-      end
-    end
-    noisemodel = noise(environment(model))
-    if noisemodel !== missing
-      for k = 1:length(rx)
-        x[:,k] .+= record(noisemodel, duration, fs; start)
-      end
-    end
-    signal(x, fs)
-  end
+  Recorder(noise(environment(model)), tx, rx, arr)
 end
 
 function record(model::PropagationModel, tx, rx, duration, fs; start=0.0)
@@ -472,3 +479,9 @@ function Base.show(io::IO, a::Arrival)
       a.raypath === missing || length(a.raypath) == 0 ? "" : " ⤷")
   end
 end
+
+function Base.show(io::IO, rec::Recorder)
+  s = replace(string(typeof(rec)), r"\{.*$" => "")
+  print(io, "$s($(size(rec.arr, 1)) => $(size(rec.arr, 2)))")
+end
+

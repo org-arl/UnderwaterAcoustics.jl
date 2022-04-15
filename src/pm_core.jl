@@ -153,6 +153,7 @@ function phasor end
     record(src::AcousticSource, duration, fs; start=0.0)
     record(noise::NoiseModel, duration, fs; start=0.0)
     record(model::PropagationModel, tx, rx, duration, fs; start=0.0)
+    record(model::PropagationModel, tx, rx, sig; start=nothing)
 
 Make a recording of an acoustic source or ambient noise. The `start` time and
 `duration` are specified in seconds, and the recording is made at a sampling
@@ -163,7 +164,14 @@ and the recording is made at a nominal range of 1 meter from the acoustic
 center of the source.
 
 For a recording through a propagation model, `tx` and `rx` may be single `AcousticSource`
-and `AcousticReceiver`, or an array each.
+and `AcousticReceiver`, or an array each. The returned signal is always complex,
+irrespective of whether the source is real or complex.
+
+When a `sig` is specified, the sources are assumed to transmit the sampled signal in `sig`.
+The number of channels in `sig` must match the number of sources. The returned signal
+is the same type as the input signal (real or complex). If `start` is set to `nothing`,
+the recorded signal starts when the transmitted signal reaches the recevier. Otherwise
+recording `start` time is relative to the transmission time of the signal.
 """
 function record end
 
@@ -252,12 +260,14 @@ of sources in `tx` at receviers `rx`. `tx` and `rx` may be single `AcousticSourc
 `AcousticReceiver`, or an array each.
 
 The recorder function may be called later with `duration`, `fs`, and optionally a `start`
-time. It functions in a similar way as the `record()` function.
+time. Alternatively, the recorder function may also be called with a sampled signal.
+It functions in a similar way as the `record()` function.
 
 # Examples:
 ```julia-repl
 julia> rec = recorder(pm, tx, rx);
 julia> s = rec(1.0, 44100.0; start=0.0);  # make a recording of 1 second at 44.1 kHz
+julia> s = rec(signal(randn(44100), 44100));  # transmit a random 1 second signal
 ```
 """
 function recorder end
@@ -349,11 +359,34 @@ function (rec::Recorder)(duration, fs; start=0.0)
       x[:,k] .+= record(rec.noisemodel, duration, fs; start)
     end
   end
-  if rec.rx isa AbstractArray
-    signal(x, fs)
-  else
-    signal(dropdims(x; dims=2), fs)
+  x̄ = rec.rx isa AbstractArray ? x : dropdims(x; dims=2)
+  signal(x̄, fs)
+end
+
+function (rec::Recorder)(sig; fs=framerate(sig), start=nothing)
+  nchannels(sig) == length(rec.tx) || throw(ArgumentError("Input signal must have $(length(rec.tx)) channel(s)"))
+  mindelay, maxdelay = extrema(Iterators.flatten([[a1.time for a1 ∈ a] for a ∈ rec.arr]))
+  n1 = round(Int, maxdelay * fs)
+  n2 = round(Int, (maxdelay - mindelay) * fs) + 1
+  src = [analytic(vcat(zeros(eltype(sig), n1), sig[:,i], zeros(eltype(sig), n2))) for i ∈ eachindex(rec.tx)]
+  nsamples = nframes(sig) + n1
+  x = zeros(Base.promote_eltype(src...), nsamples, size(rec.arr, 2))
+  for j = 1:size(rec.arr, 1)
+    for k = 1:size(rec.arr, 2)
+      for a ∈ rec.arr[j,k]
+        t = round(Int, (maxdelay - a.time) * fs)
+        x[:,k] .+= a.phasor .* src[j][t+1:t+nsamples]
+      end
+    end
   end
+  if rec.noisemodel !== missing
+    for k = 1:size(rec.arr, 2)
+      x[:,k] .+= record(rec.noisemodel, nsamples/fs, fs)
+    end
+  end
+  n3 = start === nothing ? round(Int, mindelay * fs) + 1 : round(Int, start * fs) + 1
+  x̄ = rec.rx isa AbstractArray ? @view(x[n3:end,:]) : dropdims(@view x[n3:end,:]; dims=2)
+  isanalytic(sig) ? signal(x̄, fs) : signal(convert.(eltype(sig), real.(x̄) .* √2), fs)
 end
 
 function recorder(model::PropagationModel, tx::AcousticSource, rx::AcousticReceiver)
@@ -376,9 +409,9 @@ function recorder(model::PropagationModel, tx::AbstractArray{<:AcousticSource}, 
   Recorder(noise(environment(model)), tx, rx, arr)
 end
 
-function record(model::PropagationModel, tx, rx, duration, fs; start=0.0)
-  recorder(model, tx, rx)(duration, fs; start)
-end
+# delegate recording task to an ephemeral recorder
+record(model::PropagationModel, tx, rx, duration, fs; start=0.0) = recorder(model, tx, rx)(duration, fs; start)
+record(model::PropagationModel, tx, rx, sig) = recorder(model, tx, rx)(sig)
 
 """
 $(SIGNATURES)

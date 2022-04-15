@@ -450,6 +450,40 @@ end
   @test pow2db(mean(abs2, sig[:,1])) ≈ 120.0 atol=0.5
   @test pow2db(mean(abs2, sig[:,2])) ≈ 120.0 atol=0.5
 
+  env = UnderwaterEnvironment()
+  pm = PekerisRayModel(env)
+  tx = AcousticSource(0.0, -5.0, 10000.0)
+  rx = AcousticReceiver(100.0, -10.0)
+  rec = recorder(pm, tx, rx)
+  sig = rec(zeros(44100); fs=44100.0)
+  @test sig isa AbstractVector
+  @test eltype(sig) === Float64
+  @test 44100 < length(sig) < 44700
+  sig = rec(zeros(44100); fs=44100.0, start=0.0)
+  @test sig isa AbstractVector
+  @test eltype(sig) === Float64
+  @test 47000 < length(sig) < 47600
+  sig = rec(zeros(ComplexF64, 44100); fs=44100.0)
+  @test sig isa AbstractVector
+  @test eltype(sig) === ComplexF64
+  sig = rec(zeros(ComplexF32, 44100); fs=44100.0)
+  @test sig isa AbstractVector
+  @test eltype(sig) === ComplexF32
+  sig = rec(zeros(Float32, 44100); fs=44100.0)
+  @test sig isa AbstractVector
+  @test eltype(sig) === Float32
+  rec = recorder(pm, [tx, tx], rx)
+  sig = rec(zeros(44100, 2); fs=44100.0)
+  @test sig isa AbstractVector
+  rec = recorder(pm, tx, [rx, rx])
+  sig = rec(zeros(44100); fs=44100.0)
+  @test sig isa AbstractMatrix
+  @test size(sig, 2) == 2
+  rec = recorder(pm, [tx, tx], [rx, rx])
+  sig = rec(zeros(44100, 2); fs=44100.0)
+  @test sig isa AbstractMatrix
+  @test size(sig, 2) == 2
+
 end
 
 function ∂(f, x, i, ϵ)

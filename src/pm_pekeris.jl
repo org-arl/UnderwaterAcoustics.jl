@@ -15,7 +15,7 @@ Create a Pekeris ray propagation model with a maximum of `rays` ray arrivals.
 struct PekerisRayModel{T} <: PropagationModel{T}
   env::T
   rays::Int
-  function PekerisRayModel(env, rays)
+  function PekerisRayModel(env, rays=7)
     rays > 0 || throw(ArgumentError("Number of rays should be more than 0"))
     new{typeof(env)}(check(PekerisRayModel, env), rays)
   end

@@ -1,6 +1,7 @@
 using SignalAnalysis: signal
 using FFTW: ifft!
 using DSP: nextfastfft
+using ToeplitzMatrices: TriangularToeplitz
 
 export SoundSpeedProfile, soundspeed
 export Bathymetry, depth, maxdepth
@@ -10,7 +11,7 @@ export UnderwaterEnvironment, altimetry, bathymetry, ssp, salinity, seasurface, 
 export AcousticSource, AcousticReceiver, location, nominalfrequency, phasor, record, recorder
 export PropagationModel, arrivals, transfercoef, transmissionloss, eigenrays, rays
 export NoiseModel
-export impulseresponse
+export impulseresponse, channelmatrix
 
 ### interface: SoundSpeedProfile
 
@@ -384,9 +385,29 @@ function (rec::Recorder)(sig; fs=framerate(sig), reltime=true)
       x[:,k] .+= record(rec.noisemodel, nsamples/fs, fs)
     end
   end
-  n3 = reltime ? round(Int, mindelay * fs + 1) : 1
+  n3 = reltime ? round(Int, mindelay * fs) : 1
   x̄ = rec.rx isa AbstractArray ? @view(x[n3:end,:]) : dropdims(@view x[n3:end,:]; dims=2)
   isanalytic(sig) ? signal(x̄, fs) : signal(convert.(eltype(sig), real.(x̄) .* √2), fs)
+end
+
+"""
+channelmatrix(rec::Recorder, fs, ntaps=0; tx=1, rx=1, approx=false)
+channelmatrix(rec::Vector{<:Arrival}, fs, ntaps=0; approx=false)
+
+Generate a sampled channel matrix at a sampling rate of `fs` Hz. If `ntaps` is zero,
+the number of taps of the channel matrix are chosen automatically.
+
+If `approx` is `true`, a fast algorithm is used to generate a sparse channel matrix
+that assigns an arrival to the nearest sampling time.
+"""
+function channelmatrix(rec::Recorder, fs, ntaps=0; tx=1, rx=1, approx=false)
+  ir = impulseresponse(rec.arr[tx,rx], fs, ntaps; reltime=true, approx)
+  TriangularToeplitz(ir, :L)
+end
+
+function channelmatrix(arrivals::Vector{<:Arrival}, fs, ntaps=0; approx=false)
+  ir = impulseresponse(arrivals, fs, ntaps; reltime=true, approx)
+  TriangularToeplitz(ir, :L)
 end
 
 function recorder(model::PropagationModel, tx::AcousticSource, rx::AcousticReceiver)

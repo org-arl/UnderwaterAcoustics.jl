@@ -484,6 +484,17 @@ end
   @test sig isa AbstractMatrix
   @test size(sig, 2) == 2
 
+  env = UnderwaterEnvironment(noise=nothing)
+  pm = PekerisRayModel(env)
+  tx = AcousticSource(0.0, -5.0, 10000.0)
+  rx = AcousticReceiver(100.0, -10.0)
+  rec = recorder(pm, tx, rx)
+  ir = impulseresponse(arrivals(pm, tx, rx), 44100.0, 500; approx=true, reltime=true)
+  X1 = channelmatrix(rec, 44100.0, 500; approx=true)
+  X2 = channelmatrix(arrivals(pm, tx, rx), 44100.0, 500; approx=true)
+  @test X1 == X2
+  @test X1 * vcat([1.0], zeros(size(X1,1)-1)) ≈ ir
+
 end
 
 function ∂(f, x, i, ϵ)

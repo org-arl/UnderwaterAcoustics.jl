@@ -153,7 +153,7 @@ function phasor end
     record(src::AcousticSource, duration, fs; start=0.0)
     record(noise::NoiseModel, duration, fs; start=0.0)
     record(model::PropagationModel, tx, rx, duration, fs; start=0.0)
-    record(model::PropagationModel, tx, rx, sig; start=nothing)
+    record(model::PropagationModel, tx, rx, sig; reltime=true)
 
 Make a recording of an acoustic source or ambient noise. The `start` time and
 `duration` are specified in seconds, and the recording is made at a sampling
@@ -169,9 +169,9 @@ irrespective of whether the source is real or complex.
 
 When a `sig` is specified, the sources are assumed to transmit the sampled signal in `sig`.
 The number of channels in `sig` must match the number of sources. The returned signal
-is the same type as the input signal (real or complex). If `start` is set to `nothing`,
-the recorded signal starts when the transmitted signal reaches the recevier. Otherwise
-recording `start` time is relative to the transmission time of the signal.
+is the same type as the input signal (real or complex). If `reltime` is `true`, the
+recorded signal starts at the first arrival, otherwise it starts at the beginning of the
+transmission.
 """
 function record end
 
@@ -363,7 +363,7 @@ function (rec::Recorder)(duration, fs; start=0.0)
   signal(x̄, fs)
 end
 
-function (rec::Recorder)(sig; fs=framerate(sig), start=nothing)
+function (rec::Recorder)(sig; fs=framerate(sig), reltime=true)
   nchannels(sig) == length(rec.tx) || throw(ArgumentError("Input signal must have $(length(rec.tx)) channel(s)"))
   mindelay, maxdelay = extrema(Iterators.flatten([[a1.time for a1 ∈ a] for a ∈ rec.arr]))
   n1 = round(Int, maxdelay * fs)
@@ -384,7 +384,7 @@ function (rec::Recorder)(sig; fs=framerate(sig), start=nothing)
       x[:,k] .+= record(rec.noisemodel, nsamples/fs, fs)
     end
   end
-  n3 = start === nothing ? round(Int, mindelay * fs) + 1 : round(Int, start * fs) + 1
+  n3 = reltime ? round(Int, mindelay * fs + 1) : 1
   x̄ = rec.rx isa AbstractArray ? @view(x[n3:end,:]) : dropdims(@view x[n3:end,:]; dims=2)
   isanalytic(sig) ? signal(x̄, fs) : signal(convert.(eltype(sig), real.(x̄) .* √2), fs)
 end

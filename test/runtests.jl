@@ -459,7 +459,7 @@ end
   @test sig isa AbstractVector
   @test eltype(sig) === Float64
   @test 44100 < length(sig) < 44700
-  sig = rec(zeros(44100); fs=44100.0, start=0.0)
+  sig = rec(zeros(44100); fs=44100.0, reltime=false)
   @test sig isa AbstractVector
   @test eltype(sig) === Float64
   @test 47000 < length(sig) < 47600

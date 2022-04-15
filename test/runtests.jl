@@ -1,7 +1,7 @@
 using Test
 using UnderwaterAcoustics
 using UnderwaterAcoustics: amp2db, db2amp
-using ForwardDiff
+import ForwardDiff, ReverseDiff, Zygote
 
 @testset "basic" begin
 
@@ -459,6 +459,30 @@ end
 
   x = [25.0, 200.0, 10.0, 8.0, 1000.0, 1540.0]
   ∇ℳ = ForwardDiff.gradient(ℳ, x)
+  for i ∈ 1:length(x)
+    @test ∇ℳ[i] ≈ ∂(ℳ, x, i, 0.0001) atol=0.1
+  end
+
+  x = [20.0, 100.0, 5.0, 10.0, 5000.0, 1500.0]
+  ∇ℳ = ReverseDiff.gradient(ℳ, x)
+  for i ∈ 1:length(x)
+    @test ∇ℳ[i] ≈ ∂(ℳ, x, i, 0.0001) atol=0.1
+  end
+
+  x = [25.0, 200.0, 10.0, 8.0, 1000.0, 1540.0]
+  ∇ℳ = ReverseDiff.gradient(ℳ, x)
+  for i ∈ 1:length(x)
+    @test ∇ℳ[i] ≈ ∂(ℳ, x, i, 0.0001) atol=0.1
+  end
+
+  x = [20.0, 100.0, 5.0, 10.0, 5000.0, 1500.0]
+  ∇ℳ = Zygote.gradient(ℳ, x) |> first
+  for i ∈ 1:length(x)
+    @test ∇ℳ[i] ≈ ∂(ℳ, x, i, 0.0001) atol=0.1
+  end
+
+  x = [25.0, 200.0, 10.0, 8.0, 1000.0, 1540.0]
+  ∇ℳ = Zygote.gradient(ℳ, x) |> first
   for i ∈ 1:length(x)
     @test ∇ℳ[i] ≈ ∂(ℳ, x, i, 0.0001) atol=0.1
   end

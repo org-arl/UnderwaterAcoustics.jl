@@ -333,7 +333,7 @@ end
 
 function (rec::Recorder)(duration, fs; start=0.0)
   mindelay, maxdelay = extrema(Iterators.flatten([[a1.time for a1 ∈ a] for a ∈ rec.arr]))
-  src = [record(tx1, duration + (maxdelay-mindelay) + 1/fs, fs; start=start-maxdelay) for tx1 ∈ rec.tx]
+  src = [analytic(record(tx1, duration + (maxdelay-mindelay) + 1/fs, fs; start=start-maxdelay)) for tx1 ∈ rec.tx]
   nsamples = round(Int, duration * fs)
   x = zeros(Base.promote_eltype(src...), nsamples, size(rec.arr, 2))
   for j = 1:size(rec.arr, 1)

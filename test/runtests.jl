@@ -1,6 +1,7 @@
 using Test
 using UnderwaterAcoustics
-using UnderwaterAcoustics: amp2db, db2amp
+using UnderwaterAcoustics: amp2db, db2amp, pow2db
+using Statistics
 import ForwardDiff, ReverseDiff, Zygote
 
 @testset "basic" begin
@@ -428,9 +429,26 @@ end
   rx = AcousticReceiver(100.0, 0.0, -10.0)
   sig1 = record(pm, tx, rx, 1.0, 44100.0)
   rx = AcousticReceiver(100.0/√2, 100.0/√2, -10.0)
-  rx = AcousticReceiver(-100.0, 0.0, -10.0)
   sig2 = record(pm, tx, rx, 1.0, 44100.0)
   @test !(sig1 ≈ sig2)
+
+  env = UnderwaterEnvironment(noise=WhiteGaussianNoise(db2amp(120.0)))
+  pm = PekerisRayModel(env, 7)
+  tx = SampledAcousticSource(0.0, -5.0, sin.(10000π .* (1:44100) ./ 44100.0); fs=44100.0)
+  @test tx.frequency ≈ 5000.0 atol=10.0
+  rx = AcousticReceiver(100.0, -10.0)
+  sig = record(pm, tx, rx, 1.0, 44100.0)
+  @test size(sig) == (44100,)
+  @test eltype(sig) === ComplexF64
+  tx = SampledAcousticSource(0.0, -5.0, cis.(10000π .* (1:44100) ./ 44100.0); fs=44100.0)
+  @test tx.frequency ≈ 5000.0 atol=10.0
+  sig = record(pm, tx, rx, 1.0, 44100.0)
+  @test size(sig) == (44100,)
+  @test eltype(sig) === ComplexF64
+  tx = SampledAcousticSource(0.0, -5.0, zeros(44100); fs=44100.0, frequency=5000.0)
+  sig = record(pm, tx, [rx, rx], 1.0, 44100.0)
+  @test pow2db(mean(abs2, sig[:,1])) ≈ 120.0 atol=0.5
+  @test pow2db(mean(abs2, sig[:,2])) ≈ 120.0 atol=0.5
 
 end
 

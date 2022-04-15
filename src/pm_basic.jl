@@ -9,7 +9,7 @@ export ClayeySand, CoarseSilt, SandySilt, Silt, FineSilt, SandyClay, SiltyClay, 
 export Vacuum, SeaState0, SeaState1, SeaState2, SeaState3, SeaState4
 export SeaState5, SeaState6, SeaState7, SeaState8, SeaState9
 export AcousticReceiverGrid2D, AcousticReceiverGrid3D, NarrowbandAcousticSource
-export RedGaussianNoise, Pinger, SampledAcousticSource
+export WhiteGaussianNoise, RedGaussianNoise, Pinger, SampledAcousticSource
 
 ### sound speed profiles
 

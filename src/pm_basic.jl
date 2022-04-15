@@ -345,6 +345,25 @@ noise(env::BasicUnderwaterEnvironment) = env.noise
 
 """
 $(TYPEDEF)
+Ambient noise model with Gaussian noise with a flat power spectral density.
+
+---
+
+    WhiteGaussianNoise(σ)
+
+Create an white Gaussian ambient noise model with variance `σ²`.
+"""
+struct WhiteGaussianNoise{T} <: NoiseModel
+  σ::T
+end
+
+function record(noisemodel::WhiteGaussianNoise, duration, fs; start=0.0)
+  n = round(Int, duration*fs)
+  signal(complex.(randn(n), randn(n)) .* (noisemodel.σ / √2), fs)
+end
+
+"""
+$(TYPEDEF)
 Ambient noise model with Gaussian noise with a `1/f²` power spectral density.
 
 ---

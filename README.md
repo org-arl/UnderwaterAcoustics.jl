@@ -34,4 +34,4 @@ Contributions in the form of bug reports, feature requests, ideas/suggestions, b
 
 ## Talks & publications
 
-- Mandar Chite, "[Underwater Acoustics in the age of differentiable and probabilistic programming](https://www.facebook.com/watch/live/?v=2473971036238315)", UComms 2020 webinar, 3 December 2020.
+- Mandar Chitre, "[Underwater Acoustics in the age of differentiable and probabilistic programming](https://www.facebook.com/watch/live/?v=2473971036238315)", UComms 2020 webinar, 3 December 2020.

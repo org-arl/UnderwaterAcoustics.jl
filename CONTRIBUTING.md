@@ -90,8 +90,6 @@ Allowable **scope** include:
 - **uwa**: basic underwater acoustic functionality
 - **pm**: core infrastructure for propagation modeling
 - **pekeris**: Pekeris ray propagation model
-- **bellhop**: Bellhop ray propagation model
-- **raysolv** RaySolver ray propagation model
 - **plot**: plotting support functionality
 
 NOTE: As we evolve the UnderwaterAcoustics.jl library, the allowable scope list will evolve. If you find something you're doing doesn't fit in this scope list, please [open an issue](https://github.com/org-arl/UnderwaterAcoustics.jl/issues/new/choose) to propose addition of a new scope.

@@ -354,7 +354,7 @@ function (rec::Recorder)(duration, fs; start=0.0)
       end
     end
   end
-  if rec.noisemodel !== missing
+  if rec.noisemodel !== missing && rec.noisemodel !== nothing
     for k = 1:size(rec.arr, 2)
       x[:,k] .+= record(rec.noisemodel, duration, fs; start)
     end
@@ -379,7 +379,7 @@ function (rec::Recorder)(sig; fs=framerate(sig), start=nothing)
       end
     end
   end
-  if rec.noisemodel !== missing
+  if rec.noisemodel !== missing && rec.noisemodel !== nothing
     for k = 1:size(rec.arr, 2)
       x[:,k] .+= record(rec.noisemodel, nsamples/fs, fs)
     end

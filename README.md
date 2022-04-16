@@ -4,6 +4,7 @@
 [![Codecov](https://codecov.io/gh/org-arl/UnderwaterAcoustics.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/org-arl/UnderwaterAcoustics.jl)
 
 # UnderwaterAcoustics.jl
+
 ### Julia toolbox for underwater acoustic modeling
 
 ![](https://org-arl.github.io/UnderwaterAcoustics.jl/dev/images/txloss1.png)
@@ -21,6 +22,13 @@
 julia>]
 pkg> add UnderwaterAcoustics
 ```
+
+## Related packages
+
+**NOTE: In version 0.2, `RaySolver` and `Bellhop` models have been moved out to separate packages.**
+
+- Install [`AcousticRayTracers.jl`](https://github.com/org-arl/AcousticRayTracers.jl) for `RaySolver` model
+- Install [`AcousticsToolbox.jl`](https://github.com/org-arl/AcousticsToolbox.jl) for `Bellhop` and `Kraken` models
 
 ## Getting started
 

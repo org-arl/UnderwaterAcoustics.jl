@@ -9,8 +9,9 @@ Available models:
 | Model | Description | Language | Strengths | Limitations |
 |-------|-------------|----------|-----------|-------------|
 | [PekerisRayModel](@ref) | Analytical ray model for Pekeris waveguides | Julia | Fast, differentiable, multi-threaded | Isovelocity, range independent |
-| [RaySolver](@ref) | Ray/Gaussian beam model | Julia | Differentiable, multi-threaded | Tell us and we'll fix them! |
-| [Bellhop](@ref) | Interface to [OALIB Bellhop model](http://oalib.hlsresearch.com/AcousticsToolbox/) | FORTRAN | Well established benchmark model | Does not support automatic differentiation |
+| [RaySolver](https://github.com/org-arl/AcousticRayTracers.jl) | Ray/Gaussian beam model | Julia | Differentiable, multi-threaded | Tell us and we'll fix them! |
+| [Bellhop](https://github.com/org-arl/AcousticsToolbox.jl) | Interface to [OALIB Bellhop model](http://oalib.hlsresearch.com/AcousticsToolbox/) | FORTRAN | Well established benchmark model | Does not support automatic differentiation |
+| [Kraken](https://github.com/org-arl/AcousticsToolbox.jl) | Interface to [OALIB Kraken model](http://oalib.hlsresearch.com/AcousticsToolbox/) | FORTRAN | Well established benchmark model | Does not support automatic differentiation |
 
 ## Quickstart guide
 

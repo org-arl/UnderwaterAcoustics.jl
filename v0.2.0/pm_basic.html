@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Propagation modeling toolkit · UnderwaterAcoustics.jl</title><script data-outdated-warner src="assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.039/juliamono-regular.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.11/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="index.html">UnderwaterAcoustics.jl</a></span></div><form class="docs-search" action="search.html"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="index.html">Home</a></li><li><span class="tocitem">Manual</span><ul><li><a class="tocitem" href="uw_basic.html">Underwater acoustics</a></li><li class="is-active"><a class="tocitem" href="pm_basic.html">Propagation modeling toolkit</a><ul class="internal"><li><a class="tocitem" href="#Overview"><span>Overview</span></a></li><li><a class="tocitem" href="#Quickstart-guide"><span>Quickstart guide</span></a></li></ul></li><li><a class="tocitem" href="pm_envref.html">Environmental model reference</a></li><li><a class="tocitem" href="pm_api.html">Propagation modeling API</a></li></ul></li><li><span class="tocitem">Propagation models</span><ul><li><a class="tocitem" href="pm_pekeris.html">PekerisRayModel</a></li></ul></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="tut_turing.html">Probabilistic modeling</a></li><li><a class="tocitem" href="tut_autodiff.html">Differentiable modeling</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Manual</a></li><li class="is-active"><a href="pm_basic.html">Propagation modeling toolkit</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href="pm_basic.html">Propagation modeling toolkit</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/org-arl/UnderwaterAcoustics.jl/blob/master/docs/src/pm_basic.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Propagation-modeling-toolkit"><a class="docs-heading-anchor" href="#Propagation-modeling-toolkit">Propagation modeling toolkit</a><a id="Propagation-modeling-toolkit-1"></a><a class="docs-heading-anchor-permalink" href="#Propagation-modeling-toolkit" title="Permalink"></a></h1><h2 id="Overview"><a class="docs-heading-anchor" href="#Overview">Overview</a><a id="Overview-1"></a><a class="docs-heading-anchor-permalink" href="#Overview" title="Permalink"></a></h2><p>The <em>underwater acoustic propagation modeling &amp; simulation toolkit</em> provides a framework for modeling and simulating underwater acoustic environments with multiple sources and receivers. The toolkit provides a pluggable interface that allows different propagation models to be used with the same scene description. While <code>UnderwaterAcoustics.jl</code> provides several propagation model implementations that can be used out-of-the-box, the interface is designed to allow third party propagation models to be easily plugged in to the toolkit as well.</p><p>Available models:</p><table><tr><th style="text-align: right">Model</th><th style="text-align: right">Description</th><th style="text-align: right">Language</th><th style="text-align: right">Strengths</th><th style="text-align: right">Limitations</th></tr><tr><td style="text-align: right"><a href="pm_pekeris.html#PekerisRayModel">PekerisRayModel</a></td><td style="text-align: right">Analytical ray model for Pekeris waveguides</td><td style="text-align: right">Julia</td><td style="text-align: right">Fast, differentiable, multi-threaded</td><td style="text-align: right">Isovelocity, range independent</td></tr><tr><td style="text-align: right"><a href="https://github.com/org-arl/AcousticRayTracers.jl">RaySolver</a></td><td style="text-align: right">Ray/Gaussian beam model</td><td style="text-align: right">Julia</td><td style="text-align: right">Differentiable, multi-threaded</td><td style="text-align: right">Tell us and we&#39;ll fix them!</td></tr><tr><td style="text-align: right"><a href="https://github.com/org-arl/AcousticsToolbox.jl">Bellhop</a></td><td style="text-align: right">Interface to <a href="http://oalib.hlsresearch.com/AcousticsToolbox/">OALIB Bellhop model</a></td><td style="text-align: right">FORTRAN</td><td style="text-align: right">Well established benchmark model</td><td style="text-align: right">Does not support automatic differentiation</td></tr><tr><td style="text-align: right"><a href="https://github.com/org-arl/AcousticsToolbox.jl">Kraken</a></td><td style="text-align: right">Interface to <a href="http://oalib.hlsresearch.com/AcousticsToolbox/">OALIB Kraken model</a></td><td style="text-align: right">FORTRAN</td><td style="text-align: right">Well established benchmark model</td><td style="text-align: right">Does not support automatic differentiation</td></tr></table><h2 id="Quickstart-guide"><a class="docs-heading-anchor" href="#Quickstart-guide">Quickstart guide</a><a id="Quickstart-guide-1"></a><a class="docs-heading-anchor-permalink" href="#Quickstart-guide" title="Permalink"></a></h2><p>Let&#39;s get started:</p><pre><code class="language-julia-repl hljs">julia&gt; using UnderwaterAcoustics</code></pre><h3 id="Define-an-environment"><a class="docs-heading-anchor" href="#Define-an-environment">Define an environment</a><a id="Define-an-environment-1"></a><a class="docs-heading-anchor-permalink" href="#Define-an-environment" title="Permalink"></a></h3><p>First, let&#39;s setup an environment description.</p><pre><code class="language-julia-repl hljs">julia&gt; env = UnderwaterEnvironment()
+BasicUnderwaterEnvironment:
+  altimetry = FlatSurface()
+  bathymetry = ConstantDepth{Float64}(20.0)
+  ssp = IsoSSP{Float64}(1539.0866009307247)
+  salinity = 35.0
+  seasurface = SurfaceLoss{Float64}(2.6)
+  seabed = RayleighReflectionCoef{Float64,Float64,Float64}(1.169, 0.9999, 0.01261)
+  noise = RedGaussianNoise{Float64}(1.0e6)</code></pre><p>Environments are immutable, so you have to customize them during construction. For example:</p><pre><code class="language-julia-repl hljs">julia&gt; env = UnderwaterEnvironment(
+         seasurface = Vacuum,
+         seabed = SandyClay,
+         ssp = SampledSSP(0.0:20.0:40.0, [1500.0, 1490.0, 1520.0], :smooth),
+         bathymetry = ConstantDepth(40.0)
+       )
+BasicUnderwaterEnvironment:
+  altimetry = FlatSurface()
+  bathymetry = ConstantDepth{Float64}(40.0)
+  ssp = SampledSSP{Float64,Float64,linear}(3 points)
+  salinity = 35.0
+  seasurface = ReflectionCoef{Float64}(-1.0)
+  seabed = RayleighReflectionCoef{Float64,Float64,Float64}(1.147, 0.9849, 0.00242)
+  noise = RedGaussianNoise{Float64}(1.0e6)</code></pre><p>If you have <code>Plots.jl</code> installed, you can use plot recipes to plot the environment or the soundspeed profile. For example:</p><pre><code class="language-julia-repl hljs">julia&gt; using Plots
+julia&gt; plot(ssp(env))</code></pre><p><img src="images/ssp1.png" alt/></p><h3 id="Selecting-a-model"><a class="docs-heading-anchor" href="#Selecting-a-model">Selecting a model</a><a id="Selecting-a-model-1"></a><a class="docs-heading-anchor-permalink" href="#Selecting-a-model" title="Permalink"></a></h3><p>Once you have an environment, you need to select a propagation model. To get a list of all available models:</p><pre><code class="language-julia-repl hljs">julia&gt; models()
+3-element Array{Any,1}:
+ PekerisRayModel
+ RaySolver
+ Bellhop</code></pre><p>NOTE: <code>Bellhop</code> will only be available if you have a working copy of OALIB <code>bellhop.exe</code> available on your PATH.</p><p>Once you have an environment, you can select a model that can work with that environment:</p><pre><code class="language-julia-repl hljs">julia&gt; models(env)
+2-element Array{Any,1}:
+ RaySolver
+ Bellhop</code></pre><p>In this case, we got a shorter list back because the <code>PekerisRayModel</code> can&#39;t deal with non-isovelocity SSP. We can confirm this by creating an iso-velocity environment:</p><pre><code class="language-julia-repl hljs">julia&gt; env = UnderwaterEnvironment()
+BasicUnderwaterEnvironment:
+  altimetry = FlatSurface()
+  bathymetry = ConstantDepth{Float64}(20.0)
+  ssp = IsoSSP{Float64}(1539.0866009307247)
+  salinity = 35.0
+  seasurface = SurfaceLoss{Float64}(2.6)
+  seabed = RayleighReflectionCoef{Float64,Float64,Float64}(1.169, 0.9999, 0.01261)
+  noise = RedGaussianNoise{Float64}(1.0e6)
+
+julia&gt; models(env)
+2-element Array{Any,1}:
+ PekerisRayModel
+ RaySolver</code></pre><p>This time you see that <code>Bellhop</code> wasn&#39;t included, as it assumes a <code>Vacuum</code> surface by default and we have a <code>SeaState1</code> surface as our default.</p><p>Let&#39;s pick a 7-ray Pakeris ray model for now:</p><pre><code class="language-julia-repl hljs">julia&gt; pm = PekerisRayModel(env, 7)
+PekerisRayModel with BasicUnderwaterEnvironment:
+  altimetry = FlatSurface()
+  bathymetry = ConstantDepth{Float64}(20.0)
+  ssp = IsoSSP{Float64}(1539.0866009307247)
+  salinity = 35.0
+  seasurface = SurfaceLoss{Float64}(2.6)
+  seabed = RayleighReflectionCoef{Float64,Float64,Float64}(1.169, 0.9999, 0.01261)
+  noise = RedGaussianNoise{Float64}(1.0e6)</code></pre><p>If you wanted the ray solver instead, you&#39;d do <code>pm = RaySolver(env)</code>, or for a Bellhop model, you&#39;d do <code>pm = Bellhop(env)</code>. Both models can take additional keyword parameters that can customize the solver.</p><h3 id="Defining-sources-and-receivers"><a class="docs-heading-anchor" href="#Defining-sources-and-receivers">Defining sources and receivers</a><a id="Defining-sources-and-receivers-1"></a><a class="docs-heading-anchor-permalink" href="#Defining-sources-and-receivers" title="Permalink"></a></h3><p>Now, we need a source and a receiver:</p><pre><code class="language-julia-repl hljs">julia&gt; tx = AcousticSource(0.0, -5.0, 1000.0);
+julia&gt; rx = AcousticReceiver(100.0, -10.0);</code></pre><p>This defines an omnidirectional 1 kHz transmitter <code>tx</code> at a depth of 5 m at the origin, and an omnidirectional receiver at a range of 100 m and a depth of 10 m.</p><p>NOTE: All coordinates are specified in meters as (x, y, z) for 3D or (x, z) for 2D. The coordinate system has <code>x</code> and <code>y</code> axis in the horizontal plane, and <code>z</code> axis pointing upwards, with the nominal water surface being at 0 m. This means that all <code>z</code> coordinates in water are negative.</p><h3 id="Ray-tracing"><a class="docs-heading-anchor" href="#Ray-tracing">Ray tracing</a><a id="Ray-tracing-1"></a><a class="docs-heading-anchor-permalink" href="#Ray-tracing" title="Permalink"></a></h3><p>Now that we have an environment, a propation model, a transmitter and a receiver, we can modeling. First, we ask for all eigenrays between the transmitter and receiver:</p><pre><code class="language-julia-repl hljs">julia&gt; r = eigenrays(pm, tx, rx)
+7-element Array{UnderwaterAcoustics.RayArrival{Float64,Float64},1}:
+ ∠ -2.9°  0↑  0↓ ∠  2.9° |  65.05 ms | -40.0 dB ϕ  -0.0° ⤷
+ ∠  8.5°  1↑  0↓ ∠  8.5° |  65.70 ms | -40.1 dB ϕ-180.0° ⤷
+ ∠-14.0°  0↑  1↓ ∠-14.0° |  66.97 ms | -59.0 dB ϕ  60.5° ⤷
+ ∠ 19.3°  1↑  1↓ ∠-19.3° |  68.84 ms | -61.3 dB ϕ-141.7° ⤷
+ ∠-24.2°  1↑  1↓ ∠ 24.2° |  71.25 ms | -62.3 dB ϕ-153.8° ⤷
+ ∠ 28.8°  2↑  1↓ ∠ 28.8° |  74.15 ms | -63.0 dB ϕ  19.4° ⤷
+ ∠-33.0°  1↑  2↓ ∠-33.0° |  77.49 ms | -85.4 dB ϕ-149.4° ⤷</code></pre><p>For each eigenray, this shows us the launch angle, number of surface bounces, number of bottom bounces, arrival angle, travel time, transmission loss along that ray, and phase change. The last &quot;<code>⤷</code>&quot; symbol indicates that the complete ray path is also available. We can plot the ray paths:</p><pre><code class="language-julia-repl hljs">julia&gt; plot(env; sources=[tx], receivers=[rx], rays=r)</code></pre><p><img src="images/eigenrays1.png" alt/></p><p>Th red star is the transmitter and the blue circle is the receiver. The stronger eigenrays are shown in blue, while the weaker ones are shown in red.</p><p>We might sometimes want to see all rays from the transmitter at certain angular spacing (-45°:5°:45°) and a given range (100 m):</p><pre><code class="language-julia-repl hljs">julia&gt; r = rays(pm, tx, -45°:5°:45°, 100.0)
+19-element Array{UnderwaterAcoustics.RayArrival{Float64,Float64},1}:
+ ∠-45.0°  2↑  3↓ ∠-45.0° |  91.89 ms | -109.6 dB ϕ  27.5° ⤷
+ ∠-40.0°  2↑  2↓ ∠ 40.0° |  84.82 ms | -86.8 dB ϕ  22.1° ⤷
+ ∠-35.0°  1↑  2↓ ∠-35.0° |  79.32 ms | -85.9 dB ϕ-152.3° ⤷
+ ∠-30.0°  1↑  2↓ ∠-30.0° |  75.03 ms | -85.2 dB ϕ-143.9° ⤷
+ ∠-25.0°  1↑  1↓ ∠ 25.0° |  71.69 ms | -62.8 dB ϕ-155.2° ⤷
+ ∠-20.0°  1↑  1↓ ∠ 20.0° |  69.14 ms | -61.9 dB ϕ-143.9° ⤷
+ ∠-15.0°  0↑  1↓ ∠-15.0° |  67.27 ms | -59.6 dB ϕ  55.5° ⤷
+ ⋮
+ ∠ 15.0°  1↑  1↓ ∠-15.0° |  67.27 ms | -60.0 dB ϕ-124.5° ⤷
+ ∠ 20.0°  1↑  1↓ ∠-20.0° |  69.14 ms | -61.9 dB ϕ-143.9° ⤷
+ ∠ 25.0°  2↑  1↓ ∠ 25.0° |  71.69 ms | -63.1 dB ϕ  24.8° ⤷
+ ∠ 30.0°  2↑  1↓ ∠ 30.0° |  75.03 ms | -63.6 dB ϕ  18.1° ⤷
+ ∠ 35.0°  2↑  2↓ ∠-35.0° |  79.32 ms | -86.2 dB ϕ  27.7° ⤷
+ ∠ 40.0°  2↑  2↓ ∠-40.0° |  84.82 ms | -86.8 dB ϕ  22.1° ⤷
+ ∠ 45.0°  3↑  2↓ ∠ 45.0° |  91.89 ms | -87.7 dB ϕ-161.7° ⤷
+
+julia&gt; plot(env; sources=[tx], rays=r)</code></pre><p><img src="images/rays1.png" alt/></p><h3 id="Arrivals-and-transmission-loss"><a class="docs-heading-anchor" href="#Arrivals-and-transmission-loss">Arrivals &amp; transmission loss</a><a id="Arrivals-and-transmission-loss-1"></a><a class="docs-heading-anchor-permalink" href="#Arrivals-and-transmission-loss" title="Permalink"></a></h3><p>Often, we are interested in the arrival structure or transmission loss at a receiver. Getting the arrivals is quite similar to getting eigenrays, but the ray paths are not stored:</p><pre><code class="language-julia-repl hljs">julia&gt; a = arrivals(pm, tx, rx)
+7-element Array{UnderwaterAcoustics.RayArrival{Float64,Missing},1}:
+ ∠ -2.9°  0↑  0↓ ∠  2.9° |  65.05 ms | -40.0 dB ϕ  -0.0°
+ ∠  8.5°  1↑  0↓ ∠  8.5° |  65.70 ms | -40.1 dB ϕ-180.0°
+ ∠-14.0°  0↑  1↓ ∠-14.0° |  66.97 ms | -59.0 dB ϕ  60.5°
+ ∠ 19.3°  1↑  1↓ ∠-19.3° |  68.84 ms | -61.3 dB ϕ-141.7°
+ ∠-24.2°  1↑  1↓ ∠ 24.2° |  71.25 ms | -62.3 dB ϕ-153.8°
+ ∠ 28.8°  2↑  1↓ ∠ 28.8° |  74.15 ms | -63.0 dB ϕ  19.4°
+ ∠-33.0°  1↑  2↓ ∠-33.0° |  77.49 ms | -85.4 dB ϕ-149.4°</code></pre><p>If we prefer, we can plot these arrivals as an impulse response (sampled at 44.1 kSa/s, in this case):</p><pre><code class="language-julia-repl hljs">julia&gt; plot(abs.(impulseresponse(a, 44100; reltime=true)); xlabel=&quot;Sample #&quot;, legend=false)</code></pre><p><img src="images/ir1.png" alt/></p><p>The <code>reltime=true</code> option generates an impulse response with time relative to the first arrival (default is relative to transmission time).</p><p>If we want, we can also get the complex transfer coefficient or the transmission loss in dB:</p><pre><code class="language-julia-repl hljs">julia&gt; transfercoef(pm, tx, rx)
+0.013183979186458052 - 0.012267750240848727im
+
+julia&gt; transmissionloss(pm, tx, rx)
+34.89032959932541</code></pre><p>You can also pass in arrays of sources and receivers, if you want many transmission losses to be computed simultanously. Some models are able to compute transmission loss on a Cartesion grid very efficiently. This is useful to plot transmission loss as a function of space.</p><p>To define a 1000×200 Cartesion grid with 0.1 m spacing:</p><pre><code class="language-julia-repl hljs">julia&gt; rx = AcousticReceiverGrid2D(1.0, 0.1, 1000, -20.0, 0.1, 200)
+1000×200 AcousticReceiverGrid2D{Float64}:
+ BasicAcousticReceiver((1.0, 0.0, -20.0))    …  BasicAcousticReceiver((1.0, 0.0, -0.1))
+ BasicAcousticReceiver((1.1, 0.0, -20.0))       BasicAcousticReceiver((1.1, 0.0, -0.1))
+ BasicAcousticReceiver((1.2, 0.0, -20.0))       BasicAcousticReceiver((1.2, 0.0, -0.1))
+ ⋮                                           ⋱
+ BasicAcousticReceiver((100.7, 0.0, -20.0))     BasicAcousticReceiver((100.7, 0.0, -0.1))
+ BasicAcousticReceiver((100.8, 0.0, -20.0))     BasicAcousticReceiver((100.8, 0.0, -0.1))
+ BasicAcousticReceiver((100.9, 0.0, -20.0))     BasicAcousticReceiver((100.9, 0.0, -0.1))</code></pre><p>We can then compute the transmission loss over the grid:</p><pre><code class="language-julia-repl hljs">julia&gt; x = transmissionloss(pm, tx, rx)
+1000×200 Array{Float64,2}:
+ 19.0129  19.12    19.5288  …   9.02602   8.23644   8.86055  11.1436  16.4536
+ 19.017   19.1239  19.5324      9.02506   8.26487   8.90641  11.2     16.5155
+ 19.0217  19.1284  19.5366  …   9.02392   8.29514   8.95536  11.2602  16.5817
+ 19.0271  19.1336  19.5415      9.0226    8.32706   9.00713  11.3239  16.6519
+  ⋮                 ⋮       ⋱              ⋮                           ⋮
+ 35.5238  35.4909  35.4954     56.1556   57.7909   59.9858   63.1631  68.5643
+ 35.5742  35.5448  35.5526  …  56.5185   58.1488   60.3365   63.5039  68.8852
+ 35.6261  35.6     35.611      56.8971   58.522    60.7023   63.8594  69.2206
+ 35.6793  35.6565  35.6704     57.2926   58.9118   61.0841   64.2306  69.5712
+
+julia&gt; plot(env; receivers=rx, transmissionloss=x)</code></pre><p><img src="images/txloss1.png" alt/></p><h3 id="Acoustic-simulations"><a class="docs-heading-anchor" href="#Acoustic-simulations">Acoustic simulations</a><a id="Acoustic-simulations-1"></a><a class="docs-heading-anchor-permalink" href="#Acoustic-simulations" title="Permalink"></a></h3><p>Apart from propagation modeling, we can also setup a simulation with various sources and receviers.</p><p>We demonstrate this by setting up a scenario with two pingers (1 kHz, 10 ms pulse with 1 Hz PRR; 2 kHz, 20 ms pulse with 2 Hz PRR) with a source level of 170 dB re µPa @ 1m, at two locations, and deploying two omnidirectional receviers to record them:</p><pre><code class="language-julia-repl hljs">julia&gt; using DSP: db2amp
+julia&gt; tx = [
+  Pinger(0.0, 0.0, -5.0, 1000.0; interval=1.0, duration=10e-3, sourcelevel=db2amp(170)),
+  Pinger(0.0, 100.0, -5.0, 2000.0; interval=0.5, duration=20e-3, sourcelevel=db2amp(170))
+]
+
+julia&gt; rx = [
+  AcousticReceiver(100.0, 0.0, -10.0);
+  AcousticReceiver(50.0, 20.0, -5.0)
+];</code></pre><p>To carry out the simulation, we can for a 2-second long recording (at 8 kSa/s) at the receivers:</p><pre><code class="language-julia-repl hljs">julia&gt; s = record(pm, tx, rx, 2.0, 8000.0)
+SampledSignal @ 8000.0 Hz, 16000×2 Array{Complex{Float64},2}:
+  127308.0+884666.0im   1.15927e6-548579.0im
+ -263820.0+1.16962e6im   1.1377e6+541803.0im
+  -80980.6+1.16562e6im   657226.0+738712.0im
+          ⋮
+ -447370.0+910253.0im    163952.0-436691.0im
+ -431239.0+903852.0im    100509.0-118066.0im
+ -391797.0+582705.0im     49383.0-679981.0im</code></pre><p>The signals are returned as complex analytic signals, but can be easily converted to real signals, if desired:</p><pre><code class="language-julia-repl hljs">julia&gt; s = real(s)
+SampledSignal @ 8000.0 Hz, 16000×2 Array{Float64,2}:
+ -672702.0   318731.0
+ -825049.0   377382.0
+ -984626.0   214490.0
+       ⋮
+   66193.3  -497239.0
+ -144031.0  -321312.0
+ -260200.0  -235680.0</code></pre><p>To visualize the recording, we plot a spectrogram of the signal at the first receiver with the <code>SignalAnalysis.jl</code> package:</p><pre><code class="language-julia-repl hljs">julia&gt; using SignalAnalysis
+julia&gt; specgram(s[:,1])</code></pre><p><img src="images/spec1.png" alt/></p><p>We can clearly see the two pingers, as well as the ambient noise generated with the noise model defined in the environment description.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="uw_basic.html">« Underwater acoustics</a><a class="docs-footer-nextpage" href="pm_envref.html">Environmental model reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.15 on <span class="colophon-date" title="Saturday 16 April 2022 18:02">Saturday 16 April 2022</span>. Using Julia version 1.6.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

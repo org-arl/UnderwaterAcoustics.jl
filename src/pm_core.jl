@@ -31,7 +31,7 @@ function soundspeed end
 abstract type Bathymetry end
 
 """
-    depth(bathy:Bathymetry, x, y)
+    depth(bathy::Bathymetry, x, y)
 
 Get water depth at location (`x`, `y`).
 """
@@ -49,7 +49,7 @@ function maxdepth end
 abstract type Altimetry end
 
 """
-    altitude(alt:Altimetry, x, y)
+    altitude(alt::Altimetry, x, y)
 
 Get water surface altitude at location (`x`, `y`). The nominal water surface
 is considered to have an altitude of zero. However, the water surface may

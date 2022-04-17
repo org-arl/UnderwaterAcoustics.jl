@@ -391,8 +391,8 @@ function (rec::Recorder)(sig; fs=framerate(sig), reltime=true)
 end
 
 """
-channelmatrix(rec::Recorder, fs, ntaps=0; tx=1, rx=1, approx=false)
-channelmatrix(rec::Vector{<:Arrival}, fs, ntaps=0; approx=false)
+    channelmatrix(rec::Recorder, fs, ntaps=0; tx=1, rx=1, approx=false)
+    channelmatrix(rec::Vector{<:Arrival}, fs, ntaps=0; approx=false)
 
 Generate a sampled channel matrix at a sampling rate of `fs` Hz. If `ntaps` is zero,
 the number of taps of the channel matrix are chosen automatically.

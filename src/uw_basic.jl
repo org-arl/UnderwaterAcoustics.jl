@@ -162,7 +162,7 @@ Returns a 1x4 Array
 - b_ac : radiation damping coefficient in /s
 - b_vs : viscous damping coefficient in /s
 """
-function bubble_resonance_and_damping(radius, f; z=0., T=293.15, p0=1.013e5, gas = 1, c=1500., ρ=1022.476, g = 9.80665, Rg = 8.314472, Kw = 0.58, Dw = 1.45e-7, μ = 1e-3, σ = 0.072)
+function bubble_resonance_and_damping(radius, f; z=0., T=293.15, p0=1.013e5, gas = 1, c=1500., ρ=1022.476, g=9.80665, Rg=8.314472, Kw=0.58, Dw=1.45e-7, μ=1e-3, σ=0.072)
     pamb = p0 + z * ρ * g; 
     pineq = pamb .+ 2σ ./ radius; 
     ω = 2π * f;

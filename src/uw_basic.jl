@@ -1,4 +1,5 @@
 export soundspeed, absorption, waterdensity, reflectioncoef, surfaceloss, doppler, bubbleresonance
+export dBperλ, indBperλ
 
 """
 $(SIGNATURES)
@@ -93,6 +94,20 @@ end
 
 """
 $(SIGNATURES)
+Compute dimensionless absorption coefficient `δ` from dB/λ.
+Implementation based on APL-UW TR 9407 (1994), IV-9 equation (4).
+"""
+dBperλ(x) = x / (40π / log(10))
+
+"""
+$(SIGNATURES)
+Compute dB/λ from dimensionless absorption coefficient `δ`.
+Implementation based on APL-UW TR 9407 (1994), IV-9 equation (4).
+"""
+indBperλ(δ) = δ * 40π / log(10)
+
+"""
+$(SIGNATURES)
 Compute surface reflection coefficient, given:
 - `windspeed` in m/s
 - `frequency` in Hz
@@ -131,7 +146,7 @@ This ignores surface-tension, thermal, viscous and acoustic damping effects, and
 Implementation based on Medwin & Clay (1998).
 """
 function bubbleresonance(radius, depth=0.0, γ=1.4, p0=1.013e5, ρ=1022.476)
-  g = 9.80665 #acceleration due to gravity
+  g = 9.80665 # acceleration due to gravity
   pₐ = p0 + ρ*g*depth
   1 / (2π * radius) * √(3γ * pₐ/ρ)
 end

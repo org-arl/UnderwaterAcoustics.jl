@@ -103,6 +103,13 @@ Get the salinity of the underwater environment.
 function salinity end
 
 """
+    waterdensity(env::UnderwaterEnvironment)
+
+Get the nominal water density for the underwater environment.
+"""
+function waterdensity end
+
+"""
     seasurface(env::UnderwaterEnvironment)::ReflectionModel
 
 Get the sea surface reflection model for the underwater environment.
@@ -497,9 +504,10 @@ function envrealtype(env::UnderwaterEnvironment)
   b = depth(bathymetry(env), 0.0, 0.0)
   c = soundspeed(ssp(env), 0.0, 0.0, 0.0)
   s = salinity(env)
+  d = waterdensity(env)
   r1 = real(reflectioncoef(seasurface(env), 1000.0, 0.0))
   r2 = real(reflectioncoef(seabed(env), 1000.0, 0.0))
-  promote_type(typeof(a), typeof(b), typeof(c), typeof(s), typeof(r1), typeof(r2))
+  promote_type(typeof(a), typeof(b), typeof(c), typeof(s), typeof(d), typeof(r1), typeof(r2))
 end
 
 ### pretty printing
@@ -511,6 +519,7 @@ function Base.show(io::IO, env::UnderwaterEnvironment)
   println(io, "  bathymetry = ", bathymetry(env))
   println(io, "  ssp = ", ssp(env))
   println(io, "  salinity = ", salinity(env))
+  println(io, "  waterdensity = ", waterdensity(env))
   println(io, "  seasurface = ", seasurface(env))
   println(io, "  seabed = ", seabed(env))
   println(io, "  noise = ", noise(env))

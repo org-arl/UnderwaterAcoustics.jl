@@ -321,6 +321,7 @@ Base.@kwdef struct BasicUnderwaterEnvironment{T1<:Altimetry, T2<:Bathymetry, T3<
   bathymetry::T2 = ConstantDepth(20.0)
   ssp::T3 = IsoSSP(soundspeed())
   salinity::T4 = 35.0
+  waterdensity::T4 = waterdensity()
   seasurface::T5 = SeaState1
   seabed::T6 = SandySilt
   noise::T7 = RedGaussianNoise(db2amp(120.0))
@@ -337,6 +338,7 @@ altimetry(env::BasicUnderwaterEnvironment) = env.altimetry
 bathymetry(env::BasicUnderwaterEnvironment) = env.bathymetry
 ssp(env::BasicUnderwaterEnvironment) = env.ssp
 salinity(env::BasicUnderwaterEnvironment) = env.salinity
+waterdensity(env::BasicUnderwaterEnvironment) = env.waterdensity
 seasurface(env::BasicUnderwaterEnvironment) = env.seasurface
 seabed(env::BasicUnderwaterEnvironment) = env.seabed
 noise(env::BasicUnderwaterEnvironment) = env.noise

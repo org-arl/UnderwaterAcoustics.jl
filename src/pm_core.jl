@@ -323,7 +323,7 @@ function transfercoef(model::PropagationModel, tx1::AcousticSource, rx1::Acousti
   length(arr) == 0 && return zero(phasortype(eltype(arr)))
   if mode === :coherent
     f = nominalfrequency(tx1)
-    tc = sum(a.phasor * cis(-2π * a.time * f) for a ∈ arr)
+    tc = sum(a.phasor * cis(2π * a.time * f) for a ∈ arr)
   elseif mode === :incoherent
     tc = Complex(√sum(abs2(a.phasor) for a ∈ arr), 0)
   else
@@ -470,7 +470,7 @@ function impulseresponse(arrivals::Vector{<:Arrival}, fs, ntaps=0; reltime=false
     for a ∈ arrivals
       δ = (a.time - mintime) * fs
       for i ∈ 1:N
-        x[i] += a.phasor * cis(-2π * (i-1)/N * δ)
+        x[i] += a.phasor * cis(2π * (i-1)/N * δ)
       end
     end
     ifft!(x)

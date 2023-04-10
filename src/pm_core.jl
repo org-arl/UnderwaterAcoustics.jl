@@ -513,7 +513,7 @@ end
 ### pretty printing
 
 function Base.show(io::IO, env::UnderwaterEnvironment)
-  s = replace(string(typeof(env)), r"\{.*$" => "", r"^[^\.]*\." => "")
+  s = replace(replace(string(typeof(env)), r"\{.*$" => ""), r"^[^\.]*\." => "")
   println(io, s, ":")
   println(io, "  altimetry = ", altimetry(env))
   println(io, "  bathymetry = ", bathymetry(env))

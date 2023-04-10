@@ -59,9 +59,9 @@ struct SampledSSP1D{T1,T2,T3} <: SampledSSP
   function SampledSSP1D(depth, c, interp)
     if interp === :smooth
       depth isa AbstractRange || throw(ArgumentError("depth must be sampled uniformly and specified as an AbstractRange"))
-      f = CubicSplineInterpolation(depth, c; extrapolation_bc=Line())
+      f = cubic_spline_interpolation(depth, c; extrapolation_bc=Line())
     elseif interp === :linear
-      f = LinearInterpolation(depth, c; extrapolation_bc=Line())
+      f = linear_interpolation(depth, c; extrapolation_bc=Line())
     else
       throw(ArgumentError("Unknown interpolation"))
     end
@@ -147,9 +147,9 @@ struct SampledDepth{T1,T2,T3} <: Bathymetry
   function SampledDepth(x, depth, interp)
     if interp === :smooth
       x isa AbstractRange || throw(ArgumentError("x must be sampled uniformly and specified as an AbstractRange"))
-      f = CubicSplineInterpolation(x, depth; extrapolation_bc=Line())
+      f = cubic_spline_interpolation(x, depth; extrapolation_bc=Line())
     elseif interp === :linear
-      f = LinearInterpolation(x, depth; extrapolation_bc=Line())
+      f = linear_interpolation(x, depth; extrapolation_bc=Line())
     else
       throw(ArgumentError("Unknown interpolation"))
     end
@@ -196,9 +196,9 @@ struct SampledAltitude{T1,T2,T3} <: Altimetry
   function SampledAltitude(x, altitude, interp)
     if interp === :smooth
       x isa AbstractRange || throw(ArgumentError("x must be sampled uniformly and specified as an AbstractRange"))
-      f = CubicSplineInterpolation(x, altitude; extrapolation_bc=Line())
+      f = cubic_spline_interpolation(x, altitude; extrapolation_bc=Line())
     elseif interp === :linear
-      f = LinearInterpolation(x, altitude; extrapolation_bc=Line())
+      f = linear_interpolation(x, altitude; extrapolation_bc=Line())
     else
       throw(ArgumentError("Unknown interpolation"))
     end
@@ -322,7 +322,7 @@ Base.@kwdef struct BasicUnderwaterEnvironment{T1<:Altimetry, T2<:Bathymetry, T3<
   ssp::T3 = IsoSSP(soundspeed())
   salinity::T4 = 35.0
   waterdensity::T4 = waterdensity()
-  seasurface::T5 = SeaState1
+  seasurface::T5 = Vacuum
   seabed::T6 = SandySilt
   noise::T7 = RedGaussianNoise(db2amp(120.0))
 end

@@ -2,6 +2,7 @@
 [![doc-stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://org-arl.github.io/UnderwaterAcoustics.jl/stable)
 [![doc-dev](https://img.shields.io/badge/docs-latest-blue.svg)](https://org-arl.github.io/UnderwaterAcoustics.jl/dev)
 [![Codecov](https://codecov.io/gh/org-arl/UnderwaterAcoustics.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/org-arl/UnderwaterAcoustics.jl)
+[![ColPrac](https://img.shields.io/badge/ColPrac-contributing-blueviolet)](CONTRIBUTING.md)
 
 # UnderwaterAcoustics.jl
 

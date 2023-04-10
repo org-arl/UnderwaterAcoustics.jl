@@ -32,6 +32,16 @@ If you have ideas for new features that fit within the [scope of the project](RO
 
 If you have things you'd like to talk about that don't naturally fit in as a bug report or feature request, [open a new discussion](https://github.com/org-arl/UnderwaterAcoustics.jl/discussions) for it. Discussions may include Q&A, project scope/roadmap discussions, ideas that aren't concrete enough to be feature requests yet, cool things you've done with UnderwaterAcoustics.jl that you'd want to show others, etc.
 
+### Triage
+
+The convention used to tag what's planned is as follows:
+- Issues assigned to a milestone are prioritized for inclusion in an upcoming milestone. These issues will always be assigned to a person.
+- Issues assigned to a person but not tagged for a milestone are under consideration for future milestones by the person.
+- Issues unassigned to anyone are not under consideration at present for any milestone.
+- Issues marked `high-priority` or `low-priority` are prioritized as such. Issues not marked with either label are considered "normal priority".
+
+If you wish to take up an issue for a PR, please indicate so in the issue, so that we can assign it to you and track the relevant PR.
+
 ## Bug fixes, new features & documentation enhancements
 
 In order to contribute to the code and/or documentation for UnderwaterAcoustics.jl, you'll need to be familiar with git and have a Github account. We have some useful links in the [Getting Started](#getting-started) section above, if you're new to git or Github.
@@ -98,7 +108,7 @@ In some cases, the scope of a commit cuts across multiple scopes. In that case, 
 
 Some examples of good commit messages:
 ```
-fix(raysolv): fix type instability for Float32 (issue #17)
+fix(pekeris): fix type instability for Float32 (issue #17)
 ```
 ```
 feat(uwa): add bubble resonance calculator
@@ -120,7 +130,7 @@ of it, if they need only the magnitude.
 We have not evolved a formal coding standard yet, but good coding practices common in the Julia community are adopted in this project. At minimum, you should be familiar (and comply to the extent reasonable) with [Julia style guide](https://docs.julialang.org/en/v1/manual/style-guide/), [Julia performance tips](https://docs.julialang.org/en/v1/manual/performance-tips/) and the [Julia documentation guidelines](https://docs.julialang.org/en/v1/manual/documentation/).
 
 ### Some guidelines:
-- Properly format and indent your code. Use 2 spaces for intentation (DO NOT use tabs).
+- Properly format and indent your code. Use 2 spaces for indentation (DO NOT use tabs).
 - Use blank lines and/or comments to separate code sections for readability. But do not use excess whitespace or blank lines, as this limits the amount of visible code on the screen and makes the code harder to navigate.
 - Do not leave chunks of commented code in the codebase. Delete unused code, and rely on git history for access to old code when necessary.
 - Type names start with a capital letter and use CamelCase (e.g. `RaySolver`).

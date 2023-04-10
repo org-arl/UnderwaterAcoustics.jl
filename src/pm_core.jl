@@ -470,7 +470,7 @@ function impulseresponse(arrivals::Vector{<:Arrival}, fs, ntaps=0; reltime=false
     for a ∈ arrivals
       δ = (a.time - mintime) * fs
       for i ∈ 1:N
-        x[i] += a.phasor * cis(2π * (i-1)/N * δ)
+        x[i] += a.phasor * cis(-2π * (i-1)/N * δ)
       end
     end
     ifft!(x)

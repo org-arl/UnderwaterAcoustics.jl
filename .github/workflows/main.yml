@@ -5,13 +5,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        julia-version: ['1.6.0']
+        julia-version: ['1.6', '1']
         os: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v1.0.0
       - uses: julia-actions/setup-julia@latest
         with:
           version: ${{ matrix.julia-version }}
-      - uses: julia-actions/julia-runtest@master
+      - uses: julia-actions/julia-runtest@v1
       - name: upload to codecov
         run: CODECOV_TOKEN=${{ secrets.CODECOV_TOKEN }} julia -e 'using Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(process_folder())'

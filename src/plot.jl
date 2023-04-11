@@ -98,7 +98,6 @@ end
     clim = (round(μ - 30.0), round(μ + 30.0))
   end
   ticks --> :native
-  legend --> false
   xlims --> clim
   xguide --> "soundspeed (m/s)"
   yguide --> "z (m) "

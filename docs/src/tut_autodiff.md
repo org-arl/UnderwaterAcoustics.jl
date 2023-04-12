@@ -2,7 +2,7 @@
 
 !!! note
 
-    This tutorial is based on the example presented in the UComms 2020 webinar talk "[Underwater Acoustics in the age of differentiable and probabilistic programming](https://www.facebook.com/watch/live/?v=2473971036238315)".
+    This tutorial is adapted from the example presented in the UComms 2020 webinar talk "[Underwater Acoustics in the age of differentiable and probabilistic programming](https://www.facebook.com/watch/live/?v=2473971036238315)".
 
 ## Problem statement
 
@@ -31,8 +31,8 @@ end
 
 data = [(
     range=100.0 + 0.5t,
-    depth=7.0 + 0.01t,
-    pilots=[𝒴([100.0 + 0.5t, 7.0 + 0.01t, f, 1.5, 1.2, 0.001]) for f ∈ 1000.0:10.0:2000.0]
+    depth=6.0 + 0.01t,
+    pilots=[𝒴([100.0 + 0.5t, 6.0 + 0.01t, f, 1.5, 1.2, 0.001]) for f ∈ 1000.0:10.0:2000.0]
   ) for t ∈ 0.0:1.0:59.0]
 data = DataFrame(vec(data))
 ```
@@ -44,7 +44,7 @@ In order to recover the drift path of the probe, we build a simple error model f
 Since our propagation model is differentiable, the gradient of the error can be automatically computed during the optimization using [`ForwardDiff.jl`](https://github.com/JuliaDiff/ForwardDiff.jl).
 
 ```julia
-using Optim
+using ForwardDiff
 
 # channel model for pilots
 pilots(r, d) = [
@@ -54,11 +54,13 @@ pilots(r, d) = [
 # gradient descent optimization
 function chparams(data)
   history = []
-  θ = [100.0, 7.0]    # known initial location
+  θ = [100.0, 6.0]    # known initial location
+  η = [1e-4, 1e-6]    # learning rate
   for row ∈ eachrow(data)
     err(θ) = sum(abs2, pilots(θ[1], θ[2]) .- row.pilots)  # error model
-    soln = optimize(err, θ, GradientDescent(), Optim.Options(iterations=10), autodiff = :forward)
-    θ = soln.minimizer
+    for i ∈ 1:100      # iterations of simple gradient descent
+      θ .-=  η .* ForwardDiff.gradient(err, θ)
+    end
     push!(history, (range=θ[1], depth=θ[2]))
   end
   DataFrame(history)
@@ -73,7 +75,7 @@ Now that we have a path estimate, let's check it against the ground truth:
 using Plots
 
 plot(data.range, -data.depth; xlabel="Range (m)", ylabel="Depth (m)", label="Ground truth")
-plot!(p.range, -p.depth; label="Estimated")
+scatter!(p.range, -p.depth; label="Estimated")
 ```
 
 ![](images/tut_autodiff_2.png)

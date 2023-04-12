@@ -66,7 +66,7 @@ using Turing: Variational
 
 q = vi(
   geoacoustic(data.depth, data.frequency, data.xloss),
-  ADVI(10, 10000)
+  ADVI(100, 10000)
 )
 ```
 
@@ -75,9 +75,9 @@ The returned `q` is a 3-dimensional posterior probability distribution over the 
 ```julia-repl
 julia> mean(rand(q, 10000); dims=2)
 3×1 Array{Float64,2}:
- 1.4988686875663213
- 1.200287830442071
- 0.001139531366600336
+ 1.4989510476936188
+ 1.2000012848664092
+ 0.0009835578241605488
 ```
 
 We see that the estimated parameter means for `ρ`, `c` and `δ` are quite close to the actual values used in generating the data.

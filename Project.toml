@@ -1,7 +1,7 @@
 name = "UnderwaterAcoustics"
 uuid = "0efb1f7a-1ce7-46d2-9f48-546a4c8fbb99"
 authors = ["Mandar Chitre <mandar@nus.edu.sg>"]
-version = "0.3.0"
+version = "0.3.1"
 
 [deps]
 Colors = "5ae59095-9a9b-59fe-a467-6f913c188581"

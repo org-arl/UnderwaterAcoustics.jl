@@ -439,7 +439,7 @@ end
 
 # delegate recording task to an ephemeral recorder
 record(model::PropagationModel, tx, rx, duration, fs; start=0.0) = recorder(model, tx, rx)(duration, fs; start)
-record(model::PropagationModel, tx, rx, sig) = recorder(model, tx, rx)(sig)
+record(model::PropagationModel, tx, rx, sig; reltime=true) = recorder(model, tx, rx)(sig; reltime)
 
 """
 $(SIGNATURES)

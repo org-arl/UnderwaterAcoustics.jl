@@ -5,7 +5,7 @@ export dBperλ, indBperλ
 $(SIGNATURES)
 Compute sound speed in water in m/s, given:
 - water `temperature` in °C
-- `salinity` in ppm
+- `salinity` in ppt
 - `depth` in meters
 - void fraction (`voidfrac`) in bubbly water
 - sound speed in gas (`cgas`), if `voidfrac` > 0

@@ -12,6 +12,8 @@ Available models:
 | [RaySolver](https://github.com/org-arl/AcousticRayTracers.jl) | Ray/Gaussian beam model | Julia | Differentiable, multi-threaded | Tell us and we'll fix them! |
 | [Bellhop](https://github.com/org-arl/AcousticsToolbox.jl) | Interface to [OALIB Bellhop model](http://oalib.hlsresearch.com/AcousticsToolbox/) | FORTRAN | Well established benchmark model | Does not support automatic differentiation |
 | [Kraken](https://github.com/org-arl/AcousticsToolbox.jl) | Interface to [OALIB Kraken model](http://oalib.hlsresearch.com/AcousticsToolbox/) | FORTRAN | Well established benchmark model | Does not support automatic differentiation |
+| [RayBasis](https://github.com/org-arl/DataDrivenAcoustics.jl) | Ray-basis neural network models | Julia | Data-driven models | Requires training data |
+| [GPR](https://github.com/org-arl/DataDrivenAcoustics.jl) | Gaussian process regression models | Julia | Data-driven model | Requires training data |
 
 ## Quickstart guide
 

@@ -30,6 +30,7 @@ pkg> add UnderwaterAcoustics
 
 - Install [`AcousticRayTracers.jl`](https://github.com/org-arl/AcousticRayTracers.jl) for `RaySolver` model
 - Install [`AcousticsToolbox.jl`](https://github.com/org-arl/AcousticsToolbox.jl) for `Bellhop` and `Kraken` models
+- Install [`DataDrivenAcoustics.jl`](https://github.com/org-arl/DataDrivenAcoustics.jl) for `RayBasis` and `GPR` family of models
 
 ## Getting started
 

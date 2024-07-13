@@ -290,8 +290,8 @@ end
   @test all([r[j].raypath[end][1] ≥ 100.0 for j ∈ 1:9])
   @test all([length(r[j].raypath) == r[j].surface + r[j].bottom + 2 for j ∈ 1:9])
 
-  ir1 = impulseresponse(arr, 10000.0; reltime=true, approx=true)
-  ir2 = impulseresponse(arr, 10000.0; reltime=false, approx=true)
+  ir1 = impulseresponse(arr, 10000.0; abstime=false, approx=true)
+  ir2 = impulseresponse(arr, 10000.0; abstime=true, approx=true)
   @test length(ir2) ≈ length(ir1) + round(Int, 10000.0 * arr[1].time) atol=1
   @test length(ir2) == round(Int, 10000.0 * arr[end].time) + 1
   @test sum(ir1 .!= 0.0) == 7
@@ -301,21 +301,21 @@ end
   ndx = findall(abs.(ir2) .> 0)
   @test (ndx .- 1) ./ 10000.0 ≈ [arr[j].time for j ∈ 1:7] atol=1e-4
 
-  ir1a = impulseresponse(arr, 10000.0; reltime=true)
-  ir2a = impulseresponse(arr, 10000.0; reltime=false)
+  ir1a = impulseresponse(arr, 10000.0; abstime=false)
+  ir2a = impulseresponse(arr, 10000.0; abstime=true)
   @test length(ir2a) ≈ length(ir1a) + round(Int, 10000.0 * arr[1].time) atol=1
   @test length(ir2a) ≥ length(ir2)
   @test sum(abs2.(ir1a))/sum(abs2.(ir1)) ≈ 1.0 atol=0.05
   @test sum(abs2.(ir2a))/sum(abs2.(ir2)) ≈ 1.0 atol=0.05
 
-  @test length(impulseresponse(arr, 10000.0, 256; reltime=true, approx=true)) == 256
-  @test length(impulseresponse(arr, 10000.0, 64; reltime=true, approx=true)) == 64
-  @test length(impulseresponse(arr, 10000.0, 256; reltime=true, approx=false)) == 256
-  @test length(impulseresponse(arr, 10000.0, 64; reltime=true, approx=false)) == 64
-  @test length(impulseresponse(arr, 10000.0, 1024; reltime=false, approx=true)) == 1024
-  @test length(impulseresponse(arr, 10000.0, 700; reltime=false, approx=true)) == 700
-  @test length(impulseresponse(arr, 10000.0, 1024; reltime=false, approx=false)) == 1024
-  @test length(impulseresponse(arr, 10000.0, 700; reltime=false, approx=false)) == 700
+  @test length(impulseresponse(arr, 10000.0; ntaps=256, abstime=false, approx=true)) == 256
+  @test length(impulseresponse(arr, 10000.0; ntaps=64, abstime=false, approx=true)) == 64
+  @test length(impulseresponse(arr, 10000.0; ntaps=256, abstime=false, approx=false)) == 256
+  @test length(impulseresponse(arr, 10000.0; ntaps=64, abstime=false, approx=false)) == 64
+  @test length(impulseresponse(arr, 10000.0; ntaps=1024, abstime=true, approx=true)) == 1024
+  @test length(impulseresponse(arr, 10000.0; ntaps=700, abstime=true, approx=true)) == 700
+  @test length(impulseresponse(arr, 10000.0; ntaps=1024, abstime=true, approx=false)) == 1024
+  @test length(impulseresponse(arr, 10000.0; ntaps=700, abstime=true, approx=false)) == 700
 
   env = UnderwaterEnvironment(ssp=IsoSSP(1500.0))
   pm = PekerisRayModel(env, 2)
@@ -408,7 +408,7 @@ end
   sig = recorder(pm, tx, rx)(1.0, 44100.0; start=0.5)
   @test size(sig) == (44100,2)
 
-  env = UnderwaterEnvironment(noise=missing)
+  env = UnderwaterEnvironment(noise=NoNoise())
   pm = PekerisRayModel(env, 7)
   tx = Pinger(0.0, -5.0, 1000.0; interval=0.3)
   rx = AcousticReceiver(100.0, -10.0)
@@ -459,7 +459,7 @@ end
   @test sig isa AbstractVector
   @test eltype(sig) === Float64
   @test 44100 < length(sig) < 44700
-  sig = rec(zeros(44100); fs=44100.0, reltime=false)
+  sig = rec(zeros(44100); fs=44100.0, abstime=true)
   @test sig isa AbstractVector
   @test eltype(sig) === Float64
   @test 47000 < length(sig) < 47600
@@ -484,12 +484,12 @@ end
   @test sig isa AbstractMatrix
   @test size(sig, 2) == 2
 
-  env = UnderwaterEnvironment(noise=nothing)
+  env = UnderwaterEnvironment(noise=NoNoise())
   pm = PekerisRayModel(env)
   tx = AcousticSource(0.0, -5.0, 10000.0)
   rx = AcousticReceiver(100.0, -10.0)
   rec = recorder(pm, tx, rx)
-  ir = impulseresponse(arrivals(pm, tx, rx), 44100.0, 500; approx=true, reltime=true)
+  ir = impulseresponse(arrivals(pm, tx, rx), 44100.0; ntaps=500, approx=true, abstime=false)
   X1 = channelmatrix(rec, 44100.0, 500; approx=true)
   X2 = channelmatrix(arrivals(pm, tx, rx), 44100.0, 500; approx=true)
   @test X1 == X2

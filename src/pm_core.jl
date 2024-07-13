@@ -10,7 +10,7 @@ export ReflectionModel, reflectioncoef
 export UnderwaterEnvironment, altimetry, bathymetry, ssp, salinity, seasurface, seabed, noise
 export AcousticSource, AcousticReceiver, location, nominalfrequency, phasor, record, recorder
 export PropagationModel, arrivals, transfercoef, transmissionloss, eigenrays, rays
-export NoiseModel
+export NoiseModel, variability
 export impulseresponse, channelmatrix
 
 ### interface: SoundSpeedProfile
@@ -130,6 +130,13 @@ Get the noise model for the underwater environment.
 """
 function noise end
 
+"""
+    variability(env::UnderwaterEnvironment)::VariabilityModel
+
+Get the variability model for the underwater environment.
+"""
+function variability end
+
 ### interface: AcousticSource
 
 abstract type AcousticSource end
@@ -161,7 +168,7 @@ function phasor end
     record(src::AcousticSource, duration, fs; start=0.0)
     record(noise::NoiseModel, duration, fs; start=0.0)
     record(model::PropagationModel, tx, rx, duration, fs; start=0.0)
-    record(model::PropagationModel, tx, rx, sig; reltime=true)
+    record(model::PropagationModel, tx, rx, sig; abstime=false)
 
 Make a recording of an acoustic source or ambient noise. The `start` time and
 `duration` are specified in seconds, and the recording is made at a sampling
@@ -177,7 +184,7 @@ irrespective of whether the source is real or complex.
 
 When a `sig` is specified, the sources are assumed to transmit the sampled signal in `sig`.
 The number of channels in `sig` must match the number of sources. The returned signal
-is the same type as the input signal (real or complex). If `reltime` is `true`, the
+is the same type as the input signal (real or complex). If `abstime` is `false`, the
 recorded signal starts at the first arrival, otherwise it starts at the beginning of the
 transmission.
 """
@@ -192,6 +199,10 @@ function location end
 
 abstract type NoiseModel end
 function record end
+
+### interface: VariabilityModel
+
+abstract type VariabilityModel end
 
 ### interface: PropagationModel
 
@@ -362,16 +373,14 @@ function (rec::Recorder)(duration, fs; start=0.0)
       end
     end
   end
-  if rec.noisemodel !== missing && rec.noisemodel !== nothing
-    for k = 1:size(rec.arr, 2)
-      x[:,k] .+= record(rec.noisemodel, duration, fs; start)
-    end
+  for k = 1:size(rec.arr, 2)
+    x[:,k] .+= record(rec.noisemodel, duration, fs; start)
   end
   x̄ = rec.rx isa AbstractArray ? x : dropdims(x; dims=2)
   signal(x̄, fs)
 end
 
-function (rec::Recorder)(sig; fs=framerate(sig), reltime=true)
+function (rec::Recorder)(sig; fs=framerate(sig), abstime=false)
   nchannels(sig) == length(rec.tx) || throw(ArgumentError("Input signal must have $(length(rec.tx)) channel(s)"))
   mindelay, maxdelay = extrema(Iterators.flatten([[a1.time for a1 ∈ a] for a ∈ rec.arr]))
   n1 = round(Int, maxdelay * fs)
@@ -392,7 +401,7 @@ function (rec::Recorder)(sig; fs=framerate(sig), reltime=true)
       x[:,k] .+= record(rec.noisemodel, nsamples/fs, fs)
     end
   end
-  n3 = reltime ? round(Int, mindelay * fs) : 1
+  n3 = abstime ? 1 : round(Int, mindelay * fs)
   x̄ = rec.rx isa AbstractArray ? @view(x[n3:end,:]) : dropdims(@view x[n3:end,:]; dims=2)
   isanalytic(sig) ? signal(x̄, fs) : signal(convert.(eltype(sig), real.(x̄) .* √2), fs)
 end
@@ -408,12 +417,12 @@ If `approx` is `true`, a fast algorithm is used to generate a sparse channel mat
 that assigns an arrival to the nearest sampling time.
 """
 function channelmatrix(rec::Recorder, fs, ntaps=0; tx=1, rx=1, approx=false)
-  ir = impulseresponse(rec.arr[tx,rx], fs, ntaps; reltime=true, approx)
+  ir = impulseresponse(rec.arr[tx,rx], fs; approx, ntaps)
   TriangularToeplitz(ir, :L)
 end
 
 function channelmatrix(arrivals::Vector{<:Arrival}, fs, ntaps=0; approx=false)
-  ir = impulseresponse(arrivals, fs, ntaps; reltime=true, approx)
+  ir = impulseresponse(arrivals, fs; approx, ntaps)
   TriangularToeplitz(ir, :L)
 end
 
@@ -439,23 +448,25 @@ end
 
 # delegate recording task to an ephemeral recorder
 record(model::PropagationModel, tx, rx, duration, fs; start=0.0) = recorder(model, tx, rx)(duration, fs; start)
-record(model::PropagationModel, tx, rx, sig; reltime=true) = recorder(model, tx, rx)(sig; reltime)
+record(model::PropagationModel, tx, rx, sig; abstime=false) = recorder(model, tx, rx)(sig; abstime)
 
 """
-$(SIGNATURES)
-Convert a vector of arrivals to a sampled impulse response time series at a
-sampling rate of `fs` Hz. If `ntaps` is zero, the number of taps of the impulse
-response are chosen automatically.
+    impulseresponse(model::PropagationModel, arrivals::Vector{<:Arrival}, fs; abstime=false, approx=false, ntaps=0)
+    impulseresponse(arrivals::Vector{<:Arrival}, fs; abstime=false, approx=false, ntaps=0)
 
-If `reltime` is `true`, the impulse response start time is relative to the
+Convert a vector of arrivals to a sampled impulse response time series at a
+sampling rate of `fs` Hz.
+
+If `abstime` is `false`, the impulse response start time is relative to the
 first arrival, otherwise it is relative to the absolute time. If `approx`
 is `true`, a fast algorithm is used to generate a sparse impulse response
-that assigns an arrival to the nearest sampling time.
+that assigns an arrival to the nearest sampling time. If `ntaps` is zero,
+the number of taps of the impulse response are chosen automatically.
 """
-function impulseresponse(arrivals::Vector{<:Arrival}, fs, ntaps=0; reltime=false, approx=false)
+function impulseresponse(arrivals::Vector{<:Arrival}, fs; abstime=false, approx=false, ntaps=0)
   length(arrivals) == 0 && throw(ArgumentError("No arrivals"))
   mintime, maxtime = extrema(a.time for a ∈ arrivals)
-  reltime || (mintime = zero(typeof(arrivals[1].time)))
+  abstime && (mintime = zero(typeof(arrivals[1].time)))
   mintaps = ceil(Int, (maxtime-mintime) * fs) + 1
   if approx
     ntaps == 0 && (ntaps = mintaps)
@@ -486,6 +497,26 @@ function impulseresponse(arrivals::Vector{<:Arrival}, fs, ntaps=0; reltime=false
     end
   end
   ir
+end
+
+function impulseresponse(::PropagationModel, arrivals::Vector{<:Arrival}, fs; abstime=false, approx=false, ntaps=0)
+  impulseresponse(arrivals, fs; abstime, approx, ntaps)
+end
+
+"""
+    impulseresponse(model::PropagationModel, arrivals::Vector{<:Arrival}, fs, Δt, T; abstime=false, ntaps=0)
+
+Convert a vector of arrivals to a series of sampled time-varying impulse responses,
+each of which is sampled at a rate of `fs` Hz, with an impulse response generated
+every `Δt` seconds for `T` seconds. Returns a matrix of impulse responses, where
+each column corresponds to an impulse response at a specific time.
+
+If `abstime` is `false`, the impulse response start time is relative to the
+first arrival, otherwise it is relative to the absolute time. If `ntaps` is zero,
+the number of taps of the impulse response are chosen automatically.
+"""
+function impulseresponse(model::PropagationModel, arrivals::Vector{<:Arrival}, fs, Δt, T; abstime=false, ntaps=0)
+  impulseresponse(variability(model), arrivals, fs, Δt, T; abstime, ntaps)
 end
 
 # fast threaded map, assuming all entries have the same result type

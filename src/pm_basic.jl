@@ -7,9 +7,9 @@ export ReflectionCoef, FlatSurface, RayleighReflectionCoef, SurfaceLoss
 export Rock, Pebbles, SandyGravel, CoarseSand, MediumSand, FineSand, VeryFineSand
 export ClayeySand, CoarseSilt, SandySilt, Silt, FineSilt, SandyClay, SiltyClay, Clay
 export Vacuum, SeaState0, SeaState1, SeaState2, SeaState3, SeaState4
-export SeaState5, SeaState6, SeaState7, SeaState8, SeaState9
+export SeaState5, SeaState6, SeaState7, SeaState8, SeaState9, NoVariability
 export AcousticReceiverGrid2D, AcousticReceiverGrid3D, NarrowbandAcousticSource
-export WhiteGaussianNoise, RedGaussianNoise, Pinger, SampledAcousticSource
+export WhiteGaussianNoise, RedGaussianNoise, Pinger, SampledAcousticSource, NoNoise
 
 ### sound speed profiles
 
@@ -314,9 +314,23 @@ const SeaState7 = SurfaceLoss(26.5)
 const SeaState8 = SurfaceLoss(30.6)
 const SeaState9 = SurfaceLoss(32.9)
 
+### time-invariant impulse response model
+
+"""
+$(TYPEDEF)
+No time variability.
+"""
+struct NoVariability <: VariabilityModel end
+
+function impulseresponse(::NoVariability, arrivals::Vector{<:Arrival}, fs; abstime=true, ntaps=0)
+  ir = impulseresponse(model, arrivals, fs; abstime, ntaps)
+  n = floor(Int, T / Δt) + 1
+  repeat(ir; outer=(1,n))
+end
+
 ### basic environmental model
 
-Base.@kwdef struct BasicUnderwaterEnvironment{T1<:Altimetry, T2<:Bathymetry, T3<:SoundSpeedProfile, T4<:Number, T5<:ReflectionModel, T6<:ReflectionModel, T7} <: UnderwaterEnvironment
+Base.@kwdef struct BasicUnderwaterEnvironment{T1<:Altimetry, T2<:Bathymetry, T3<:SoundSpeedProfile, T4<:Number, T5<:ReflectionModel, T6<:ReflectionModel, T7<:NoiseModel, T8<:VariabilityModel} <: UnderwaterEnvironment
   altimetry::T1 = FlatSurface()
   bathymetry::T2 = ConstantDepth(20.0)
   ssp::T3 = IsoSSP(soundspeed())
@@ -325,6 +339,7 @@ Base.@kwdef struct BasicUnderwaterEnvironment{T1<:Altimetry, T2<:Bathymetry, T3<
   seasurface::T5 = Vacuum
   seabed::T6 = SandySilt
   noise::T7 = RedGaussianNoise(db2amp(120.0))
+  variability::T8 = NoVariability()
 end
 
 """
@@ -342,8 +357,26 @@ waterdensity(env::BasicUnderwaterEnvironment) = env.waterdensity
 seasurface(env::BasicUnderwaterEnvironment) = env.seasurface
 seabed(env::BasicUnderwaterEnvironment) = env.seabed
 noise(env::BasicUnderwaterEnvironment) = env.noise
+variability(env::BasicUnderwaterEnvironment) = env.variability
 
 ### noise models
+
+"""
+$(TYPEDEF)
+Ambient noise model representing no noise.
+
+---
+
+    NoNoise(σ)
+
+Create an ambient noise model representing no noise.
+"""
+struct NoNoise <: NoiseModel end
+
+function record(::NoNoise, duration, fs; start=0.0)
+  n = round(Int, duration*fs)
+  signal(zeros(ComplexF64, n), fs)
+end
 
 """
 $(TYPEDEF)

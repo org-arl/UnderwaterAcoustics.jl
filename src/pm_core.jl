@@ -157,7 +157,7 @@ Get the nominal frequency of an acoustic source in Hz.
 function nominalfrequency end
 
 """
-    nominalfrequency(src::AcousticSource)
+    phasor(src::AcousticSource)
 
 Get the complex phasor representation (amplitude & phase) of a narrowband
 acoustic source at the nominal frequency.

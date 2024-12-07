@@ -25,7 +25,8 @@ function soundspeed(temperature=27.0, salinity=35.0, depth=10.0; voidfrac=0.0, c
 end
 
 """
-$(SIGNATURES)
+    absorption(frequency, distance=1000.0, salinity=35.0, temperature=27.0, depth=10.0, pH=8.1)
+
 Compute volume acoustic absorption coefficient in water, given:
 - `frequency` in Hz
 - `distance` in meters
@@ -34,8 +35,8 @@ Compute volume acoustic absorption coefficient in water, given:
 - `depth` in meters
 - `pH` of water
 
-The result is a unitless linear scale factor for sound pressure over the given `distance`. To get 
-absorption in terms of dB / m, set `distance = 1.0` and convert the result to decibels. For instance, 
+The result is a unitless linear scale factor for sound pressure over the given `distance`. To get
+absorption in terms of dB / m, set `distance = 1.0` and convert the result to decibels. For instance,
 at a frequency of 100 kHz:
 
 ```julia-repl

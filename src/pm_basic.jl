@@ -323,7 +323,7 @@ No time variability.
 struct NoVariability <: VariabilityModel end
 
 function impulseresponse(::NoVariability, arrivals::Vector{<:Arrival}, fs; abstime=true, ntaps=0)
-  ir = impulseresponse(model, arrivals, fs; abstime, ntaps)
+  ir = impulseresponse(arrivals, fs; abstime, ntaps)
   n = floor(Int, T / Δt) + 1
   repeat(ir; outer=(1,n))
 end

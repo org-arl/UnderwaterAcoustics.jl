@@ -463,7 +463,7 @@ is `true`, a fast algorithm is used to generate a sparse impulse response
 that assigns an arrival to the nearest sampling time. If `ntaps` is zero,
 the number of taps of the impulse response are chosen automatically.
 """
-function impulseresponse(arrivals::Vector{<:Arrival}, fs; abstime=false, approx=false, ntaps=0)
+function impulseresponse(arrivals::Vector{<:RayArrival}, fs; abstime=false, approx=false, ntaps=0)
   length(arrivals) == 0 && throw(ArgumentError("No arrivals"))
   mintime, maxtime = extrema(a.time for a ∈ arrivals)
   abstime && (mintime = zero(typeof(arrivals[1].time)))
@@ -516,7 +516,7 @@ first arrival, otherwise it is relative to the absolute time. If `ntaps` is zero
 the number of taps of the impulse response are chosen automatically.
 """
 function impulseresponse(model::PropagationModel, arrivals::Vector{<:Arrival}, fs, Δt, T; abstime=false, ntaps=0)
-  impulseresponse(variability(model), arrivals, fs, Δt, T; abstime, ntaps)
+  impulseresponse(model, variability(model), arrivals, fs, Δt, T; abstime, ntaps)
 end
 
 # fast threaded map, assuming all entries have the same result type

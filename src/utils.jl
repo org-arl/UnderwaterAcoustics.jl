@@ -45,7 +45,6 @@ in_units(u::typeof(u"dB"), x::typeof(1u"dB")) = ustrip(x)
     Position(x, y, z)
     Position(x, z)
     Position(z)
-    Position()
 
 Convert a position to a named tuple with fields `x`, `y`, and `z`. If any of the
 coordinates is not provided, they are assumed to be zero. If the coordinates have
@@ -59,7 +58,8 @@ Position(pos::NamedTuple{(:z,)}) = Position(pos.z)
 Position(x::Number, y::Number, z::Number) = Position((x, y, z))
 Position(x::Number, z::Number) = Position((x, 0, z))
 Position(z::Number) = Position((0, 0, z))
-Position() = Position((0, 0, 0))
+Position(::Nothing) = nothing
+Position(::Missing) = missing
 
 ################################################################################
 # fields - types and utilities for quantities that may depend on position
@@ -114,4 +114,4 @@ may be specified as a `(x, y, z)` tuple, a `(x, z)` tuple, a `z` value.
 """
 value(q::Number, pos) = q
 value(q, pos) = q(Position(pos))
-value(q) = value(q, Position())
+value(q) = value(q, nothing)

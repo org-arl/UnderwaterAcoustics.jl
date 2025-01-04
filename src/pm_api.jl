@@ -13,22 +13,31 @@ Superclass for all propagation models.
 abstract type AbstractPropagationModel end
 
 """
+Superclass for all acoustic arrivals.
+"""
+abstract type AcousticArrival end
+
+"""
     transmission_loss(pm, tx, rxs)
 
 Compute the transmission loss from the source `tx` to the receivers `rxs`
 using propagation model `pm`. If `rxs` denotes a single receiver, the result is a
 scalar. If `rxs` is an `AbstractArray`, the result is an array of transmission
-losses with the same shape as `rxs`.
+losses (in dB) with the same shape as `rxs`.
 """
-function transmission_loss end
+function transmission_loss(pm, tx, rxs; kwargs...)
+  20 * log10.(abs.(acoustic_field(pm, tx, rxs; kwargs...))) .- spl(tx)
+end
 
 """
     acoustic_field(pm, txs, rxs)
 
 Compute the acoustic field at the receivers `rxs` due to the sources `txs`
 using propagation model `pm`. If `rxs` denotes a single receiver, the result is a
-scalar. If `rxs` is an `AbstractArray`, the result is an array of acoustic
-fields with the same shape as `rxs`.
+complex scalar. If `rxs` is an `AbstractArray`, the result is an array of
+complex numbers with the same shape as `rxs`. The amplitude of the field is
+related to the transmission loss, and the angle is related to the acoustic phase
+at the source frequency.
 """
 function acoustic_field end
 
@@ -287,6 +296,10 @@ end
 
 Narrowband source at position `pos` with specified `frequency` and source level
 `spl` (dB re 1 µPa @ 1 m).
+
+If the position of the source is unknown, it may be specified as `nothing`. This
+is useful when the propagation model does not require the source position (e.g.,
+data-driven models).
 """
 struct NarrowbandAcousticSource{T1,T2,T3} <: AbstractAcousticSource
   pos::T1

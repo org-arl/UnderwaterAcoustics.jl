@@ -14,6 +14,7 @@ makedocs(
     "Manual" => Any[
       "uw_basic.md",
       "pm_api.md",
+      "pm_ext.md",
       "utils.md"
     ],
     # "Propagation models" => Any[

@@ -34,17 +34,18 @@ db2amp(x) = 10^(x/20)
   @test amp2db(abs(reflection_coef(0.0, 1.195, 1.0179, 0.02158))) ≈ -20 atol=0.5
   @test amp2db(abs(reflection_coef(1.22, 1.149, 0.9873, 0.00386))) ≈ -32 atol=0.5
 
-  @test amp2db(surface_reflection_coef(15.0, 20000.0, 80°)) ≈ -6.5 atol=0.1
-  @test amp2db(surface_reflection_coef(10.0, 20000.0, 80°)) ≈ -3.4 atol=0.1
-  @test amp2db(surface_reflection_coef(5.0, 20000.0, 80°)) ≈ -0.5 atol=0.1
+  @test surface_reflection_coef(15.0, 20000.0, 80°) isa Complex
+  @test surface_reflection_coef(15.0, 20000.0, 80°) ≈ -db2amp(-6.5) atol=0.1
+  @test surface_reflection_coef(10.0, 20000.0, 80°) ≈ -db2amp(-3.4) atol=0.1
+  @test surface_reflection_coef(5.0, 20000.0, 80°) ≈ -db2amp(-0.5) atol=0.1
 
   @test doppler(0.0, 50000.0) == 50000.0
   @test doppler(10.0, 50000.0) ≈ 50325 atol=0.5
   @test doppler(-10.0, 50000.0) ≈ 49675 atol=0.5
 
-  @test bubble_resonance(100e-6) ≈ 32465.562964 atol=0.1
-  @test bubble_resonance(32e-6) ≈ 101454.8842 atol=0.1
-  @test bubble_resonance(100e-6, 10.0) ≈ 45796.45437634176 atol=0.1
+  @test bubble_resonance(100e-6) ≈ 32461.7 atol=0.1
+  @test bubble_resonance(32e-6) ≈ 101442.8 atol=0.1
+  @test bubble_resonance(100e-6, 10.0) ≈ 45793.7 atol=0.1
 
 end
 

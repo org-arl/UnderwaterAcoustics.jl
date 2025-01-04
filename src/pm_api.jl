@@ -1,7 +1,10 @@
+import Random: AbstractRNG, default_rng
+import SignalAnalysis: RedGaussian, signal
+
 export UnderwaterEnvironment, PekerisWaveguide
 export FluidBoundary, RigidBoundary, PressureReleaseBoundary
 export transmission_loss, acoustic_field, arrivals, impulse_response, channel, transmit
-export NarrowbandAcousticSource, AcousticReceiver, AcousticReceiverGrid2D, AcousticReceiverGrid3D
+export AcousticSource, AcousticReceiver, AcousticReceiverGrid2D, AcousticReceiverGrid3D
 export spl, frequency
 
 ###############################################################################
@@ -102,18 +105,33 @@ Superclass for all boundary conditions.
 abstract type AbstractAcousticBoundary end
 
 """
-    FluidBoundary(c, ρ, δ)
+    reflection_coef(bc::AbstractAcousticBoundary, frequency, θ, ρ, c)
 
-Create a fluid half-space boundary with sound speed `c`, density `ρ`, and
+Compute the complex reflection coefficient at a fluid-fluid boundary of type
+`bc` at incidence angle `θ` and `frequency`. The density and sound speed in
+the water are given by `ρ` and `c`, respectively.
+"""
+function reflection_coef(bc::AbstractAcousticBoundary, frequency, θ, ρ, c) end
+
+"""
+    FluidBoundary(ρ, c, δ)
+
+Create a fluid half-space boundary with density `ρ`, sound speed `c`, and
 dimensionless absorption coefficient `δ`.
 """
-struct FluidBoundary{T1,T2,T3} <: AbstractAcousticBoundary
-  c::T1
-  ρ::T2
-  δ::T3
+struct FluidBoundary{T} <: AbstractAcousticBoundary
+  ρ::T
+  c::T
+  δ::T
+  function FluidBoundary(ρ, c, δ)
+    ρ = in_units(u"kg/m^3", ρ)
+    c = in_units(u"m/s", c)
+    ρ, c, δ = promote(ρ, c, δ)
+    new{typeof(ρ)}(ρ, c, δ)
+  end
 end
 
-FluidBoundary(c, ρ) = FluidBoundary(c, ρ, 0.0)
+FluidBoundary(ρ, c) = FluidBoundary(ρ, c, 0)
 
 function Base.show(io::IO, b::FluidBoundary)
   if b.c == Inf
@@ -121,21 +139,80 @@ function Base.show(io::IO, b::FluidBoundary)
   elseif b.c == 0
     print(io, "PressureReleaseBoundary")
   elseif b.δ == 0
-    print(io, "FluidBoundary(c=$(b.c), ρ=$(b.ρ))")
+    print(io, "FluidBoundary(ρ=$(b.ρ), c=$(b.c))")
   else
-    print(io, "FluidBoundary(c=$(b.c), ρ=$(b.ρ), δ=$(b.δ))")
+    print(io, "FluidBoundary(ρ=$(b.ρ), c=$(b.c), δ=$(b.δ))")
   end
+end
+
+function reflection_coef(bc::FluidBoundary, frequency, θ, ρ, c)
+  bc.c == Inf && return -1.0 + 0im
+  bc.c == 0 && return 1.0 + 0im
+  θ = in_units(u"rad", θ)
+  ρ = in_units(u"kg/m^3", ρ)
+  c = in_units(u"m/s", c)
+  reflection_coef(θ, bc.ρ / ρ, bc.c / c, bc.δ)
 end
 
 """
 Rigid boundary condition.
 """
-const RigidBoundary = FluidBoundary(Inf, 0, 0)
+const RigidBoundary = FluidBoundary(0, Inf, 0)
 
 """
 Pressure-release boundary condition.
 """
 const PressureReleaseBoundary = FluidBoundary(0, 0, 0)
+
+# seabeds from APL-UW TR 9407 (1994), IV-6 Table 2
+const Rock = FluidBoundary(2.5 * 1023, 2.5 * 1528, 0.01374)
+const Pebbles = FluidBoundary(2.5 * 1023, 1.8 * 1528, 0.01374)
+const SandyGravel = FluidBoundary(2.492 * 1023, 1.3370 * 1528, 0.01705)
+const CoarseSand = FluidBoundary(2.231 * 1023, 1.2503 * 1528, 0.01638)
+const MediumSand = FluidBoundary(1.845 * 1023, 1.1782 * 1528, 0.01624)
+const FineSand = FluidBoundary(1.451 * 1023, 1.1073 * 1528, 0.01602)
+const VeryFineSand = FluidBoundary(1.268 * 1023, 1.0568 * 1528, 0.01875)
+const ClayeySand = FluidBoundary(1.224 * 1023, 1.0364 * 1528, 0.02019)
+const CoarseSilt = FluidBoundary(1.195 * 1023, 1.0179 * 1528, 0.02158)
+const SandySilt = FluidBoundary(1.169 * 1023, 0.9999 * 1528, 0.01261)
+const Silt = FluidBoundary(1.149 * 1023, 0.9873 * 1528, 0.00386)
+const FineSilt = FluidBoundary(1.148 * 1023, 0.9861 * 1528, 0.00306)
+const SandyClay = FluidBoundary(1.147 * 1023, 0.9849 * 1528, 0.00242)
+const SiltyClay = FluidBoundary(1.146 * 1023, 0.9824 * 1528, 0.00163)
+const Clay = FluidBoundary(1.145 * 1023, 0.98 * 1528, 0.00148)
+
+"""
+    WindySurface(windspeed)
+
+Reflection model for a water surface affected by wind. `windspeed` is given
+in m/s.
+"""
+struct WindySurface{T} <: AbstractAcousticBoundary
+  windspeed::T
+  function WindySurface(windspeed)
+    windspeed = in_units(u"m/s", windspeed)
+    new{typeof(windspeed)}(windspeed)
+  end
+end
+
+function reflection_coef(bc::WindySurface, frequency, θ, ρ, c)
+  frequency = in_units(u"Hz", frequency)
+  θ = in_units(u"rad", θ)
+  surface_reflection_coef(bc.windspeed, frequency, θ)
+end
+
+# WMO sea states
+# from APL-UW TR 9407 (1994), II-4 Table 2 (median windspeed)
+const SeaState0 = WindySurface(0.8)
+const SeaState1 = WindySurface(2.6)
+const SeaState2 = WindySurface(4.4)
+const SeaState3 = WindySurface(6.9)
+const SeaState4 = WindySurface(9.8)
+const SeaState5 = WindySurface(12.6)
+const SeaState6 = WindySurface(19.3)
+const SeaState7 = WindySurface(26.5)
+const SeaState8 = WindySurface(30.6)
+const SeaState9 = WindySurface(32.9)
 
 ###############################################################################
 ### environment model API
@@ -175,7 +252,7 @@ mutable struct UnderwaterEnvironment
     temperature = 25.0,
     salinity = 35.0,
     soundspeed = nothing,
-    density = 1025.0,
+    density = nothing,
     seabed = RigidBoundary,
     surface = PressureReleaseBoundary,
     noise = nothing
@@ -185,6 +262,7 @@ mutable struct UnderwaterEnvironment
     temperature isa Number && (temperature = in_units(u"°C", temperature))
     salinity isa Number && (salinity = in_units(u"ppt", salinity))
     density isa Number && (density = in_units(u"kg/m^3", density))
+    density = something(density, water_density(temperature, salinity))
     soundspeed isa Number && (soundspeed = in_units(u"m/s", soundspeed))
     soundspeed = something(soundspeed, UnderwaterAcoustics.soundspeed(temperature, salinity))
     new(bathymetry, altimetry, temperature, salinity, soundspeed, density, seabed, surface, noise)
@@ -213,7 +291,7 @@ are optional (have default values). Default values are specified below:
 
 - `D`  = water depth (m)
 - `c₁` = sound speed in water (m/s, computed from temperature and salinity)
-- `ρ₁` = density of water (`1025` kg/m³)
+- `ρ₁` = density of water (kg/m³, computed from temperature and salinity)
 - `c₂` = sound speed in seabed (`Inf` m/s)
 - `ρ₂` = density of seabed (`2000` kg/m³)
 - `δ₂` = dimensionless absorption coefficient for seabed (`0`)
@@ -233,17 +311,15 @@ Returns an underwater environment with the specified parameters to ensure it
 is a Pekeris waveguide.
 """
 function PekerisWaveguide(;
-  D=100.0, c₁=1500.0, ρ₁=1025.0, c₂=Inf, ρ₂=2000.0, δ₂=0.0, σ₂=0.0, cₛ=0.0,
+  D=100.0, c₁=nothing, ρ₁=nothing, c₂=Inf, ρ₂=2000.0, δ₂=0.0, σ₂=0.0, cₛ=0.0,
   ρₛ=0.0, δₛ=0.0, σₛ=0.0, kwargs...
 )
   UnderwaterEnvironment(
     bathymetry = D,
-    altimetry = 0.0,
     soundspeed = c₁,
     density = ρ₁,
     seabed = FluidBoundary(c₂, ρ₂, δ₂),
     surface = FluidBoundary(cₛ, ρₛ, δₛ),
-    noise = nothing,
     kwargs...
   )
 end
@@ -292,20 +368,23 @@ function Base.show(io::IO, tx::AbstractAcousticReceiver)
 end
 
 """
-    NarrowbandAcousticSource(pos, frequency, spl=0)
+    AcousticSource(pos, frequency, spl=0)
 
-Narrowband source at position `pos` with specified `frequency` and source level
-`spl` (dB re 1 µPa @ 1 m).
+An source at position `pos` with nominal `frequency` and source level `spl`
+(dB re 1 µPa @ 1 m). The source is assumed to be omnidirectional and well
+approximated by a point source. While the source may have some bandwidth,
+the nominal frequency is used to estimate propagation effects such as
+absorption, reflection coefficients, etc.
 
 If the position of the source is unknown, it may be specified as `nothing`. This
 is useful when the propagation model does not require the source position (e.g.,
 data-driven models).
 """
-struct NarrowbandAcousticSource{T1,T2,T3} <: AbstractAcousticSource
+struct AcousticSource{T1,T2,T3} <: AbstractAcousticSource
   pos::T1
   frequency::T2
   spl::T3
-  function NarrowbandAcousticSource(pos, frequency, spl=0)
+  function AcousticSource(pos, frequency, spl=0)
     p = Position(pos)
     f = in_units(u"Hz", frequency)
     s = in_units(u"dB", spl)
@@ -382,7 +461,7 @@ Base.setindex!(g::AcousticReceiverGrid3D, v, I::Vararg{Int,3}) = error("Acoustic
 
 Get the position of the source or receiver.
 """
-Base.position(tx::NarrowbandAcousticSource) = tx.pos
+Base.position(tx::AcousticSource) = tx.pos
 Base.position(rx::AcousticReceiver) = rx.pos
 
 """
@@ -390,11 +469,73 @@ Base.position(rx::AcousticReceiver) = rx.pos
 
 Get the nominal frequency of an acoustic source.
 """
-frequency(tx::NarrowbandAcousticSource) = tx.frequency
+frequency(tx::AcousticSource) = tx.frequency
 
 """
     spl(tx::AbstractAcousticSource)
 
 Get the source level of an acoustic source.
 """
-spl(tx::NarrowbandAcousticSource) = tx.spl
+spl(tx::AcousticSource) = tx.spl
+
+###############################################################################
+### noise modeling API
+
+"""
+Superclass for all noise models.
+"""
+abstract type AbstractNoiseModel end
+
+"""
+    rand([rng::AbstractRNG, ] noise::AbstractNoiseModel, nsamples, fs)
+
+Generate random noise samples from the noise model `noise` with the specified
+size `nsamples` (2-tuple for multichannel noise). The noise is returned as a
+signal sampled at `fs`. The optional `rng` argument specifies the random number
+generator to use.
+"""
+Base.rand(noise::AbstractNoiseModel, nsamples, fs) = Base.rand(default_rng(), noise, nsamples, fs)
+
+"""
+    WhiteGaussianNoise(σ)
+
+Create an white Gaussian ambient noise model with variance `σ²` µPa².
+"""
+struct WhiteGaussianNoise{T<:AbstractFloat} <: AbstractNoiseModel
+  σ::T
+  function WhiteGaussianNoise(σ)
+    σ = in_units(u"µPa", σ)
+    new{typeof(σ)}(σ)
+  end
+end
+
+function Base.rand(rng::AbstractRNG, noise::WhiteGaussianNoise, nsamples, fs)
+  fs = in_units(u"Hz", fs)
+  signal(randn(rng, nsamples) .* noise.σ, fs)
+end
+
+"""
+    RedGaussianNoise(σ)
+
+Create an ambient noise model with variance `σ²` µPa² and `1/f²` variation
+in power spectral density.
+"""
+struct RedGaussianNoise{T<:AbstractFloat} <: AbstractNoiseModel
+  σ::T
+  function RedGaussianNoise(σ)
+    σ = in_units(u"µPa", σ)
+    new{typeof(σ)}(σ)
+  end
+end
+
+function Base.rand(rng::AbstractRNG, noise::RedGaussianNoise, nsamples, fs)
+  fs = in_units(u"Hz", fs)
+  if length(nsamples) == 1
+    signal(rand(rng, RedGaussian(σ=noise.σ, n=nsamples[1])), fs)
+  else
+    x = mapreduce(hcat, 1:nsamples[2]) do _
+      rand(rng, RedGaussian(σ=noise.σ, n=nsamples[1]))
+    end
+    signal(x, fs)
+  end
+end

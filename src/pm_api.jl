@@ -1,11 +1,17 @@
 import Random: AbstractRNG, default_rng
-import SignalAnalysis: RedGaussian, signal
+import SignalAnalysis: RedGaussian, signal, amp2db
+import Printf: @printf
 
 export UnderwaterEnvironment, PekerisWaveguide
 export FluidBoundary, RigidBoundary, PressureReleaseBoundary
 export transmission_loss, acoustic_field, arrivals, impulse_response, channel, transmit
 export AcousticSource, AcousticReceiver, AcousticReceiverGrid2D, AcousticReceiverGrid3D
-export spl, frequency
+export spl, frequency, location
+
+export Rock, Pebbles, SandyGravel, CoarseSand, MediumSand, FineSand, VeryFineSand
+export ClayeySand, CoarseSilt, SandySilt, Silt, FineSilt, SandyClay, SiltyClay
+export Clay, SeaState0, SeaState1, SeaState2, SeaState3, SeaState4, SeaState5
+export SeaState6, SeaState7, SeaState8, SeaState9
 
 ###############################################################################
 ### propagation model API
@@ -19,6 +25,59 @@ abstract type AbstractPropagationModel end
 Superclass for all acoustic arrivals.
 """
 abstract type AcousticArrival end
+
+"""
+Type representing a single acoustic ray arrival.
+
+Fields:
+- `t`: arrival time (s)
+- `ϕ`: complex amplitude
+- `ns`: number of surface bounces
+- `nb`: number of bottom bounces
+- `θₛ`: launch angle at source (rad)
+- `θᵣ`: arrival angle at receiver (rad)
+- `path`: ray path (optional, vector of 3-tuples or missing)
+"""
+struct RayArrival{T1,T2,T3,T4,T5} <: AcousticArrival
+  t::T1                 # arrival time
+  ϕ::Complex{T2}        # complex amplitude
+  ns::Int               # number of surface bounces
+  nb::Int               # number of bottom bounces
+  θₛ::T3                # launch angle at source
+  θᵣ::T4                # arrival angle at receiver
+  path::T5              # ray path
+end
+
+function Base.show(io::IO, a::RayArrival)
+  @printf(io, "∠%5.1f° %2d⤒ %2d⤓ ∠%5.1f° | %6.2f ms | %5.1f dB ϕ%6.1f°%s",
+    rad2deg(a.θₛ), a.ns, a.nb, rad2deg(a.θᵣ), 1000*a.t, amp2db(abs(a.ϕ)),
+    rad2deg(angle(a.ϕ)), a.path === missing || length(a.path) == 0 ? "" : "↝")
+end
+
+"""
+Type representing a single acoustic normal mode arrival.
+
+Fields:
+- `t`: arrival time (s)
+- `m`: mode number
+- `kz`: vertical wavenumber (rad/m)
+- `kr`: horizontal wavenumber (rad/m)
+- `θ`: propagation angle (rad)
+- `ϕ`: complex multiplier
+"""
+struct ModeArrival{T1,T2,T3,T4,T5} <: AcousticArrival
+  t::T1                 # arrival time
+  m::Int                # mode number
+  kz::T2                # vertical wavenumber
+  kr::T3                # horizontal wavenumber
+  θ::T4                 # propagation angle
+  ϕ::Complex{T5}        # complex multiplier
+end
+
+function Base.show(io::IO, a::ModeArrival)
+  @printf(io, "%3d | %6.3f→ %6.3f↑ ∠%5.1f° | %6.2f ms | %5.1f dB ϕ%6.1f°",
+    a.m, a.kr, a.kz, rad2deg(a.θ), 1000*a.t, amp2db(abs(a.ϕ)), rad2deg(angle(a.ϕ)))
+end
 
 """
     transmission_loss(pm, tx, rxs)
@@ -146,8 +205,8 @@ function Base.show(io::IO, b::FluidBoundary)
 end
 
 function reflection_coef(bc::FluidBoundary, frequency, θ, ρ, c)
-  bc.c == Inf && return -1.0 + 0im
-  bc.c == 0 && return 1.0 + 0im
+  bc.c == Inf && return 1.0 + 0im
+  bc.c == 0 && return -1.0 + 0im
   θ = in_units(u"rad", θ)
   ρ = in_units(u"kg/m^3", ρ)
   c = in_units(u"m/s", c)
@@ -289,7 +348,7 @@ end
 Create a Pekeris waveguide environment with the given parameters. All parameters
 are optional (have default values). Default values are specified below:
 
-- `D`  = water depth (m)
+- `h`  = water depth (m)
 - `c₁` = sound speed in water (m/s, computed from temperature and salinity)
 - `ρ₁` = density of water (kg/m³, computed from temperature and salinity)
 - `c₂` = sound speed in seabed (`Inf` m/s)
@@ -311,15 +370,15 @@ Returns an underwater environment with the specified parameters to ensure it
 is a Pekeris waveguide.
 """
 function PekerisWaveguide(;
-  D=100.0, c₁=nothing, ρ₁=nothing, c₂=Inf, ρ₂=2000.0, δ₂=0.0, σ₂=0.0, cₛ=0.0,
+  h=100.0, c₁=nothing, ρ₁=nothing, c₂=Inf, ρ₂=2000.0, δ₂=0.0, σ₂=0.0, cₛ=0.0,
   ρₛ=0.0, δₛ=0.0, σₛ=0.0, kwargs...
 )
-  UnderwaterEnvironment(
-    bathymetry = D,
+  UnderwaterEnvironment(;
+    bathymetry = h,
     soundspeed = c₁,
     density = ρ₁,
-    seabed = FluidBoundary(c₂, ρ₂, δ₂),
-    surface = FluidBoundary(cₛ, ρₛ, δₛ),
+    seabed = FluidBoundary(ρ₂, c₂, δ₂),
+    surface = FluidBoundary(ρₛ, cₛ, δₛ),
     kwargs...
   )
 end
@@ -328,7 +387,7 @@ end
     is_range_dependent(env)
 
 Return `true` if any quantity (e.g. sound speed, bathymetry, etc) in the
-environment `env` depends on the horizontal position, and `false` otherwise.
+environment `env` depends on the horizontal location, and `false` otherwise.
 """
 function is_range_dependent(env::UnderwaterEnvironment)
   for p ∈ (:bathymetry, :altimetry, :temperature, :salinity, :soundspeed, :density, :seabed, :surface, :noise)
@@ -358,26 +417,26 @@ Superclass for all acoustic receivers.
 abstract type AbstractAcousticReceiver end
 
 function Base.show(io::IO, tx::AbstractAcousticSource)
-  p = Tuple(position(tx))
+  p = Tuple(location(tx))
   print(io, "TX$p")
 end
 
 function Base.show(io::IO, tx::AbstractAcousticReceiver)
-  p = Tuple(position(tx))
+  p = Tuple(location(tx))
   print(io, "RX$p")
 end
 
 """
     AcousticSource(pos, frequency, spl=0)
 
-An source at position `pos` with nominal `frequency` and source level `spl`
+An source at location `pos` with nominal `frequency` and source level `spl`
 (dB re 1 µPa @ 1 m). The source is assumed to be omnidirectional and well
 approximated by a point source. While the source may have some bandwidth,
 the nominal frequency is used to estimate propagation effects such as
 absorption, reflection coefficients, etc.
 
-If the position of the source is unknown, it may be specified as `nothing`. This
-is useful when the propagation model does not require the source position (e.g.,
+If the location of the source is unknown, it may be specified as `nothing`. This
+is useful when the propagation model does not require the source location (e.g.,
 data-driven models).
 """
 struct AcousticSource{T1,T2,T3} <: AbstractAcousticSource
@@ -385,7 +444,7 @@ struct AcousticSource{T1,T2,T3} <: AbstractAcousticSource
   frequency::T2
   spl::T3
   function AcousticSource(pos, frequency, spl=0)
-    p = Position(pos)
+    p = XYZ(pos)
     f = in_units(u"Hz", frequency)
     s = in_units(u"dB", spl)
     new{typeof(p),typeof(f),typeof(s)}(p, f, s)
@@ -397,23 +456,23 @@ end
     AcousticReceiver(x, z)
     AcousticReceiver(x, y, z)
 
-Receiver at position `pos`.
+Receiver at location `pos`.
 """
 struct AcousticReceiver{T1} <: AbstractAcousticReceiver
   pos::T1
   function AcousticReceiver(pos)
-    p = Position(pos)
+    p = XYZ(pos)
     new{typeof(p)}(p)
   end
 end
 
-AcousticReceiver(x, z) = AcousticReceiver(Position(x, z))
-AcousticReceiver(x, y, z) = AcousticReceiver(Position(x, y, z))
+AcousticReceiver(x, z) = AcousticReceiver(XYZ(x, z))
+AcousticReceiver(x, y, z) = AcousticReceiver(XYZ(x, y, z))
 
 """
     AcousticReceiverGrid2D(xrange, zrange)
 
-A 2D grid of receivers with the specified position ranges.
+A 2D grid of receivers with the specified location ranges.
 """
 struct AcousticReceiverGrid2D{T1,T2} <: AbstractArray{AcousticReceiver,2}
   xrange::T1
@@ -434,7 +493,7 @@ Base.setindex!(g::AcousticReceiverGrid2D, v, I::Vararg{Int,2}) = error("Acoustic
 """
     AcousticReceiverGrid3D(xrange, yrange, zrange)
 
-A 3D grid of receivers with the specified position ranges.
+A 3D grid of receivers with the specified location ranges.
 """
 struct AcousticReceiverGrid3D{T1,T2,T3} <: AbstractArray{AcousticReceiver,3}
   xrange::T1
@@ -456,13 +515,13 @@ Base.getindex(g::AcousticReceiverGrid3D, I::Vararg{Int,3}) = AcousticReceiver(g.
 Base.setindex!(g::AcousticReceiverGrid3D, v, I::Vararg{Int,3}) = error("AcousticReceiverGrid3D is readonly")
 
 """
-    position(tx::AbstractAcousticSource)
-    position(rx::AbstractAcousticReceiver)
+    location(tx::AbstractAcousticSource)
+    location(rx::AbstractAcousticReceiver)
 
-Get the position of the source or receiver.
+Get the location of the source or receiver.
 """
-Base.position(tx::AcousticSource) = tx.pos
-Base.position(rx::AcousticReceiver) = rx.pos
+location(tx::AcousticSource) = tx.pos
+location(rx::AcousticReceiver) = rx.pos
 
 """
     frequency(tx::AbstractAcousticSource)

@@ -15,30 +15,29 @@ Support for `Unitful.jl` units:
 in_units
 ```
 
-## Positions
+## Locations
 
-Creation of named tuples representing positions:
+Creation of named tuples representing locations:
 
 ```@docs
-Position
+XYZ
 ```
 
 ## Fields
 
 Fields are quantities that may vary with position. The quantities that do not
-vary with position are considered `Constant`. If they vay only with depth, but
-not with horizontal position, they are considered `RangeIndependent`. The ones
-that vary with any positional coordinate are considered `RangeDependent`.
+vary with position are considered constant. If they vay only with depth, but
+not with horizontal position, they are considered `DepthDependent`. The ones
+that vary with any positional coordinate are considered `PositionDependent`.
 
-Scalars are, by definition, `Constant`. Other data types should be tagged with
-the appropriate abstract type to help the propagation modeling API check/choose
-a model's validity.
+Data types that vary with position should be tagged with the appropriate
+abstract type to help the propagation modeling API check/choose a model's
+validity.
 
 ```@docs
-Constant
-RangeIndependent
-RangeDependent
-is_range_dependent(::Constant)
+DepthDependent
+PositionDependent
+is_range_dependent(::PositionDependent)
 is_constant
 value
 ```

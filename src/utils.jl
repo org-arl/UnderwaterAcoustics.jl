@@ -38,28 +38,28 @@ in_units(u::typeof(u"dB"), x::Real) = x
 in_units(u::typeof(u"dB"), x::typeof(1u"dB")) = ustrip(x)
 
 ################################################################################
-# positions are represented as named tuples with coordinates in meters
+# locations are represented as named tuples with coordinates in meters
 
 """
-    Position(pos)
-    Position(x, y, z)
-    Position(x, z)
-    Position(z)
+    XYZ(pos)
+    XYZ(x, y, z)
+    XYZ(x, z)
+    XYZ(z)
 
-Convert a position to a named tuple with fields `x`, `y`, and `z`. If any of the
+Convert a location to a named tuple with fields `x`, `y`, and `z`. If any of the
 coordinates is not provided, they are assumed to be zero. If the coordinates have
 units, they are converted to meters.
 """
-Position(pos::NTuple{3,Real}) = NamedTuple{(:x,:y,:z)}(in_units.(u"m", promote(pos...)))
-Position(pos::NTuple{2,Real}) = Position((pos[1], 0, pos[2]))
-Position(pos::NamedTuple{(:x,:y,:z)}) = Position(pos.x, pos.y, pos.z)
-Position(pos::NamedTuple{(:x,:z)}) = Position(pos.x, pos.z)
-Position(pos::NamedTuple{(:z,)}) = Position(pos.z)
-Position(x::Number, y::Number, z::Number) = Position((x, y, z))
-Position(x::Number, z::Number) = Position((x, 0, z))
-Position(z::Number) = Position((0, 0, z))
-Position(::Nothing) = nothing
-Position(::Missing) = missing
+XYZ(xyz::NTuple{3,Real}) = NamedTuple{(:x,:y,:z)}(float.(in_units.(u"m", promote(xyz...))))
+XYZ(xz::NTuple{2,Real}) = XYZ((xz[1], 0, xz[2]))
+XYZ(xyz::NamedTuple{(:x,:y,:z)}) = XYZ(xyz.x, xyz.y, xyz.z)
+XYZ(xz::NamedTuple{(:x,:z)}) = XYZ(xz.x, xz.z)
+XYZ(z::NamedTuple{(:z,)}) = XYZ(z.z)
+XYZ(x::Number, y::Number, z::Number) = XYZ((x, y, z))
+XYZ(x::Number, z::Number) = XYZ((x, 0, z))
+XYZ(z::Number) = XYZ((0, 0, z))
+XYZ(::Nothing) = nothing
+XYZ(::Missing) = missing
 
 ################################################################################
 # fields - types and utilities for quantities that may depend on position
@@ -67,23 +67,18 @@ Position(::Missing) = missing
 # Quantities that are independent of position are represented as scalars.
 # Quantities that depend on position are represented as callable structs that
 # take a position as argument. Such structs should be tagged with the abstract
-# types `RangeIndependent` or `RangeDependent` to indicate whether they depend
+# types `DepthDependent` or `PositionDependent` to indicate whether they depend
 # only on depth, or on depth and range.
-
-"""
-Quantity that does not vary with position.
-"""
-const Constant = Number
 
 """
 Quantity that may vary with depth, but not with range (`x` or `y` coordinate).
 """
-abstract type RangeIndependent end
+abstract type DepthDependent end
 
 """
 Quantity that may vary with depth and range (`x`, `y` and/or `z` coordinate).
 """
-abstract type RangeDependent end
+abstract type PositionDependent <: DepthDependent end
 
 """
     is_range_dependent(q)
@@ -91,9 +86,8 @@ abstract type RangeDependent end
 Return `true` if the quantity `q` may be range-dependent, `false` if it is
 guaranteed to not depend on `x` or `y` coordinate.
 """
-is_range_dependent(q::Constant) = false
-is_range_dependent(q::RangeIndependent) = false
-is_range_dependent(q::RangeDependent) = true
+is_range_dependent(q::PositionDependent) = true
+is_range_dependent(q) = false
 
 """
     is_constant(q)
@@ -101,9 +95,8 @@ is_range_dependent(q::RangeDependent) = true
 Return `true` if the quantity `q` is a constant, `false` if it could depend
 on position.
 """
-is_constant(q::Constant) = true
-is_constant(q::RangeIndependent) = false
-is_constant(q::RangeDependent) = false
+is_constant(q::DepthDependent) = false
+is_constant(q) = true
 
 """
     value(q)
@@ -112,6 +105,23 @@ is_constant(q::RangeDependent) = false
 Get the value of the varying quantity `q` at the given position `pos`. `pos`
 may be specified as a `(x, y, z)` tuple, a `(x, z)` tuple, a `z` value.
 """
-value(q::Number, pos) = q
-value(q, pos) = q(Position(pos))
+value(q, pos) = q
+value(q::DepthDependent, pos) = q(XYZ(pos))
 value(q) = value(q, nothing)
+value(q::DepthDependent) = error("position not specified")
+
+################################################################################
+# general utilities
+
+# fast threaded map, assuming all entries have the same result type
+function tmap(f, x)
+  x1 = first(x)
+  y1 = f(x1)
+  y = Array{typeof(y1)}(undef, size(x))
+  y[1] = y1
+  Threads.@threads for i ∈ eachindex(x)
+    i == firstindex(x) && continue
+    y[i] = f(x[i])
+  end
+  y
+end

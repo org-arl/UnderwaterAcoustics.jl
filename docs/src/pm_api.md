@@ -8,7 +8,10 @@ CurrentModule = UnderwaterAcoustics
 
 ```@docs
 AbstractPropagationModel
+PekerisRayTracer
 AcousticArrival
+RayArrival
+ModeArrival
 transmission_loss
 acoustic_field
 arrivals
@@ -84,11 +87,11 @@ SeaState9 — Constant
 ```@docs
 AbstractAcousticSource
 AbstractAcousticReceiver
-NarrowbandAcousticSource
+AcousticSource
 AcousticReceiver
 AcousticReceiverGrid2D
 AcousticReceiverGrid3D
-position
+location
 frequency
 spl
 ```

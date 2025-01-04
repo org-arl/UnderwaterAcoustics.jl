@@ -1,151 +1,154 @@
-export PekerisRayModel
+import SignalAnalysis: signal
+
+export PekerisRayTracer
 
 """
-    struct PekerisRayModel{T} <: PropagationModel{T}
+    PekerisRayTracer(env; nbounces=3)
 
-A fast differentiable ray model that only supports isovelocity constant depth
-environments.
-
----
-
-    PekerisRayModel(env, rays)
-
-Create a Pekeris ray propagation model with a maximum of `rays` ray arrivals.
+A fast differentiable ray tracer that only supports isovelocity constant depth
+environments. `nbounces` is the number of surface/bottom bounces to consider
+in the ray tracing.
 """
-struct PekerisRayModel{T} <: PropagationModel{T}
-  env::T
-  rays::Int
-  function PekerisRayModel(env, rays=7)
-    rays > 0 || throw(ArgumentError("Number of rays should be more than 0"))
-    new{typeof(env)}(check(PekerisRayModel, env), rays)
+struct PekerisRayTracer{T1,T2,T3,T4,T5,T6,T7,T8} <: AbstractPropagationModel
+  h::T1             # water depth
+  c::T2             # sound speed
+  ρ::T3             # density
+  T::T4             # temperature
+  S::T5             # salinity
+  seabed::T6        # seabed properties
+  surface::T7       # surface properties
+  noise::T8         # noise model
+  nbounces::Int
+  function PekerisRayTracer(env; nbounces=16)
+    nbounces ≥ 0 || error("Number of nbounces cannot be negative")
+    isospeed(env) || error("Environment must be isovelocity")
+    is_range_dependent(env) && error("Environment must be range independent")
+    is_constant(env.temperature) || error("Temperature must be constant")
+    is_constant(env.salinity) || error("Salinity must be constant")
+    is_constant(env.density) || error("Density must be constant")
+    h = value(env.bathymetry)
+    c = value(env.soundspeed)
+    ρ = value(env.density)
+    T = value(env.temperature)
+    S = value(env.salinity)
+    ps = (h, c, ρ, T, S, env.seabed, env.surface, env.noise)
+    new{typeof.(ps)...}(ps..., nbounces)
   end
 end
 
-### interface functions
-
-function check(::Type{PekerisRayModel}, env::Union{<:UnderwaterEnvironment,Missing})
-  if env !== missing
-    altimetry(env) isa FlatSurface || throw(ArgumentError("PekerisRayModel only supports environments with flat sea surface"))
-    bathymetry(env) isa ConstantDepth || throw(ArgumentError("PekerisRayModel only supports constant depth environments"))
-    ssp(env) isa IsoSSP || throw(ArgumentError("PekerisRayModel only supports isovelocity environments"))
-  end
-  env
+function Base.show(io::IO, model::PekerisRayTracer)
+  print(io, "PekerisRayTracer(h=$(model.h), nbounces=$(model.nbounces))")
 end
 
-function arrivals(model::PekerisRayModel, tx1::AcousticSource, rx1::AcousticReceiver)
+"""
+    arrivals(model, tx, rx; paths=true)
+
+Compute the arrivals between a transmitter `tx` and a receiver `rx` in the
+Pekeris waveguide.
+
+If `paths=true`, the eigenray paths are computed and stored in the returned
+arrivals. Setting `paths=false` avoids eigenray computation and is slightly
+faster.
+"""
+function arrivals(model::PekerisRayTracer, tx::AbstractAcousticSource, rx::AbstractAcousticReceiver; paths=true)
   # based on Chitre (2007)
-  c = soundspeed(ssp(model.env), 0.0, 0.0, 0.0)
-  h = depth(bathymetry(model.env), 0.0, 0.0)
-  f = nominalfrequency(tx1)
-  p1 = location(tx1)
-  p2 = location(rx1)
-  R² = abs2(p1[1] - p2[1]) + abs2(p1[2] - p2[2])
-  R = R² == 0 ? R² : √R²   # ForwardDiff compatible version of √R²
-  d1 = -p1[3]
-  d2 = -p2[3]
-  [arrival(j, model, R, R², d1, d2, h, c, f) for j ∈ 1:model.rays]
-end
-
-function eigenrays(model::PekerisRayModel, tx1::AcousticSource, rx1::AcousticReceiver)
-  # based on Chitre (2007)
-  c = soundspeed(ssp(model.env), 0.0, 0.0, 0.0)
-  h = depth(bathymetry(model.env), 0.0, 0.0)
-  f = nominalfrequency(tx1)
-  p1 = location(tx1)
-  p2 = location(rx1)
-  R² = abs2(p1[1] - p2[1]) + abs2(p1[2] - p2[2])
-  R = R² == 0 ? R² : √R²   # ForwardDiff compatible version of √R²
-  d1 = -p1[3]
-  d2 = -p2[3]
-  [arrival(j, model, R, R², d1, d2, h, c, f, p1, p2) for j ∈ 1:model.rays]
-end
-
-function rays(model::PekerisRayModel, tx1::AcousticSource, θ::Real, rmax)
-  -π/2 < θ < π/2 || throw(ArgumentError("θ must be between -π/2 and π/2"))
-  c = soundspeed(ssp(model.env), 0.0, 0.0, 0.0)
-  h = depth(bathymetry(model.env), 0.0, 0.0)
-  f = nominalfrequency(tx1)
-  p1 = location(tx1)
-  d1 = -p1[3]
-  d2 = d1 - rmax * tan(θ)
-  s = 0
-  b = 0
-  while true
-    if d2 < 0
-      s += 1
-      d2 = -d2
-    elseif d2 > h
-      b += 1
-      d2 = 2h - d2
-    else
-      break
-    end
-  end
-  if 4s - 2 == 4b + 2
-    j = 4s - 2
-  elseif 4s + 3 == 4b - 1
-    j = 4s + 3
+  f = frequency(tx)
+  p1 = location(tx)
+  p2 = location(rx)
+  R² = abs2(p1.x - p2.x) + abs2(p1.y - p2.y)
+  R = √R²
+  d1 = -p1.z
+  d2 = -p2.z
+  if paths
+    [_arrival(j, model, R, R², d1, d2, f, p1, p2) for j ∈ 1:1+2*model.nbounces]
   else
-    @assert s == b
-    j = θ > 0 ? 4s : 4s + 1
+    [_arrival(j, model, R, R², d1, d2, f) for j ∈ 1:1+2*model.nbounces]
   end
-  p2 = (p1[1] + rmax, p1[2], -d2)
-  arrival(j, model, rmax, rmax*rmax, d1, d2, h, c, f, p1, p2)
 end
 
-### helper functions
+"""
+    acoustic_field(model, tx, rxs; mode=:coherent)
 
-# memoized version of absorption
-const cached_absorption = Ref{Tuple{Float64,Float64,Float64}}()
-function fast_absorption(f::Float64, D, S::Float64)
-  if cached_absorption[][1:2] == (f, S)
-    db2amp(cached_absorption[][3] * D)
+Compute the acoustic field at a receiver `rxs` due to a transmitter `tx` in the
+Pekeris waveguide. The field can be computed incoherently if `mode=:incoherent`.
+Otherwise, the field is computed coherently.
+"""
+function acoustic_field(model::PekerisRayTracer, tx::AbstractAcousticSource, rx::AbstractAcousticReceiver; mode=:coherent)
+  arr = arrivals(model, tx, rx; paths=false)
+  length(arr) == 0 && return zero(_phasortype(eltype(arr)))
+  if mode === :incoherent
+    Complex(√sum(a -> abs2(a.ϕ), arr), 0) * db2amp(spl(tx))
   else
-    dBperm = amp2db(absorption(f, 1.0, S))
-    cached_absorption[] = (f, S, dBperm)
-    db2amp(dBperm * D)
+    f = frequency(tx)
+    sum(a -> a.ϕ * cispi(2f * a.t), arr) * db2amp(spl(tx))
   end
 end
 
-# fallback
-fast_absorption(f, D, S) = absorption(f, D, S)
+function acoustic_field(model::PekerisRayTracer, tx::AbstractAcousticSource, rxs::AbstractArray{<:AbstractAcousticReceiver}; mode=:coherent)
+  tmap(rx -> acoustic_field(model, tx, rx; mode), rxs)
+end
+
+function impulse_response(model::PekerisRayTracer, tx::AbstractAcousticSource, rx::AbstractAcousticReceiver, fs; abstime=false)
+  arr = arrivals(model, tx, rx; paths=false)
+  T = _phasortype(eltype(arr))
+  length(arr) == 0 && return Vector{T}(undef, 0)
+  t0, tmax = extrema(a -> a.t, arr)
+  abstime && (t0 = zero(t0))
+  n = ceil(Int, (tmax - t0) * fs) + 1
+  x = zeros(T, n)
+  for a ∈ arr
+    # allocate arrival energy to 2 nearest samples
+    t = (a.t - t0) * fs + 1
+    t̄ = floor(Int, t)
+    α = sqrt(t - t̄)
+    β = sqrt(1 - t + t̄)
+    x[t̄] += β * a.ϕ
+    x[t̄+1] += α * a.ϕ
+  end
+  signal(x, fs)
+end
+
+### helpers
+
+_phasortype(::Type{RayArrival{T1,T2,T3,T4,T5}}) where {T1,T2,T3,T4,T5} = Complex{T2}
 
 # complex ForwardDiff friendly version of x^n
-ipow(x, n::Int) = prod(x for _ ∈ 1:n)
+_ipow(x, n::Int) = prod(x for _ ∈ 1:n)
 
-function arrival(j, model, R, R², d1, d2, h, c, f, p1=missing, p2=missing)
+function _arrival(j, model, R, R², d1, d2, f, p1=missing, p2=missing)
   upward = iseven(j)
-  s1 = 2*upward - 1
+  s1 = 2 * upward - 1
   n = div(j, 2)
   s = div(n + upward, 2)
-  b = div(n + (1-upward), 2)
-  s2 = 2*iseven(n) - 1
-  dz = 2*b*h + s1*d1 - s1*s2*d2
+  b = div(n + (1 - upward), 2)
+  s2 = 2 * iseven(n) - 1
+  dz = 2 * b * model.h + s1 * d1 - s1 * s2 * d2
   D = √(R² + abs2(dz))
   θ = atan(R, dz)
-  t = D/c
-  A = Complex(1.0, 0.0) / D * fast_absorption(f, D, salinity(model.env))
-  s > 0 && (A *= ipow(reflectioncoef(seasurface(model.env), f, θ), s))
-  b > 0 && (A *= ipow(reflectioncoef(seabed(model.env), f, θ), b))
+  t = D / model.c
+  A = Complex(1.0, 0.0) / D * absorption(f, D, model.S)
+  s > 0 && (A *= _ipow(reflection_coef(model.surface, f, θ, model.c, model.ρ), s))
+  b > 0 && (A *= _ipow(reflection_coef(model.seabed, f, θ, model.c, model.ρ), b))
   λ = π/2 - θ
-  if typeof(p1) === Missing
-    RayArrival(t, conj(A), s, b, s1*λ, -s1*s2*λ)    # conj(A) needed to match with Bellhop
-  else
-    raypath = Array{typeof(p1)}(undef, 2+s+b)
-    raypath[1] = p1
+  if p1 !== missing
+    path = Array{typeof(p1)}(undef, 2 + s + b)
+    path[1] = p1
     if s + b > 0
       dx = p2[1] - p1[1]
       dy = p2[2] - p1[2]
-      z = (1-upward) * h
-      r = abs(z-d1) * tan(θ)
-      raypath[2] = (p1[1] + r/R * dx, p1[2] + r/R * dy, -z)
-      for i ∈ 3:length(raypath)-1
-        r += h * tan(θ)
-        z = h - z
-        raypath[i] = (p1[1] + r/R * dx, p1[2] + r/R * dy, -z)
+      z = (1 - upward) * model.h
+      r = abs(z - d1) * tan(θ)
+      path[2] = (p1[1] + r/R * dx, p1[2] + r/R * dy, -z)
+      for i ∈ 3:length(path)-1
+        r += model.h * tan(θ)
+        z = model.h - z
+        path[i] = (p1[1] + r/R * dx, p1[2] + r/R * dy, -z)
       end
     end
-    raypath[end] = p2
-    RayArrival(t, conj(A), s, b, s1*λ, -s1*s2*λ, raypath)
+    path[end] = p2
+    # conj(A) needed to match with Bellhop
+    RayArrival(t, conj(A), s, b, s1 * λ, -s1 * s2 * λ, path)
+  else
+    RayArrival(t, conj(A), s, b, s1*λ, -s1*s2*λ, missing)
   end
 end

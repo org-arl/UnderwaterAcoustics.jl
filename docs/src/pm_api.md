@@ -8,6 +8,7 @@ CurrentModule = UnderwaterAcoustics
 
 ```@docs
 AbstractPropagationModel
+AcousticArrival
 transmission_loss
 acoustic_field
 arrivals

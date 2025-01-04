@@ -23,6 +23,7 @@ pkg> add UnderwaterAcoustics
 
 - [Propagation modeling toolkit]() quickstart guide.
 - [Underwater acoustics]() utility functions.
+- [Developing your own propagation or channel models](@ref).
 
 ## Talks & publications
 

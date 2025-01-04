@@ -134,12 +134,12 @@ We have not evolved a formal coding standard yet, but good coding practices comm
 - Use blank lines and/or comments to separate code sections for readability. But do not use excess whitespace or blank lines, as this limits the amount of visible code on the screen and makes the code harder to navigate.
 - Do not leave chunks of commented code in the codebase. Delete unused code, and rely on git history for access to old code when necessary.
 - Type names start with a capital letter and use CamelCase (e.g. `RaySolver`).
-- Function and variable names are generally all lowercase. Multiple words are concatenated together without a underscore. However, the use of underscore or uppercase is permitted when concatenated words are difficult to read (e.g. `bubbleresonance()`, `surfaceloss`, `transmissionloss_dB()`).
+- Function and variable names are generally all lowercase. Multiple words are concatenated together without an underscore. However, the use of underscore or uppercase is encouraged when concatenated words are difficult to read.
 - Use descriptive function and variable names, and avoid abbreviations unless obvious or common (e.g. prefer `count` over `cnt`). Local index variables may use single letter variables (e.g. `i`, `j`, `k`, etc).
 - When implementing mathematical algorithms, it is fine to use the notation used in the original papers, including single letter variables, Greek letters, unicode characters, and capital letters for matrices. When doing so, however, it is recommended that a citation to the original paper be made available in the code as a comment, or in the docstring.
 - Code should be as self-documenting as possible, and comments that could go out of sync with code should be avoided. However, in cases where additional information would be useful for the reader, comments may be included.
 - Comments may be prefixed with `NOTE:`, `FIXME:` or `TODO:`, if the developer wishes to leave some thoughts for oneself or a later developer to be reminded of, understand or address.
-- When docstrings are included, they MUST either include the method signature, or the text "`$(SIGNATURES)`" (or equivalent). We use [DocStringExtensions.jl](https://juliadocs.github.io/DocStringExtensions.jl/stable/) to expand "`$(SIGNATURES)`" out into the method signatures, when generating the online documentation.
+- When docstrings are included, they MUST include the method signature.
 - Be mindful of performance (memory organization, type stability, etc) when coding, as much of the code in this project gets used in computationally sensitive applications. The [Julia performance tips](https://docs.julialang.org/en/v1/manual/performance-tips/) section provides a good guidelines on this.
 - When in doubt, be guided by other parts of the existing codebase. If still unsure, [ask](https://github.com/org-arl/UnderwaterAcoustics.jl/discussions).
 

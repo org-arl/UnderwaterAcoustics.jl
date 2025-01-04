@@ -1,29 +1,55 @@
 # Propagation modeling API
 
-## Model database
-
-```@autodocs
-Modules = [UnderwaterAcoustics]
-Pages   = ["pm_all.jl"]
+```@meta
+CurrentModule = UnderwaterAcoustics
 ```
 
-## Core interfaces
+## Propagation modeling
 
-```@autodocs
-Modules = [UnderwaterAcoustics]
-Pages   = ["pm_core.jl"]
+```@docs
+AbstractPropagationModel
+transmission_loss
+acoustic_field
+arrivals
+impulse_response
 ```
 
-# Common models
+## Channel modeling and simulation
 
-```@autodocs
-Modules = [UnderwaterAcoustics]
-Pages   = ["pm_basic.jl"]
+```@docs
+AbstractChannelModel
+channel
+transmit
 ```
 
-# Propagation models
+## Environment modeling
 
-```@autodocs
-Modules = [UnderwaterAcoustics]
-Pages   = ["pm_pekeris.jl"]
+```@docs
+UnderwaterEnvironment
+PekerisWaveguide
+is_range_dependent(::UnderwaterEnvironment)
+isospeed
+```
+
+## Boundary conditions
+
+```@docs
+AbstractAcousticBoundary
+RigidBoundary
+PressureReleaseBoundary
+FluidBoundary
+```
+
+## Sources and receivers
+
+```@docs
+AbstractAcousticSource
+AbstractAcousticReceiver
+NarrowbandAcousticSource
+AcousticReceiver
+AcousticReceiverGrid2D
+AcousticReceiverGrid3D
+position
+frequency
+spl
 ```

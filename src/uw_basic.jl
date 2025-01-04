@@ -1,31 +1,37 @@
-export soundspeed, absorption, waterdensity, reflectioncoef, surfaceloss, doppler, bubbleresonance
-export dBperλ, indBperλ
+import DSP: db2amp
+
+export soundspeed, absorption, water_density, doppler, bubble_resonance
+export reflection_coef, surface_reflection_coef, dBperλ, in_dBperλ
+
+################################################################################
+# common underwater acoustics utility functions
 
 """
-$(SIGNATURES)
+    soundspeed(temperature=27, salinity=35, depth=0; γ=0, cₐ=340, ρᵣ=1000)
+
 Compute sound speed in water in m/s, given:
 - water `temperature` in °C
 - `salinity` in ppt
 - `depth` in meters
-- void fraction (`voidfrac`) in bubbly water
-- sound speed in gas (`cgas`), if `voidfrac` > 0
-- ratio of density of water to gas (`reldensity`), if `voidfrac` > 0
+- void fraction (`γ`) in bubbly water
+- sound speed in gas (`cₐ`) if `γ` > 0
+- ratio of density of water to gas (`ρᵣ`) if `γ` > 0
 
 Implementation based on Mackenzie (1981), Wood (1964) and Buckingham (1997).
 """
-function soundspeed(temperature=27.0, salinity=35.0, depth=10.0; voidfrac=0.0, cgas=340.0, reldensity=1000.0)
+function soundspeed(temperature=27.0, salinity=35.0, depth=0.0; γ=0.0, cₐ=340.0, ρᵣ=1000.0)
   c = 1448.96 + 4.591*temperature - 5.304e-2*temperature^2 + 2.374e-4*temperature^3
   c += 1.340*(salinity-35) + 1.630e-2*depth + 1.675e-7*depth^2
   c += -1.025e-2*temperature*(salinity-35) - 7.139e-13*temperature*depth^3
-  if voidfrac > 0.0
-    m = √reldensity
-    c = 1.0/(1.0/c*√((voidfrac*(c/cgas)^2*m+(1.0-voidfrac)/m)*(voidfrac/m+(1-voidfrac)*m)))
+  if γ > 0.0
+    m = √ρᵣ
+    c = 1.0/(1.0/c*√((γ*(c/cₐ)^2*m+(1.0-γ)/m)*(γ/m+(1-γ)*m)))
   end
   return c
 end
 
 """
-    absorption(frequency, distance=1000.0, salinity=35.0, temperature=27.0, depth=10.0, pH=8.1)
+    absorption(frequency, distance=1000, salinity=35, temperature=27, depth=0, pH=8.1)
 
 Compute volume acoustic absorption coefficient in water, given:
 - `frequency` in Hz
@@ -49,7 +55,7 @@ julia> α = -20log10(A)
 
 Implementation based on the Francois and Garrison (1982) model.
 """
-function absorption(frequency, distance=1000.0, salinity=35.0, temperature=27.0, depth=10.0, pH=8.1)
+function absorption(frequency, distance=1000.0, salinity=35.0, temperature=27.0, depth=0.0, pH=8.1)
   f = frequency/1000.0
   d = distance/1000.0
   c = 1412.0 + 3.21*temperature + 1.19*salinity + 0.0167*depth
@@ -70,12 +76,13 @@ function absorption(frequency, distance=1000.0, salinity=35.0, temperature=27.0,
 end
 
 """
-$(SIGNATURES)
+    water_density(temperature=27, salinity=35)
+
 Compute density of water (kg/m^3), given `temperature` in °C and `salinity` in ppm.
 
 Implementation based on Fofonoff (1985 - IES 80).
 """
-function waterdensity(temperature=27, salinity=35)
+function water_density(temperature=27.0, salinity=35.0)
   t = temperature
   A = 1.001685e-04 + t * (-1.120083e-06 + t * 6.536332e-09)
   A = 999.842594 + t * (6.793952e-02 + t * (-9.095290e-03 + t * A))
@@ -87,7 +94,8 @@ function waterdensity(temperature=27, salinity=35)
 end
 
 """
-$(SIGNATURES)
+    reflection_coef(θ, ρᵣ, cᵣ, δ=0.0)
+
 Compute complex reflection coefficient at a fluid-fluid boundary, given:
 - angle of incidence `θ` (angle to the surface normal)
 - relative density of the reflecting medium to incidence medium `ρᵣ`
@@ -97,7 +105,7 @@ Compute complex reflection coefficient at a fluid-fluid boundary, given:
 Implementation based on Brekhovskikh & Lysanov. Dimensionless absorption
 coefficient based on APL-UW Technical Report 9407.
 """
-function reflectioncoef(θ, ρᵣ, cᵣ, δ=0.0)
+function reflection_coef(θ, ρᵣ, cᵣ, δ=0.0)
   n = Complex(1.0, δ) / cᵣ
   t1 = ρᵣ * cos(θ)
   t2 = n*n - sin(θ)^2
@@ -106,21 +114,25 @@ function reflectioncoef(θ, ρᵣ, cᵣ, δ=0.0)
 end
 
 """
-$(SIGNATURES)
+    dBperλ(x)
+
 Compute dimensionless absorption coefficient `δ` from dB/λ.
 Implementation based on APL-UW TR 9407 (1994), IV-9 equation (4).
 """
 dBperλ(x) = x / (40π / log(10))
 
 """
-$(SIGNATURES)
+    in_dBperλ(δ)
+
 Compute dB/λ from dimensionless absorption coefficient `δ`.
 Implementation based on APL-UW TR 9407 (1994), IV-9 equation (4).
 """
-indBperλ(δ) = δ * 40π / log(10)
+in_dBperλ(δ) = δ * 40π / log(10)
 
 """
-$(SIGNATURES)
+    surface_reflection_coef(windspeed, frequency, θ)
+
+
 Compute surface reflection coefficient, given:
 - `windspeed` in m/s
 - `frequency` in Hz
@@ -128,7 +140,7 @@ Compute surface reflection coefficient, given:
 
 Implementation based on the APL-UW Technical Report 9407 II-21.
 """
-function surfaceloss(windspeed, frequency, θ)
+function surface_reflection_coef(windspeed, frequency, θ)
   β = π/2 - θ
   f = frequency/1000.0
   if windspeed >= 6.0
@@ -140,26 +152,29 @@ function surfaceloss(windspeed, frequency, θ)
 end
 
 """
-$(SIGNATURES)
+    doppler(speed, frequency)
+    doppler(speed, frequency, soundspeed)
+
 Compute Doppler frequency, given relative speed between transmitter and
-receiver in m/s. `c` is the nominal sound speed in water.
+receiver in m/s. `soundspeed` is the nominal sound speed in water.
 """
-doppler(speed, frequency, c=soundspeed()) = (1.0+speed/c)*frequency
+doppler(speed, frequency, soundspeed=soundspeed()) = (1 + speed / soundspeed) * frequency
 
 """
-$(SIGNATURES)
+    bubble_resonance(radius, depth=0, γ=1.4, p₀=1.013e5, ρ=1022.476)
+
 Compute resonance frequency of a freely oscillating has bubble in water, given:
 - bubble `radius` in meters
 - `depth` of bubble in water in meters
 - gas ratio of specific heats 'γ', default: 1.4 (for air)
-- atmospheric pressure 'p0', default: 1.013e5
+- atmospheric pressure 'p₀', default: 1.013e5
 - density of water 'ρ' in kg/m³, default: 1022.476
 
 This ignores surface-tension, thermal, viscous and acoustic damping effects, and the pressure-volume relationship is taken to be adiabatic.
 Implementation based on Medwin & Clay (1998).
 """
-function bubbleresonance(radius, depth=0.0, γ=1.4, p0=1.013e5, ρ=1022.476)
+function bubble_resonance(radius, depth=0.0, γ=1.4, p₀=1.013e5, ρ=1022.476)
   g = 9.80665 # acceleration due to gravity
-  pₐ = p0 + ρ*g*depth
+  pₐ = p₀ + ρ*g*depth
   1 / (2π * radius) * √(3γ * pₐ/ρ)
 end

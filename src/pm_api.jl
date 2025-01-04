@@ -1,3 +1,9 @@
+export UnderwaterEnvironment, PekerisWaveguide
+export FluidBoundary, RigidBoundary, PressureReleaseBoundary
+export transmission_loss, acoustic_field, arrivals, impulse_response, channel, transmit
+export NarrowbandAcousticSource, AcousticReceiver, AcousticReceiverGrid2D, AcousticReceiverGrid3D
+export spl, frequency
+
 ###############################################################################
 ### propagation model API
 
@@ -159,7 +165,7 @@ mutable struct UnderwaterEnvironment
     altimetry = 0.0,
     temperature = 25.0,
     salinity = 35.0,
-    soundspeed = _soundspeed(temperature, salinity),
+    soundspeed = nothing,
     density = 1025.0,
     seabed = RigidBoundary,
     surface = PressureReleaseBoundary,
@@ -169,16 +175,11 @@ mutable struct UnderwaterEnvironment
     altimetry isa Number && (altimetry = in_units(u"m", altimetry))
     temperature isa Number && (temperature = in_units(u"°C", temperature))
     salinity isa Number && (salinity = in_units(u"ppt", salinity))
-    soundspeed isa Number && (soundspeed = in_units(u"m/s", soundspeed))
     density isa Number && (density = in_units(u"kg/m^3", density))
+    soundspeed isa Number && (soundspeed = in_units(u"m/s", soundspeed))
+    soundspeed = something(soundspeed, UnderwaterAcoustics.soundspeed(temperature, salinity))
     new(bathymetry, altimetry, temperature, salinity, soundspeed, density, seabed, surface, noise)
   end
-end
-
-function _soundspeed(temperature, salinity)
-  temperature = in_units(u"°C", value(temperature))
-  salinity = in_units(u"ppt", value(salinity))
-  soundspeed(temperature, salinity)
 end
 
 function Base.show(io::IO, env::UnderwaterEnvironment)
@@ -282,18 +283,18 @@ function Base.show(io::IO, tx::AbstractAcousticReceiver)
 end
 
 """
-    NarrowbandAcousticSource(pos, freq, spl=0)
+    NarrowbandAcousticSource(pos, frequency, spl=0)
 
-Narrowband source at position `pos` with frequency `freq` and source level
+Narrowband source at position `pos` with specified `frequency` and source level
 `spl` (dB re 1 µPa @ 1 m).
 """
 struct NarrowbandAcousticSource{T1,T2,T3} <: AbstractAcousticSource
   pos::T1
-  freq::T2
+  frequency::T2
   spl::T3
-  function NarrowbandAcousticSource(pos, freq, spl=0)
+  function NarrowbandAcousticSource(pos, frequency, spl=0)
     p = Position(pos)
-    f = in_units(u"Hz", freq)
+    f = in_units(u"Hz", frequency)
     s = in_units(u"dB", spl)
     new{typeof(p),typeof(f),typeof(s)}(p, f, s)
   end
@@ -376,11 +377,11 @@ Base.position(rx::AcousticReceiver) = rx.pos
 
 Get the nominal frequency of an acoustic source.
 """
-frequency(tx::NarrowbandAcousticSource) = tx.freq
+frequency(tx::NarrowbandAcousticSource) = tx.frequency
 
 """
     spl(tx::AbstractAcousticSource)
 
 Get the source level of an acoustic source.
 """
-spl(tx::NarrowbandAcousticSource) = tx.srclvl
+spl(tx::NarrowbandAcousticSource) = tx.spl

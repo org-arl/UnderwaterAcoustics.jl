@@ -20,6 +20,10 @@ Compute sound speed in water in m/s, given:
 Implementation based on Mackenzie (1981), Wood (1964) and Buckingham (1997).
 """
 function soundspeed(temperature=27.0, salinity=35.0, depth=0.0; γ=0.0, cₐ=340.0, ρᵣ=1000.0)
+  temperature = in_units(u"°C", temperature)
+  salinity = in_units(u"ppt", salinity)
+  depth = in_units(u"m", depth)
+  cₐ = in_units(u"m/s", cₐ)
   c = 1448.96 + 4.591*temperature - 5.304e-2*temperature^2 + 2.374e-4*temperature^3
   c += 1.340*(salinity-35) + 1.630e-2*depth + 1.675e-7*depth^2
   c += -1.025e-2*temperature*(salinity-35) - 7.139e-13*temperature*depth^3
@@ -56,8 +60,11 @@ julia> α = -20log10(A)
 Implementation based on the Francois and Garrison (1982) model.
 """
 function absorption(frequency, distance=1000.0, salinity=35.0, temperature=27.0, depth=0.0, pH=8.1)
-  f = frequency/1000.0
-  d = distance/1000.0
+  temperature = in_units(u"°C", temperature)
+  salinity = in_units(u"ppt", salinity)
+  depth = in_units(u"m", depth)
+  f = in_units(u"Hz", frequency) / 1000.0
+  d = in_units(u"m", distance) / 1000.0
   c = 1412.0 + 3.21*temperature + 1.19*salinity + 0.0167*depth
   A1 = 8.86/c * 10.0^(0.78*pH-5.0)
   P1 = 1.0
@@ -78,12 +85,13 @@ end
 """
     water_density(temperature=27, salinity=35)
 
-Compute density of water (kg/m^3), given `temperature` in °C and `salinity` in ppm.
+Compute density of water (kg/m³), given `temperature` in °C and `salinity` in ppm.
 
 Implementation based on Fofonoff (1985 - IES 80).
 """
 function water_density(temperature=27.0, salinity=35.0)
-  t = temperature
+  salinity = in_units(u"ppt", salinity)
+  t = in_units(u"°C", temperature)
   A = 1.001685e-04 + t * (-1.120083e-06 + t * 6.536332e-09)
   A = 999.842594 + t * (6.793952e-02 + t * (-9.095290e-03 + t * A))
   B = 7.6438e-05 + t * (-8.2467e-07 + t * 5.3875e-09)
@@ -106,6 +114,7 @@ Implementation based on Brekhovskikh & Lysanov. Dimensionless absorption
 coefficient based on APL-UW Technical Report 9407.
 """
 function reflection_coef(θ, ρᵣ, cᵣ, δ=0.0)
+  θ = in_units(u"rad", θ)
   n = Complex(1.0, δ) / cᵣ
   t1 = ρᵣ * cos(θ)
   t2 = n*n - sin(θ)^2
@@ -141,6 +150,9 @@ Compute surface reflection coefficient, given:
 Implementation based on the APL-UW Technical Report 9407 II-21.
 """
 function surface_reflection_coef(windspeed, frequency, θ)
+  windspeed = in_units(u"m/s", windspeed)
+  frequency = in_units(u"Hz", frequency)
+  θ = in_units(u"rad", θ)
   β = π/2 - θ
   f = frequency/1000.0
   if windspeed >= 6.0
@@ -148,7 +160,7 @@ function surface_reflection_coef(windspeed, frequency, θ)
   else
     a = 1.26e-3/sin(β) * 6^1.57 * f^0.85 * exp(1.2*(windspeed-6.0))
   end
-  db2amp(-a)
+  complex(-db2amp(-a), 0)
 end
 
 """
@@ -158,23 +170,33 @@ end
 Compute Doppler frequency, given relative speed between transmitter and
 receiver in m/s. `soundspeed` is the nominal sound speed in water.
 """
-doppler(speed, frequency, soundspeed=soundspeed()) = (1 + speed / soundspeed) * frequency
+function doppler(speed, frequency, soundspeed=soundspeed())
+  speed = in_units(u"m/s", speed)
+  frequency = in_units(u"Hz", frequency)
+  soundspeed = in_units(u"m/s", soundspeed)
+  (1 + speed / soundspeed) * frequency
+end
 
 """
-    bubble_resonance(radius, depth=0, γ=1.4, p₀=1.013e5, ρ=1022.476)
+    bubble_resonance(radius, depth=0; γ=1.4, p₀=1.013e5, ρ=1022.72, g=9.80665)
 
 Compute resonance frequency of a freely oscillating has bubble in water, given:
 - bubble `radius` in meters
 - `depth` of bubble in water in meters
-- gas ratio of specific heats 'γ', default: 1.4 (for air)
-- atmospheric pressure 'p₀', default: 1.013e5
-- density of water 'ρ' in kg/m³, default: 1022.476
+- gas ratio of specific heats 'γ'
+- atmospheric pressure 'p₀'
+- density of water 'ρ' in kg/m³
+- acceleration due to gravity 'g' in m/s²
 
 This ignores surface-tension, thermal, viscous and acoustic damping effects, and the pressure-volume relationship is taken to be adiabatic.
 Implementation based on Medwin & Clay (1998).
 """
-function bubble_resonance(radius, depth=0.0, γ=1.4, p₀=1.013e5, ρ=1022.476)
-  g = 9.80665 # acceleration due to gravity
+function bubble_resonance(radius, depth=0.0; γ=1.4, p₀=1.013e5, ρ=water_density(), g=9.80665)
+  radius = in_units(u"m", radius)
+  depth = in_units(u"m", depth)
+  p₀ = in_units(u"Pa", p₀)
+  ρ = in_units(u"kg/m^3", ρ)
+  g = in_units(u"m/s^2", g)
   pₐ = p₀ + ρ*g*depth
   1 / (2π * radius) * √(3γ * pₐ/ρ)
 end

@@ -17,26 +17,11 @@
 - Differentiable and probabilistic underwater acoustic modeling
 - Underwater acoustics utility functions
 
-## Installation
-
-```julia-repl
-julia>]
-pkg> add UnderwaterAcoustics
-```
-
 ## Related packages
-
-**NOTE: In version 0.2, `RaySolver` and `Bellhop` models have been moved out to separate packages.**
 
 - Install [`AcousticRayTracers.jl`](https://github.com/org-arl/AcousticRayTracers.jl) for `RaySolver` model
 - Install [`AcousticsToolbox.jl`](https://github.com/org-arl/AcousticsToolbox.jl) for `Bellhop` and `Kraken` models
 - Install [`DataDrivenAcoustics.jl`](https://github.com/org-arl/DataDrivenAcoustics.jl) for `RayBasis` and `GPR` family of models
-
-## Getting started
-
-- Propagation modeling toolkit -- [quickstart guide](https://org-arl.github.io/UnderwaterAcoustics.jl/stable/pm_basic.html)
-- Probabilistic propagation modeling -- [tutorial](https://org-arl.github.io/UnderwaterAcoustics.jl/stable/tut_turing.html)
-- Differentiable propagation modeling -- [tutorial](https://org-arl.github.io/UnderwaterAcoustics.jl/stable/tut_autodiff.html)
 
 ## Contributing
 
@@ -45,3 +30,4 @@ Contributions in the form of bug reports, feature requests, ideas/suggestions, b
 ## Talks & publications
 
 - Mandar Chitre, "[Underwater Acoustics in the age of differentiable and probabilistic programming](https://www.facebook.com/watch/live/?v=2473971036238315)", UComms 2020 webinar, 3 December 2020.
+- Mandar Chitre, "[Differentiable Ocean Acoustic Propagation Modeling](https://arl.nus.edu.sg/wp-content/uploads/2023/04/Chitre_Differentiable-Ocean-Acoustic-Propagation-Modeling.pdf)," in OCEANS 2023 IEEE/MTS – Limerick, 5-8 June 2023.

@@ -1,28 +1,28 @@
 using Documenter
-using Plots
+# using Plots
 
-push!(LOAD_PATH,"../src/")
+# push!(LOAD_PATH,"../src/")
 using UnderwaterAcoustics
 
 makedocs(
   sitename = "UnderwaterAcoustics.jl",
   format = Documenter.HTML(prettyurls = false),
-  linkcheck = !("skiplinks" in ARGS),
+  modules = [UnderwaterAcoustics],
+  warnonly = [:linkcheck, :missing_docs],
   pages = Any[
     "Home" => "index.md",
     "Manual" => Any[
       "uw_basic.md",
-      "pm_basic.md",
-      "pm_envref.md",
-      "pm_api.md"
+      "pm_api.md",
+      "utils.md"
     ],
-    "Propagation models" => Any[
-      "pm_pekeris.md"
-    ],
-    "Tutorials" => Any[
-      "tut_turing.md",
-      "tut_autodiff.md"
-    ]
+    # "Propagation models" => Any[
+    #   "pm_pekeris.md"
+    # ],
+    # "Tutorials" => Any[
+    #   "tut_turing.md",
+    #   "tut_autodiff.md"
+    # ]
   ]
 )
 

@@ -39,7 +39,7 @@ isospeed
 
 ```@docs
 AbstractAcousticBoundary
-reflection_coef(::AbstractAcousticBoundary, ::Any, ::Any, ::Any, ::Any)
+reflection_coef(::AbstractAcousticBoundary, ::Any, ::Any)
 RigidBoundary
 PressureReleaseBoundary
 FluidBoundary

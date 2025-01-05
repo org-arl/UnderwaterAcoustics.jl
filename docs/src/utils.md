@@ -41,3 +41,9 @@ is_range_dependent(::PositionDependent)
 is_constant
 value
 ```
+
+Sampled fields can be created using:
+
+```@docs
+SampledField
+```

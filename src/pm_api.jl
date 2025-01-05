@@ -199,11 +199,11 @@ function transmit(ch::SampledChannelModel, x; txs=:, rxs=:, abstime=false, noisy
   # add noise
   if isanalytic(x)
     noisy && ch.noise !== nothing && (ȳ .+= analytic(rand(ch.noise, size(ȳ), ch.fs)))
-    return ȳ
+    signal(ȳ, ch.fs)
   else
     y = real(ȳ)
     noisy && ch.noise !== nothing && (y .+= rand(ch.noise, size(y), ch.fs))
-    return y
+    signal(y, ch.fs)
   end
 end
 

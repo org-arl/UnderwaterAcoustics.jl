@@ -34,6 +34,7 @@ struct PekerisRayTracer{T1,T2,T3,T4,T5,T6,T7,T8} <: AbstractPropagationModel
     ps = (h, c, ρ, T, S, env.seabed, env.surface, env.noise)
     new{typeof.(ps)...}(ps..., nbounces)
   end
+
 end
 
 function Base.show(io::IO, model::PekerisRayTracer)
@@ -127,8 +128,8 @@ function _arrival(j, model, R, R², d1, d2, f, p1=missing, p2=missing)
   θ = atan(R, dz)
   t = D / model.c
   A = Complex(1.0, 0.0) / D * absorption(f, D, model.S)
-  s > 0 && (A *= _ipow(reflection_coef(model.surface, f, θ, model.c, model.ρ), s))
-  b > 0 && (A *= _ipow(reflection_coef(model.seabed, f, θ, model.c, model.ρ), b))
+  s > 0 && (A *= _ipow(reflection_coef(model.surface, f, θ, model.ρ, model.c), s))
+  b > 0 && (A *= _ipow(reflection_coef(model.seabed, f, θ, model.ρ, model.c), b))
   λ = π/2 - θ
   if p1 !== missing
     path = Array{typeof(p1)}(undef, 2 + s + b)

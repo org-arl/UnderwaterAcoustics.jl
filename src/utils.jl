@@ -1,7 +1,5 @@
-using Interpolations
 import Unitful: ustrip, Quantity, Units, @u_str
-
-export @u_str, SampledField
+export @u_str
 
 ################################################################################
 # unit conversion utilities, with default units if none are specified
@@ -111,95 +109,6 @@ value(q, pos) = q
 value(q::DepthDependent, pos) = q(XYZ(pos))
 value(q) = value(q, nothing)
 value(q::DepthDependent) = error("position not specified")
-
-################################################################################
-# interpolants
-
-struct SampledFieldZ{T1,T2} <: DepthDependent
-  f::T1
-  zrange::T2
-end
-
-struct SampledFieldX{T1,T2} <: DepthDependent
-  f::T1
-  xrange::T2
-end
-
-struct SampledFieldXZ{T1,T2} <: PositionDependent
-  f::T1
-  xrange::T2
-  zrange::T2
-end
-
-struct SampledFieldXY{T1,T2} <: PositionDependent
-  f::T1
-  xrange::T2
-  yrange::T2
-end
-
-struct SampledFieldXYZ{T1,T2} <: PositionDependent
-  f::T1
-  xrange::T2
-  yrange::T2
-  zrange::T2
-end
-
-(v::SampledFieldZ)(z::Number) = v.f(z)
-(v::SampledFieldX)(x::Number) = v.f(x)
-(v::SampledFieldXZ)(x, z) = v.f(x, z)
-(v::SampledFieldXY)(x, y) = v.f(x, y)
-(v::SampledFieldXYZ)(x, y, z) = v.f(x, y, z)
-
-(v::SampledFieldZ)(pos::NamedTuple{(:x,:y,:z)}) = v.f(pos.z)
-(v::SampledFieldX)(pos::NamedTuple{(:x,:y,:z)}) = v.f(pos.x)
-(v::SampledFieldXZ)(pos::NamedTuple{(:x,:y,:z)}) = v.f(pos.x, pos.z)
-(v::SampledFieldXY)(pos::NamedTuple{(:x,:y,:z)}) = v.f(pos.x, pos.y)
-(v::SampledFieldXYZ)(pos::NamedTuple{(:x,:y,:z)}) = v.f(pos.x, pos.y, pos.z)
-
-Base.show(io::IO, v::SampledFieldZ) = print(io, "SampledField(z-varying, $(length(v.zrange)) samples)")
-Base.show(io::IO, v::SampledFieldX) = print(io, "SampledField(x-varying, $(length(v.xrange)) samples)")
-Base.show(io::IO, v::SampledFieldXZ) = print(io, "SampledField(xz-varying, $(length(v.xrange))×$(length(v.zrange)) samples)")
-Base.show(io::IO, v::SampledFieldXY) = print(io, "SampledField(xy-varying, $(length(v.xrange))×$(length(v.yrange)) samples)")
-Base.show(io::IO, v::SampledFieldXYZ) = print(io, "SampledField(xyz-varying, $(length(v.xrange))×$(length(v.yrange))×$(length(v.zrange)) samples)")
-
-"""
-    SampledField(v; x)
-    SampledField(v; z)
-    SampledField(v; x, y)
-    SampledField(v; x, z)
-    SampledField(v; x, y, z)
-
-Create a sampled field from a data `v` that may depend on position. For 1D
-fields, the `x` or `z` coordinate is required, and `v` is a vector. For 2D
-fields, the `x` and `y` coordinates or the `x` and `z` coordinates are
-required, and `v` is a matrix. For 3D fields, the `x`, `y`, and `z` coordinates
-are required, and `v` is a 3D array.
-
-Keyword `interp` is used to specify the interpolation method. Only `:linear`
-interpolation is supported at present. For 2D and 3D fields, the data must be
-sampled on a regular grid.
-"""
-function SampledField(v; x=nothing, y=nothing, z=nothing, interp=:linear)
-  interp === :linear || error("Only linear interpolation supported")
-  if x === nothing && y === nothing && z !== nothing
-    f = linear_interpolation(z, v; extrapolation_bc=Flat())
-    SampledFieldZ(f, z)
-  elseif x !== nothing && y === nothing && z === nothing
-    f = linear_interpolation(x, v; extrapolation_bc=Flat())
-    SampledFieldX(f, x)
-  elseif x !== nothing && y === nothing && z !== nothing
-    f = extrapolate(interpolate((x, z), v, Gridded(Linear())), Flat())
-    SampledFieldXZ(f, x, z)
-  elseif x !== nothing && y !== nothing && z === nothing
-    f = extrapolate(interpolate((x, y), v, Gridded(Linear())), Flat())
-    SampledFieldXY(f, x, y)
-  elseif x !== nothing && y !== nothing && z !== nothing
-    f = extrapolate(interpolate((x, y, z), v, Gridded(Linear())), Flat())
-    SampledFieldXYZ(f, x, y, z)
-  else
-    error("Only x, z, x-z, x-y, or x-y-z interpolation supported")
-  end
-end
 
 ################################################################################
 # general utilities

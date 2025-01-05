@@ -282,10 +282,12 @@ sampled on a regular grid.
 function SampledField(v; x=nothing, y=nothing, z=nothing, interp=:linear)
   interp === :linear || error("Only linear interpolation supported")
   if x === nothing && y === nothing && z !== nothing
-    f = linear_interpolation(z, v; extrapolation_bc=Flat())
+    ndx = sortperm(z)
+    f = linear_interpolation(z[ndx], v[ndx]; extrapolation_bc=Flat())
     SampledFieldZ(f, z)
   elseif x !== nothing && y === nothing && z === nothing
-    f = linear_interpolation(x, v; extrapolation_bc=Flat())
+    ndx = sortperm(x)
+    f = linear_interpolation(x[ndx], v[ndx]; extrapolation_bc=Flat())
     SampledFieldX(f, x)
   elseif x !== nothing && y === nothing && z !== nothing
     f = extrapolate(interpolate((x, z), v, Gridded(Linear())), Flat())

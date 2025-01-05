@@ -4,6 +4,7 @@ using RecipesBase
 using Colors
 using UnderwaterAcoustics
 import UnderwaterAcoustics: AbstractAcousticSource, AbstractAcousticReceiver, RayArrival, value
+import UnderwaterAcoustics: SampledFieldZ, SampledFieldX, SampledFieldXZ, SampledFieldXY
 import DSP: amp2db
 
 @recipe function plot(env::UnderwaterEnvironment)
@@ -16,12 +17,12 @@ import DSP: amp2db
   xguide --> "x (m)"
   yguide --> "z (m)"
   @series begin
-    seriestype := :line
+    seriestype := :path
     linecolor := :royalblue
     xrange, [value(z1, (x, 0.0)) for x ∈ xrange]
   end
   @series begin
-    seriestype := :line
+    seriestype := :path
     linecolor := :brown
     xrange, [-value(z2, (x, 0.0)) for x ∈ xrange]
   end
@@ -107,10 +108,60 @@ end
   for (j, r) ∈ enumerate(rays)
     r = r.path
     @series begin
-      seriestype := :line
+      seriestype := :path
       linecolor := colors[cndx[j]]
       [r[i][1] for i ∈ 1:length(r)], [r[i][3] for i ∈ 1:length(r)]
     end
+  end
+end
+
+@recipe function plot(fld::SampledFieldZ; npts=1000)
+  zr = range(minimum(fld.zrange), maximum(fld.zrange); length=npts)
+  ticks --> :native
+  legend --> false
+  yguide --> "z (m)"
+  @series begin
+    seriestype := :path
+    [fld(z) for z ∈ zr], zr
+  end
+end
+
+@recipe function plot(fld::SampledFieldX; npts=1000)
+  xr = range(minimum(fld.xrange), maximum(fld.xrange); length=npts)
+  ticks --> :native
+  legend --> false
+  xguide --> "x (m)"
+  @series begin
+    seriestype := :path
+    xr, [fld(x) for x ∈ xr]
+  end
+end
+
+@recipe function plot(fld::SampledFieldXY; npts=1000)
+  xr = range(minimum(fld.xrange), maximum(fld.xrange); length=npts)
+  yr = range(minimum(fld.yrange), maximum(fld.yrange); length=npts)
+  ticks --> :native
+  legend --> false
+  xguide --> "x (m)"
+  yguide --> "y (m)"
+  colorbar --> true
+  @series begin
+    seriestype := :heatmap
+    xr, yr, [fld(x, y) for x ∈ xr, y ∈ yr]
+  end
+end
+
+@recipe function plot(fld::SampledFieldXZ; npts=1000)
+  xr = range(minimum(fld.xrange), maximum(fld.xrange); length=npts)
+  zr = range(minimum(fld.zrange), maximum(fld.zrange); length=npts)
+  ticks --> :native
+  legend --> false
+  xguide --> "x (m)"
+  yguide --> "z (m)"
+  colorbar --> true
+  @series begin
+    seriestype := :heatmap
+    xr, zr, [fld(x, z) for x ∈ xr, z ∈ zr]
   end
 end
 

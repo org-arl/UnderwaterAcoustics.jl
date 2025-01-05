@@ -88,7 +88,7 @@ scalar. If `rxs` is an `AbstractArray`, the result is an array of transmission
 losses (in dB) with the same shape as `rxs`.
 """
 function transmission_loss(pm, tx, rxs; kwargs...)
-  20 * log10.(abs.(acoustic_field(pm, tx, rxs; kwargs...))) .- spl(tx)
+  spl(tx) .- 20 * log10.(abs.(acoustic_field(pm, tx, rxs; kwargs...)))
 end
 
 """
@@ -164,13 +164,16 @@ Superclass for all boundary conditions.
 abstract type AbstractAcousticBoundary end
 
 """
+    reflection_coef(bc::AbstractAcousticBoundary, frequency, θ)
     reflection_coef(bc::AbstractAcousticBoundary, frequency, θ, ρ, c)
 
 Compute the complex reflection coefficient at a fluid-fluid boundary of type
 `bc` at incidence angle `θ` and `frequency`. The density and sound speed in
 the water are given by `ρ` and `c`, respectively.
 """
-function reflection_coef(bc::AbstractAcousticBoundary, frequency, θ, ρ, c) end
+function reflection_coef(bc::AbstractAcousticBoundary, frequency, θ)
+  reflection_coef(bc::AbstractAcousticBoundary, frequency, θ, water_density(), soundspeed())
+end
 
 """
     FluidBoundary(ρ, c, δ)

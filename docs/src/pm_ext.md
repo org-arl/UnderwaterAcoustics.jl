@@ -44,9 +44,13 @@ arrivals
 ```
 The returned arrivals should be an array of arrivals that extend:
 ```@docs; canonical=false
-AcousticArrival
+AbstractAcousticArrival
 ```
-The information held in an arrival is propagation model dependent. For example, ray models may return arrivals that contain ray information such as time of arrival, angle of arrival, amplitude and phase of arrival, eigenpath, etc. On the other hand, models based on normal modes may return arrivals containing mode information such as mode number, horizontal and vertical wavenumber, etc.
+The information held in an arrival is propagation model dependent. For example, ray models may return arrivals that contain ray information such as time of arrival, angle of arrival, amplitude and phase of arrival, eigenpath, etc. On the other hand, models based on normal modes may return arrivals containing mode information such as mode number, horizontal and vertical wavenumber, etc. For ray and mode arrivals, the following concrete subtypes should be used when possible:
+```@docs; canonical=false
+RayArrival
+ModeArrival
+```
 
 Some propagation models may be able to generate an impulse response. If so, they should define:
 ```@docs; canonical=false

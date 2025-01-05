@@ -108,7 +108,7 @@ may be specified as a `(x, y, z)` tuple, a `(x, z)` tuple, a `z` value.
 value(q, pos) = q
 value(q::DepthDependent, pos) = q(XYZ(pos))
 value(q) = value(q, nothing)
-value(q::DepthDependent) = error("position not specified")
+value(q::DepthDependent) = error("Position not specified")
 
 ################################################################################
 # general utilities

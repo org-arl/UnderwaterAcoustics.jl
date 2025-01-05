@@ -8,14 +8,18 @@ CurrentModule = UnderwaterAcoustics
 
 ```@docs
 AbstractPropagationModel
-PekerisRayTracer
-AcousticArrival
+AbstractAcousticArrival
 RayArrival
 ModeArrival
 transmission_loss
 acoustic_field
 arrivals
 impulse_response
+```
+
+Implementations:
+```@docs
+PekerisRayTracer
 ```
 
 ## Channel modeling and simulation
@@ -30,9 +34,13 @@ transmit
 
 ```@docs
 UnderwaterEnvironment
-PekerisWaveguide
 is_range_dependent(::UnderwaterEnvironment)
 isospeed
+```
+
+Specialized constructors:
+```@docs
+PekerisWaveguide
 ```
 
 ## Boundary conditions
@@ -40,9 +48,28 @@ isospeed
 ```@docs
 AbstractAcousticBoundary
 reflection_coef(::AbstractAcousticBoundary, ::Any, ::Any)
+```
+
+Implementations:
+```@docs
 RigidBoundary
 PressureReleaseBoundary
+WindySurface
 FluidBoundary
+```
+
+Various surface boundary conditions based on APL-UW Technical Report 9407:
+```julia
+SeaState0 — Constant
+SeaState1 — Constant
+SeaState2 — Constant
+SeaState3 — Constant
+SeaState4 — Constant
+SeaState5 — Constant
+SeaState6 — Constant
+SeaState7 — Constant
+SeaState8 — Constant
+SeaState9 — Constant
 ```
 
 Other fluid seabed boundary conditions based on APL-UW Technical Report 9407:
@@ -64,24 +91,6 @@ UnderwaterAcoustics.SiltyClay — Constant
 UnderwaterAcoustics.Clay — Constant
 ```
 
-```@docs
-WindySurface
-```
-
-Various surface boundary conditions based on APL-UW Technical Report 9407:
-```julia
-SeaState0 — Constant
-SeaState1 — Constant
-SeaState2 — Constant
-SeaState3 — Constant
-SeaState4 — Constant
-SeaState5 — Constant
-SeaState6 — Constant
-SeaState7 — Constant
-SeaState8 — Constant
-SeaState9 — Constant
-```
-
 ## Sources and receivers
 
 ```@docs
@@ -100,7 +109,11 @@ spl
 
 ```@docs
 AbstractNoiseModel
+rand
+```
+
+Implementations:
+```@docs
 WhiteGaussianNoise
 RedGaussianNoise
-rand
 ```

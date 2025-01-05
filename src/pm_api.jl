@@ -1,5 +1,6 @@
 import Random: default_rng
-import SignalAnalysis: amp2db
+import SignalAnalysis: amp2db, SampledSignal, samples, signal, framerate
+import SignalAnalysis: nchannels, isanalytic, analytic, filt
 import Printf: @printf
 
 export UnderwaterEnvironment, transmission_loss, acoustic_field, arrivals
@@ -122,31 +123,89 @@ Superclass for all channel models.
 """
 abstract type AbstractChannelModel end
 
+struct SampledChannelModel{T1,T2} <: AbstractChannelModel
+  irs::T1       # impulse responses
+  noise::T2     # noise model
+  fs::Float64   # sampling rate
+  t0::Int       # start time
+end
+
+function Base.show(io::IO, ch::SampledChannelModel)
+  print(io, "SampledChannelModel($(size(ch.irs,1))×$(size(ch.irs,2)), $(ch.fs) Hz)")
+end
+
 """
-    channel(pm, txs, rxs; abstime=false)
+    channel(pm, txs, rxs, fs; noise=nothing)
 
 Compute a channel model from the sources `txs` to the receivers `rxs` using
 propagation model `pm`. The result is a channel model with the same number of
 input channels as the number of sources and output channels as the number of
-receivers.
+receivers. The channel model accepts signals sampled at rate `fs` and returns
+signals sampled at the same rate.
 
-If `abstime` is `true`, the resulting channel model returns signals with time
-relative to the start of transmission. Otherwise, the result is relative to the
-earliest arrival time of the signal at any receiver.
+An additive noise model may be optionally specified as `noise`. If specified,
+it is used to corrupt the received signals.
 """
-function channel end
+function channel(pm, txs, rxs, fs; abstime=false, noise=nothing)
+  txs isa AbstractArray || (txs = [txs])
+  rxs isa AbstractArray || (rxs = [rxs])
+  ch = [
+    samples(impulse_response(pm, tx, rx, fs; abstime=true))
+    for tx in vec(txs), rx in vec(rxs)
+  ]
+  t0 = minimum(findfirst(x -> abs(x) > 0, ch1) for ch1 ∈ ch)
+  ch = map(ch1 -> @view(ch1[t0:end]), ch)
+  len = maximum(length.(ch))
+  ch = map(ch1 -> vcat(ch1, zeros(eltype(ch1), len - length(ch1))), ch)
+  SampledChannelModel(ch, noise, Float64(fs), t0)
+end
 
 """
-    transmit(ch, x; fs=framerate(x), txs=:, rxs=:)
+    transmit(ch, x; txs=:, rxs=:, abstime=false)
 
-Simulate the transmission of the signal `x`, sampled at rate `fs`, through the
-channel model `ch`. If `txs` is specified, it specifies the indices of the
-sources active in the simulation. The number of sources must match the number
-of channels in the input signal. If `rxs` is specified, it specifies the
-indices of the receivers active in the simulation. Returns the received signal
-at the specified (or all) receivers.
+Simulate the transmission of passband signal `x` through the channel model `ch`.
+If `txs` is specified, it specifies the indices of the sources active in the
+simulation. The number of sources must match the number of channels in the
+input signal. If `rxs` is specified, it specifies the indices of the
+receivers active in the simulation. Returns the received signal at the
+specified (or all) receivers.
+
+If `abstime` is `true`, the returned signals begin at the start of transmission.
+Otherwise, the result is relative to the earliest arrival time of the signal
+at any receiver. If `noisy` is `true` and the channel has a noise model
+associated with it, the received signal is corrupted by additive noise.
 """
-function transmit end
+function transmit(ch::SampledChannelModel, x; txs=:, rxs=:, abstime=false, noisy=true)
+  # defaults
+  N, M = size(ch.irs)
+  txs === (:) && (txs = 1:N)
+  rxs === (:) && (rxs = 1:M)
+  # validate inputs
+  x isa SampledSignal && framerate(x) != ch.fs && error("Mismatched sampling rate (expected $(ch.fs) Hz, actual $(framerate(x)) Hz)")
+  all(tx ∈ 1:N for tx ∈ txs) || error("Invalid transmitter indices ($txs ⊄ 1:$N)")
+  all(rx ∈ 1:M for rx ∈ rxs) || error("Invalid receiver indices ($rxs ⊄ 1:$M)")
+  nchannels(x) == length(txs) || error("Mismatched number of sources (expected $(length(txs)), actual $(nchannels(x)))")
+  # simulate transmission
+  t0 = abstime ? ch.t0 : 1
+  flen = size(ch.irs[1],1)
+  x̄ = analytic(x)
+  x̄ = vcat(x̄, zeros(eltype(x̄), flen - 1, size(x̄,2)))
+  ȳ = zeros(Base.promote_eltype(x̄, ch.irs[1]), size(x̄,1) + t0 - 1, length(rxs))
+  Threads.@threads for i ∈ eachindex(rxs)
+    for j ∈ eachindex(txs)
+      ȳ[t0:end,i] .+= filt(ch.irs[txs[j],rxs[i]], x̄[:,j])
+    end
+  end
+  # add noise
+  if isanalytic(x)
+    noisy && ch.noise !== nothing && (ȳ .+= analytic(rand(ch.noise, size(ȳ), ch.fs)))
+    return ȳ
+  else
+    y = real(ȳ)
+    noisy && ch.noise !== nothing && (y .+= rand(ch.noise, size(y), ch.fs))
+    return y
+  end
+end
 
 ###############################################################################
 ### boundary conditions
@@ -185,7 +244,6 @@ parameters are supported:
 - `density` = density model
 - `seabed` = seabed sediment model
 - `surface` = surface model
-- `noise` = noise model
 
 All parameters are optional and have default values. Parameters may be modified
 after construction by setting the corresponding property in the environment.
@@ -199,7 +257,6 @@ mutable struct UnderwaterEnvironment
   density::Any
   seabed::Any
   surface::Any
-  noise::Any
   function UnderwaterEnvironment(;
     bathymetry = 100.0,
     altimetry = 0.0,
@@ -209,7 +266,6 @@ mutable struct UnderwaterEnvironment
     density = nothing,
     seabed = RigidBoundary,
     surface = PressureReleaseBoundary,
-    noise = nothing
   )
     bathymetry isa Number && (bathymetry = in_units(u"m", bathymetry))
     altimetry isa Number && (altimetry = in_units(u"m", altimetry))
@@ -219,7 +275,7 @@ mutable struct UnderwaterEnvironment
     density = something(density, water_density(temperature, salinity))
     soundspeed isa Number && (soundspeed = in_units(u"m/s", soundspeed))
     soundspeed = something(soundspeed, UnderwaterAcoustics.soundspeed(temperature, salinity))
-    new(bathymetry, altimetry, temperature, salinity, soundspeed, density, seabed, surface, noise)
+    new(bathymetry, altimetry, temperature, salinity, soundspeed, density, seabed, surface)
   end
 end
 
@@ -233,7 +289,6 @@ function Base.show(io::IO, env::UnderwaterEnvironment)
   println(io, "  density = $(env.density), ")
   println(io, "  seabed = $(env.seabed), ")
   println(io, "  surface = $(env.surface), ")
-  println(io, "  noise = $(env.noise)")
   println(io, ")")
 end
 
@@ -244,7 +299,7 @@ Return `true` if any quantity (e.g. sound speed, bathymetry, etc) in the
 environment `env` depends on the horizontal location, and `false` otherwise.
 """
 function is_range_dependent(env::UnderwaterEnvironment)
-  for p ∈ (:bathymetry, :altimetry, :temperature, :salinity, :soundspeed, :density, :seabed, :surface, :noise)
+  for p ∈ (:bathymetry, :altimetry, :temperature, :salinity, :soundspeed, :density, :seabed, :surface)
     is_range_dependent(getproperty(env, p)) && return true
   end
   false

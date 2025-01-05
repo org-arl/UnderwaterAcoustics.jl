@@ -9,7 +9,7 @@ A fast differentiable ray tracer that only supports isovelocity constant depth
 environments. `nbounces` is the number of surface/bottom bounces to consider
 in the ray tracing.
 """
-struct PekerisRayTracer{T1,T2,T3,T4,T5,T6,T7,T8} <: AbstractPropagationModel
+struct PekerisRayTracer{T1,T2,T3,T4,T5,T6,T7} <: AbstractPropagationModel
   h::T1             # water depth
   c::T2             # sound speed
   ρ::T3             # density
@@ -17,7 +17,6 @@ struct PekerisRayTracer{T1,T2,T3,T4,T5,T6,T7,T8} <: AbstractPropagationModel
   S::T5             # salinity
   seabed::T6        # seabed properties
   surface::T7       # surface properties
-  noise::T8         # noise model
   nbounces::Int
   function PekerisRayTracer(env; nbounces=16)
     nbounces ≥ 0 || error("Number of nbounces cannot be negative")
@@ -31,7 +30,7 @@ struct PekerisRayTracer{T1,T2,T3,T4,T5,T6,T7,T8} <: AbstractPropagationModel
     ρ = value(env.density)
     T = value(env.temperature)
     S = value(env.salinity)
-    ps = (h, c, ρ, T, S, env.seabed, env.surface, env.noise)
+    ps = (h, c, ρ, T, S, env.seabed, env.surface)
     new{typeof.(ps)...}(ps..., nbounces)
   end
 

@@ -89,7 +89,7 @@ function Base.show(io::IO, b::FluidBoundary)
 end
 
 function reflection_coef(bc::FluidBoundary, frequency, θ, ρ, c)
-  bc.c == Inf && return 1.0 + 0im
+  isinf(bc.c) && return 1.0 + 0im
   bc.c == 0 && return -1.0 + 0im
   θ = in_units(u"rad", θ)
   ρ = in_units(u"kg/m^3", ρ)

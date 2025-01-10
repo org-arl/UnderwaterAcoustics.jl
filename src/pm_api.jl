@@ -62,25 +62,20 @@ end
 Type representing a single acoustic mode arrival.
 
 Fields:
-- `t`: arrival time (s)
 - `m`: mode number
-- `kz`: vertical wavenumber (rad/m)
-- `kr`: horizontal wavenumber (rad/m)
-- `θ`: propagation angle (rad)
-- `ϕ`: complex multiplier
+- `kᵣ`: horizontal wavenumber (rad/m)
+- `ψ(z)`: mode function
+- `v`: group velocity (m/s)
 """
-struct ModeArrival{T1,T2,T3,T4,T5} <: AbstractAcousticArrival
-  t::T1                 # arrival time
+struct ModeArrival{T1,T2,T3} <: AbstractAcousticArrival
   m::Int                # mode number
-  kz::T2                # vertical wavenumber
-  kr::T3                # horizontal wavenumber
-  θ::T4                 # propagation angle
-  ϕ::Complex{T5}        # complex multiplier
+  kᵣ::T1                # horizontal wavenumber
+  ψ::T2                 # mode function
+  v::T3                 # group velocity
 end
 
 function Base.show(io::IO, a::ModeArrival)
-  @printf(io, "%3d | %6.3f→ %6.3f↑ ∠%5.1f° | %6.2f ms | %5.1f dB ϕ%6.1f°",
-    a.m, a.kr, a.kz, rad2deg(a.θ), 1000*a.t, amp2db(abs(a.ϕ)), rad2deg(angle(a.ϕ)))
+  @printf(io, "%3d: %6.3f rad/m, %7.2f m/s", a.m, a.kᵣ, a.v)
 end
 
 """
@@ -105,7 +100,7 @@ complex numbers with the same shape as `rxs`. The amplitude of the field is
 related to the transmission loss, and the angle is related to the acoustic phase
 at the source frequency.
 """
-function acoustic_field(pm, tx::AbstractAcousticSource, rxs::AbstractArray{<:AbstractAcousticReceiver}; kwargs...)
+function acoustic_field(pm, tx, rxs::AbstractArray; kwargs...)
   tmap(rx -> acoustic_field(pm, tx, rx; kwargs...), rxs)
 end
 

@@ -118,7 +118,8 @@ function arrivals end
 Compute the impulse response at the receiver `rx` due to the source `tx` using
 propagation model `pm` at the given sampling frequency `fs`. If `abstime` is
 `true`, the result is in absolute time from the start of transmission. Otherwise,
-the result is relative to the earliest arrival time of the signal at the receiver.
+the result is relative to the earliest arrival time of the signal at the receiver
+(possibly with some guard period to accommodate acausal response).
 """
 function impulse_response end
 

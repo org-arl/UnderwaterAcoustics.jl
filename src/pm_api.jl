@@ -16,6 +16,16 @@ Superclass for all propagation models.
 abstract type AbstractPropagationModel end
 
 """
+Superclass for all ray propagation models.
+"""
+abstract type AbstractRayPropagationModel <: AbstractPropagationModel end
+
+"""
+Superclass for all mode propagation models.
+"""
+abstract type AbstractModePropagationModel <: AbstractPropagationModel end
+
+"""
 Superclass for all acoustic arrivals.
 """
 abstract type AbstractAcousticArrival end
@@ -49,7 +59,7 @@ function Base.show(io::IO, a::RayArrival)
 end
 
 """
-Type representing a single acoustic normal mode arrival.
+Type representing a single acoustic mode arrival.
 
 Fields:
 - `t`: arrival time (s)
@@ -86,16 +96,18 @@ function transmission_loss(pm, tx, rxs; kwargs...)
 end
 
 """
-    acoustic_field(pm, txs, rxs)
+    acoustic_field(pm, tx, rxs)
 
-Compute the acoustic field at the receivers `rxs` due to the sources `txs`
+Compute the acoustic field at the receivers `rxs` due to the source `tx`
 using propagation model `pm`. If `rxs` denotes a single receiver, the result is a
 complex scalar. If `rxs` is an `AbstractArray`, the result is an array of
 complex numbers with the same shape as `rxs`. The amplitude of the field is
 related to the transmission loss, and the angle is related to the acoustic phase
 at the source frequency.
 """
-function acoustic_field end
+function acoustic_field(pm, tx::AbstractAcousticSource, rxs::AbstractArray{<:AbstractAcousticReceiver}; kwargs...)
+  tmap(rx -> acoustic_field(pm, tx, rx; kwargs...), rxs)
+end
 
 """
     arrivals(pm, tx, rx)

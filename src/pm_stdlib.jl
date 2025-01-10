@@ -280,6 +280,7 @@ interpolation is supported at present. For 2D and 3D fields, the data must be
 sampled on a regular grid.
 """
 function SampledField(v; x=nothing, y=nothing, z=nothing, interp=:linear)
+  # TODO: support PCHIP interpolation (see HLS-2021-01.pdf in OALIB distribution)
   interp === :linear || error("Only linear interpolation supported")
   if x === nothing && y === nothing && z !== nothing
     ndx = sortperm(z)

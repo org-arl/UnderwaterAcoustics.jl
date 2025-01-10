@@ -1,5 +1,7 @@
 import SignalAnalysis: signal
 import Roots: find_zero, Bisection
+import DSP: nextfastfft
+import FFTW: ifft
 
 export PekerisRayTracer, PekerisModeSolver
 
@@ -156,12 +158,16 @@ end
 
 ################################################################################
 # Pekeris mode propagation model
+#
+# current limitations:
+#   iso-velocity, range independent, no absorption, pressure release surface,
+#   fluid half-space seabed, no layers, no leaky modes
 
 """
     PekerisModeSolver(env)
 
-A fast differentiable mode propagation model that only supports isovelocity constant
-depth environments.
+A fast differentiable mode propagation model that only supports iso-velocity
+constant depth environments.
 """
 struct PekerisModeSolver{T1,T2,T3,T4,T5,T6,T7} <: AbstractModePropagationModel
   h::T1             # water depth
@@ -172,15 +178,13 @@ struct PekerisModeSolver{T1,T2,T3,T4,T5,T6,T7} <: AbstractModePropagationModel
   seabed::T6        # seabed properties
   surface::T7       # surface properties
   function PekerisModeSolver(env)
-    isospeed(env) || error("Environment must be isovelocity")
+    isospeed(env) || error("Environment must be iso-velocity")
     is_range_dependent(env) && error("Environment must be range independent")
     is_constant(env.temperature) || error("Temperature must be constant")
     is_constant(env.salinity) || error("Salinity must be constant")
     is_constant(env.density) || error("Density must be constant")
     env.seabed isa FluidBoundary || error("Seabed must be a fluid boundary")
-    # TODO: handle non-pressure release surface
     env.surface.c == 0 || error("Surface must be a pressure release boundary")
-    # TODO: handle seabed absorption
     env.seabed.δ == 0 || @warn "Seabed absorption will be ignored"
     h = value(env.bathymetry)
     c = value(env.soundspeed)
@@ -216,13 +220,12 @@ function arrivals(pm::PekerisModeSolver, tx::AbstractAcousticSource, rx::Abstrac
     m = _mode.(1:M, ((1:M) .- 0.5) .* (π / pm.h), k₁, R, pm.c)
   else                                           # acousto-elastic boundary
     k₂ = ω / pm.seabed.c
-    J(γ) = sin(γ*pm.h) + γ / sqrt(k₁^2 - k₂^2 - γ^2) * cos(γ * pm.h)
-    # TODO: add support for leaky modes
     k₂ < k₁ || return ModeArrival[]
-    γgrid = range(0, sqrt(k₁^2 - k₂^2) - eps(); length=1000)
+    γgrid = range(0, sqrt(k₁^2 - k₂^2) - sqrt(eps()); length=1000)
+    J(γ) = pm.seabed.ρ * γ * cos(γ * pm.h) + pm.ρ * sqrt(k₁^2 - k₂^2 - γ^2) * sin(γ * pm.h)
     ndx = findall(i -> sign(J(γgrid[i+1])) * sign(J(γgrid[i])) < 0, 1:length(γgrid)-1)
     γ = [find_zero(J, (γgrid[i], γgrid[i+1]), Bisection()) for i ∈ ndx]
-    m = _mode.(1:length(γ), γ, k₁, R, pm.c)
+    m = _mode.(1:length(γ), ω, γ, k₁, pm.c, pm.ρ, pm.seabed.c, pm.seabed.ρ, pm.h)
   end
   m
 end
@@ -241,35 +244,72 @@ end
 function acoustic_field(pm::PekerisModeSolver, tx::AbstractAcousticSource, rxs::AbstractArray{<:AbstractAcousticReceiver}; mode=:coherent)
   mode ∈ (:coherent, :incoherent) || error("Unknown mode: $mode")
   p1 = location(tx)
-  ρₛ = value(pm.ρ, p1)
   # modes don't depend on the receiver, so we can compute based on any receiver
-  modes = arrivals(pm, tx, rxs[1])
-  γ = [m.kz for m ∈ modes]
-  kᵣ = [m.kr for m ∈ modes]
-  ϕ = [m.ϕ for m ∈ modes]
+  modes = arrivals(pm, tx, first(rxs))
+  kᵣ = [m.kᵣ for m ∈ modes]
+  k² = (2π * frequency(tx) / pm.c)^2
+  γ = sqrt.(k² .- kᵣ.^2)
   tmap(rxs) do rx
     p2 = location(rx)
     R = sqrt(abs2(p1.x - p2.x) + abs2(p1.y - p2.y))
-    modal_terms = @. ϕ * sin(γ * -p1.z) * sin(γ * -p2.z) * hankelh1(0, kᵣ * R)
+    modal_terms = @. sin(γ * -p1.z) * sin(γ * -p2.z) * cis(kᵣ * R) / sqrt(kᵣ)
+    multiplier = cis(-π/4) * sqrt(2 / (π * R))
     if mode === :coherent
-      sum(modal_terms) * im / (2 * pm.h * ρₛ) * db2amp(spl(tx))
+      sum(modal_terms) * im / (2 * pm.h) * db2amp(spl(tx)) * multiplier
     else
-      complex(√sum(abs2, modal_terms) / (2 * pm.h * ρₛ)) * db2amp(spl(tx))
+      complex(√sum(abs2, modal_terms) / (2 * pm.h)) * db2amp(spl(tx)) * multiplier
     end
   end
 end
 
 function impulse_response(pm::PekerisModeSolver, tx::AbstractAcousticSource, rx::AbstractAcousticReceiver, fs; abstime=false)
-
+  arr = arrivals(pm, tx, rx)
+  isempty(arr) && return signal(ComplexF64[], fs)
+  p1 = location(tx)
+  p2 = location(rx)
+  R = sqrt(abs2(p1.x - p2.x) + abs2(p1.y - p2.y))
+  N = ceil(Int, R / minimum(a -> a.v, arr) * fs)
+  M = ceil(Int, R / maximum(a -> a.v, arr) * fs)
+  N -= M
+  N = nextfastfft(2N)
+  Δf = fs / N
+  X = map(0:N-1) do i
+    i == 0 && return complex(0.0)
+    tx1 = AcousticSource(location(tx), i * Δf)
+    acoustic_field(pm, tx1, rx) |> conj
+  end
+  x = ifft(X)
+  x = circshift(x, -mod(M, N) + N ÷ 100)
+  if abstime
+    absx = abs.(x)
+    i = findfirst(>(maximum(absx) / 10), absx)
+    while i < length(absx) && absx[i+1] > absx[i]
+      i += 1
+    end
+    x = vcat(zeros(eltype(x), M - i), x)
+  end
+  signal(x, fs)
 end
 
 ### helpers
 
-function _mode(m, γ, k, R, c)
-  kᵣ = sqrt(k^2 - γ^2)
-  cᵣ = kᵣ / k * c
-  t = R / cᵣ                      # FIXME: this is not an accurate way to compute this
-  θ = asin(γ / k)
-  ϕ = complex(1.0, 0.0)
-  ModeArrival(t, m, γ, kᵣ, θ, ϕ)
+function _group_velocity(ω, γ, kᵣ, c, ρ, cb, ρb, D)
+  k₁ = ω / c
+  kb = ω / cb
+  ζ = sqrt(k₁^2 - γ^2 - kb^2)
+  sγD = sin(γ * D)
+  cγD = cos(γ * D)
+  ∂γ = -(c^2 - cb^2) * ρ * ω * sγD / (
+    c^2 * cb^2 * D * ρ * cγD * γ^2 +
+    c^2 * cb^2 * sγD * γ * (ρ + D * ρb * ζ) +
+    cγD * (-cb^2 * D * ρ * ω^2 + c^2 * (D * ρ * ω^2 - cb^2 * ρb * ζ))
+  )
+  real(1 / (k₁ / (c * kᵣ) - γ / kᵣ * ∂γ))
+end
+
+function _mode(m, ω, γ, k, c, ρ, cb, ρb, D)
+  kᵣ = complex(sqrt(k^2 - γ^2))
+  v = _group_velocity(ω, γ, kᵣ, c, ρ, cb, ρb, D)
+  ψ(z) = sqrt(2/D) * sin(γ * z)
+  ModeArrival{typeof(kᵣ),typeof(ψ),typeof(v)}(m, kᵣ, ψ, v)
 end

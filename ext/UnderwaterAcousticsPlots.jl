@@ -4,7 +4,7 @@ using RecipesBase
 using Colors
 using UnderwaterAcoustics
 import UnderwaterAcoustics: AbstractAcousticSource, AbstractAcousticReceiver, RayArrival, value
-import UnderwaterAcoustics: SampledFieldZ, SampledFieldX, SampledFieldXZ, SampledFieldXY
+import UnderwaterAcoustics: SampledFieldZ, SampledFieldX, SampledFieldXZ, SampledFieldXY, ModeArrival
 import DSP: amp2db
 
 @recipe function plot(env::UnderwaterEnvironment)
@@ -162,6 +162,47 @@ end
   @series begin
     seriestype := :heatmap
     xr, zr, [fld(x, z) for x ∈ xr, z ∈ zr]
+  end
+end
+
+@recipe function plot(m::ModeArrival, D; npts=1000)
+  zr = range(0, -D; length=npts)
+  ticks --> :native
+  legend --> false
+  xguide --> "Mode #"
+  yguide --> "z (m)"
+  xlims --> (0, 2)
+  @series begin
+    seriestype := :line
+    color := :lightgray
+    linestyle := :dash
+    [1, 1], [0, -D]
+  end
+  @series begin
+    seriestype := :path
+    1 .+ m.ψ.(-zr), zr
+  end
+end
+
+@recipe function plot(m::AbstractVector{<:ModeArrival}, D; npts=1000)
+  n = length(m)
+  zr = range(0, -D; length=npts)
+  ticks --> :native
+  legend --> false
+  xguide --> "Mode #"
+  yguide --> "z (m)"
+  xlims --> (0, n+1)
+  for i ∈ 1:n
+    @series begin
+      seriestype := :line
+      color := :lightgray
+      linestyle := :dash
+      [i, i], [0, -D]
+    end
+    @series begin
+      seriestype := :path
+      i .+ m[i].ψ.(-zr), zr
+    end
   end
 end
 

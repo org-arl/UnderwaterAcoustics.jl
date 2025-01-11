@@ -1,0 +1,113 @@
+# Mode propagation in a Pekeris waveguide
+
+This math is largely based on `kraken.pdf` by Michael B. Porter.
+
+## Basic theory
+
+The acoustic wave equation is:
+$$
+\nabla^2p = \frac{1}{c^2}\frac{\partial^2p}{\partial t^2}.
+$$
+In a Pekeris waveguide with a pressure-release surface and a pressure-release bottom (good approximation for a long range propagation problem, as it turns out), the boundary conditions in cylindrical coordinates are:
+$$
+\begin{align*}
+p(r,0) &= 0 \quad \forall \; r, \\
+p(r,-D) &= 0.
+\end{align*}
+$$
+For a monochromatic source of frequency $f$ Hz located at $(0,-z_s)$ boundary condition is:
+$$
+p(0,-z_s) = -A\exp(-i\omega t),
+$$
+where $A$ is the source amplitude, and $\omega = 2\pi f$. Due to symmetry of the Pekeris waveguide, we have dropped the azimuthal coordinate.
+
+The wave equation with these boundary conditions admits an approximate modal solution of the form:
+$$
+p(r,z,t) = \frac{i}{4}\sum_m\psi_m(z_s)\psi_m(z)H_0^{(1)}(k_mr)\exp(-i\omega t),
+$$
+where $\psi_m(z)$ is the mode of order $m$ and $H_0^{(1)}$ is the Hankel function of the first kind and order 0, $k_m$ is the horizontal wavenumber associated with mode. The mode $\psi_m$ is given by:
+$$
+\psi_m(z) = \sqrt{\frac{2}{D}}\sin(\gamma_m z),
+$$
+where $\gamma_m$ is the vertical wavenumber associated with mode $m$:
+$$
+\gamma_m = \sqrt{k_0^2 - k_m^2},
+$$
+for wavenumber $k_0 = \omega/c$.
+
+$\gamma_m$ is chosen to ensure boundary conditions are satisfied:
+$$
+\psi_m(0) = \psi_m(D) = 0,
+$$
+i.e.,
+$$
+\gamma_m = m\frac{\pi}{D}.
+$$
+If the bottom boundary condition is chosen for a rigid bottom:
+$$
+\begin{align*}
+& \left.\frac{d}{dz}\psi_m(z)\right|_{z=D} = 0, \\
+& \therefore \; \gamma_m = \left(m-\frac{1}{2}\right)\frac{\pi}{D}.
+\end{align*}
+$$
+
+Substituting $\psi_m$ back, we have:
+$$
+p(r,z,t) = \frac{i}{2D}\sum_m\sin(\gamma_m z_s)\sin(\gamma_m z)H_0^{(1)}(k_mr)\exp(-i\omega t),
+$$
+The transmission loss is then given by:
+$$
+\text{TL}(r,z) = -20\log\left| \frac{p(r,z)}{p^0_{r=1}} \right|,
+$$
+where $p^0_{r=1}$ is the pressure due to the source at 1 m from the acoustic center of the source:
+$$
+p^0_{r=1} = \frac{\exp(ik_0r)}{4\pi r} = \frac{\exp(ik_0)}{4\pi}.
+$$
+
+## Acousto-elastic boundary condition
+
+If we use an acousto-elastic boundary condition for the seabed with sound speed $c_b$ and density $\rho_b$, we have a boundary condition:
+$$
+\left.\rho_b\frac{d\psi_m}{dz}\right|_{z=D} = -\rho\sqrt{k_m^2 - k_b^2} \; \psi_m(r,D).
+$$
+for $k_b = \omega/c_b$. Substituting $\psi_m(r,z)$:
+$$
+\rho_b\gamma_m\cos(\gamma_m D) + \rho\sqrt{k_m^2 - k_b^2} \; \sin(\gamma_m D) = 0.
+$$
+
+## Group velocity
+
+The group velocity of mode $m$ is $d\omega/dk_m$. Given:
+$$
+\begin{align*}
+k_m^2 &= k_0^2 - \gamma_m^2 \\
+\therefore \; 2k_m\frac{dk_m}{d\omega} &= \frac{2k_0}{c} - 2\gamma_m\frac{d\gamma_m}{d\omega} \\
+\therefore \; \frac{dk_m}{d\omega} &= \frac{k_0}{c k_m} - \frac{\gamma_m}{k_m}\frac{d\gamma_m}{d\omega}
+\end{align*}
+$$
+Also:
+$$
+\begin{align*}
+&\rho_b\gamma_m\cos(\gamma_m D) + \rho\sqrt{k_m^2 - k_b^2} \; \sin(\gamma_m D) = 0 \\
+\therefore \quad &\rho_b\gamma_m\cos(\gamma_m D) + \rho\sqrt{k_0^2 - \gamma_m^2 - k_b^2} \; \sin(\gamma_m D) = 0 \\
+\therefore \quad &\rho_b\frac{d\gamma_m}{d\omega}\cos(\gamma_m D) - \rho_b\gamma_m\sin(\gamma_m D)D\frac{d\gamma_m}{d\omega} + \rho\zeta\cos(\gamma_m D)D\frac{d\gamma_m}{d\omega} \\
+&- \frac{\rho}{2\zeta}\sin(\gamma_m D)\left(\frac{2k_0}{c} - 2\gamma_m\frac{d\gamma_m}{d\omega} - \frac{2k_b}{c}\right) = 0 \\
+\therefore \quad &\left[\rho_b\cos(\gamma_m D) - \rho_bD\gamma_m\sin(\gamma_m D) + \rho D\zeta\cos(\gamma_m D) - \frac{\rho\gamma_m}{\zeta}\sin(\gamma_m D)\right]\frac{d\gamma_m}{d\omega} \\
+&= -\frac{\rho k_0}{c\zeta}\sin(\gamma_m D) - \frac{\rho k_b}{c\zeta} \; \sin(\gamma_m D) \\
+\therefore \quad &\frac{d\gamma_m}{d\omega} = -\frac{\rho\sin(\gamma_m D)(k_0 + k_b)}{c\zeta[\rho_b\cos(\gamma_m D) - \rho_bD\gamma_m\sin(\gamma_m D) + \rho D\zeta\cos(\gamma_m D) - \frac{\rho\gamma_m}{\zeta}\sin(\gamma_m D)]} \\
+&= -\frac{\rho\sin (\gamma_m D)\omega\left(c^2-c_b^2\right)}{c^2 c_b^2 \gamma_m \sin (\gamma_m D) \left(D\text{$\rho $b} \zeta+\rho \right)+\cos(\gamma_m D) \left(c^2 \left(D\rho\omega ^2-c_b^2 \text{$\rho $b} \zeta\right)-c_b^2 D\rho\omega^2\right)+c^2 c_b^2 D\rho\gamma_m^2\cos(\gamma_m D)}.
+\end{align*}
+$$
+where $\zeta = \sqrt{k_0^2 - \gamma_m^2 - k_b^2}$.
+
+
+Mathematica code to do the simplification:
+```
+Derivative[1][\[Gamma]][\[Omega]] /.
+  Solve[Collect[
+      D[\[Rho]b \[Gamma][\[Omega]] Cos[\[Gamma][\[Omega]] h] + \[Rho] \
+Sqrt[(\[Omega]/c)^2 - \[Gamma][\[Omega]]^2 - (\[Omega]/
+             cb)^2] Sin[\[Gamma][\[Omega]] h], \[Omega]],
+      Derivative[1][\[Gamma]][\[Omega]]] == 0,
+    Derivative[1][\[Gamma]][\[Omega]]][[1]] // Simplify
+```

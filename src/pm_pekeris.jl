@@ -262,7 +262,10 @@ function acoustic_field(pm::PekerisModeSolver, tx::AbstractAcousticSource, rxs::
   end
 end
 
-function impulse_response(pm::PekerisModeSolver, tx::AbstractAcousticSource, rx::AbstractAcousticReceiver, fs; abstime=false)
+# impulse response computation is designed for Pekeris mode solver, but should
+# work for any mode solver that returns ModeArrival, and hence is marked as
+# a fallback for any AbstractModePropagationModel
+function impulse_response(pm::AbstractModePropagationModel, tx::AbstractAcousticSource, rx::AbstractAcousticReceiver, fs; abstime=false)
   arr = arrivals(pm, tx, rx)
   isempty(arr) && return signal(ComplexF64[], fs)
   p1 = location(tx)
@@ -271,7 +274,7 @@ function impulse_response(pm::PekerisModeSolver, tx::AbstractAcousticSource, rx:
   N = ceil(Int, R / minimum(a -> a.v, arr) * fs)
   M = ceil(Int, R / maximum(a -> a.v, arr) * fs)
   N -= M
-  N = nextfastfft(2N)
+  N = nextfastfft(2N)                       # heuristic to ensure no aliasing
   Δf = fs / N
   X = map(0:N-1) do i
     i == 0 && return complex(0.0)
@@ -279,7 +282,7 @@ function impulse_response(pm::PekerisModeSolver, tx::AbstractAcousticSource, rx:
     acoustic_field(pm, tx1, rx) |> conj
   end
   x = ifft(X)
-  x = circshift(x, -mod(M, N) + N ÷ 100)
+  x = circshift(x, -mod(M, N) + N ÷ 100)    # heuristic to position first arrival
   if abstime
     absx = abs.(x)
     i = findfirst(>(maximum(absx) / 10), absx)

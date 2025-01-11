@@ -5,6 +5,7 @@ using Colors
 using UnderwaterAcoustics
 import UnderwaterAcoustics: AbstractAcousticSource, AbstractAcousticReceiver, RayArrival, value
 import UnderwaterAcoustics: SampledFieldZ, SampledFieldX, SampledFieldXZ, SampledFieldXY, ModeArrival
+import UnderwaterAcoustics: BasebandReplayChannel
 import DSP: amp2db
 
 @recipe function plot(env::UnderwaterEnvironment)
@@ -203,6 +204,27 @@ end
       seriestype := :path
       i .+ m[i].ψ.(-zr), zr
     end
+  end
+end
+
+@recipe function plot(ch::BasebandReplayChannel, i=1; npts=1000)
+  T = size(ch.h, 3)
+  Tstep = ceil(Int, T / npts)
+  h = 20 * log10.(reverse(abs.(ch.h[:,i,1:Tstep:T]'); dims=2))
+  hmax = ceil(Int, maximum(h))
+  n, m = size(h)
+  t = (0:n-1) / ch.fs * ch.step * Tstep
+  τ = (0:m-1) / ch.fs
+  ticks --> :native
+  legend --> false
+  xguide --> "delay (ms)"
+  yguide --> "time (s)"
+  yflip --> true
+  clims --> (hmax-30, hmax)
+  colorbar --> true
+  @series begin
+    seriestype := :heatmap
+    1000τ, t, h
   end
 end
 

@@ -131,15 +131,15 @@ Superclass for all channel models.
 """
 abstract type AbstractChannelModel end
 
-struct SampledChannelModel{T1,T2} <: AbstractChannelModel
+struct SampledPassbandChannel{T1,T2} <: AbstractChannelModel
   irs::T1       # impulse responses
   noise::T2     # noise model
   fs::Float64   # sampling rate
   t0::Int       # start time
 end
 
-function Base.show(io::IO, ch::SampledChannelModel)
-  print(io, "SampledChannelModel($(size(ch.irs,1))×$(size(ch.irs,2)), $(ch.fs) Hz)")
+function Base.show(io::IO, ch::SampledPassbandChannel)
+  print(io, "SampledPassbandChannel($(size(ch.irs,1))×$(size(ch.irs,2)), $(ch.fs) Hz)")
 end
 
 """
@@ -165,7 +165,7 @@ function channel(pm, txs, rxs, fs; abstime=false, noise=nothing)
   ch = map(ch1 -> @view(ch1[t0:end]), ch)
   len = maximum(length.(ch))
   ch = map(ch1 -> vcat(ch1, zeros(eltype(ch1), len - length(ch1))), ch)
-  SampledChannelModel(ch, noise, Float64(fs), t0)
+  SampledPassbandChannel(ch, noise, Float64(fs), t0)
 end
 
 """
@@ -178,18 +178,24 @@ input signal. If `rxs` is specified, it specifies the indices of the
 receivers active in the simulation. Returns the received signal at the
 specified (or all) receivers.
 
+`fs` specifies the sampling rate of the input signal. The output signal is
+sampled at the same rate. If `fs` is not specified but `x` is a `SampledSignal`,
+the sampling rate of `x` is used. Otherwise, the signal is assumed to be
+sampled at the channel's sampling rate.
+
 If `abstime` is `true`, the returned signals begin at the start of transmission.
 Otherwise, the result is relative to the earliest arrival time of the signal
 at any receiver. If `noisy` is `true` and the channel has a noise model
 associated with it, the received signal is corrupted by additive noise.
 """
-function transmit(ch::SampledChannelModel, x; txs=:, rxs=:, abstime=false, noisy=true)
+function transmit(ch::SampledPassbandChannel, x; txs=:, rxs=:, abstime=false, noisy=true, fs=nothing)
   # defaults
   N, M = size(ch.irs)
   txs === (:) && (txs = 1:N)
   rxs === (:) && (rxs = 1:M)
   # validate inputs
-  x isa SampledSignal && framerate(x) != ch.fs && error("Mismatched sampling rate (expected $(ch.fs) Hz, actual $(framerate(x)) Hz)")
+  fs = something(fs, x isa SampledSignal ? framerate(x) : ch.fs)
+  fs != ch.fs && error("Mismatched sampling rate (expected $(ch.fs) Hz, actual $(fs) Hz)")
   all(tx ∈ 1:N for tx ∈ txs) || error("Invalid transmitter indices ($txs ⊄ 1:$N)")
   all(rx ∈ 1:M for rx ∈ rxs) || error("Invalid receiver indices ($rxs ⊄ 1:$M)")
   nchannels(x) == length(txs) || error("Mismatched number of sources (expected $(length(txs)), actual $(nchannels(x)))")
@@ -206,12 +212,12 @@ function transmit(ch::SampledChannelModel, x; txs=:, rxs=:, abstime=false, noisy
   end
   # add noise
   if isanalytic(x)
-    noisy && ch.noise !== nothing && (ȳ .+= analytic(rand(ch.noise, size(ȳ), ch.fs)))
-    signal(ȳ, ch.fs)
+    noisy && ch.noise !== nothing && (ȳ .+= analytic(rand(ch.noise, size(ȳ), fs)))
+    signal(ȳ, fs)
   else
     y = real(ȳ)
-    noisy && ch.noise !== nothing && (y .+= rand(ch.noise, size(y), ch.fs))
-    signal(y, ch.fs)
+    noisy && ch.noise !== nothing && (y .+= rand(ch.noise, size(y), fs))
+    signal(y, fs)
   end
 end
 

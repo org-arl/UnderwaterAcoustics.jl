@@ -9,10 +9,10 @@ export PekerisRayTracer, PekerisModeSolver
 # Pekeris ray tracer
 
 """
-    PekerisRayTracer(env; nbounces=3)
+    PekerisRayTracer(env, maxbounces=16)
 
 A fast differentiable ray tracer that only supports isovelocity constant depth
-environments. `nbounces` is the number of surface/bottom bounces to consider
+environments. `maxbounces` is the number of surface/bottom bounces to consider
 in the ray tracing.
 """
 struct PekerisRayTracer{T1,T2,T3,T4,T5,T6,T7} <: AbstractRayPropagationModel
@@ -23,9 +23,9 @@ struct PekerisRayTracer{T1,T2,T3,T4,T5,T6,T7} <: AbstractRayPropagationModel
   S::T5             # salinity
   seabed::T6        # seabed properties
   surface::T7       # surface properties
-  nbounces::Int
-  function PekerisRayTracer(env; nbounces=16)
-    nbounces ≥ 0 || error("Number of nbounces cannot be negative")
+  maxbounces::Int   # maximum number of bounces
+  function PekerisRayTracer(env, maxbounces=16)
+    maxbounces ≥ 0 || error("Maximum number of bounces cannot be negative")
     isospeed(env) || error("Environment must be isovelocity")
     is_range_dependent(env) && error("Environment must be range independent")
     is_constant(env.temperature) || error("Temperature must be constant")
@@ -37,12 +37,12 @@ struct PekerisRayTracer{T1,T2,T3,T4,T5,T6,T7} <: AbstractRayPropagationModel
     T = value(env.temperature)
     S = value(env.salinity)
     ps = (h, c, ρ, T, S, env.seabed, env.surface)
-    new{typeof.(ps)...}(ps..., nbounces)
+    new{typeof.(ps)...}(ps..., maxbounces)
   end
 end
 
 function Base.show(io::IO, pm::PekerisRayTracer)
-  print(io, "PekerisRayTracer(h=$(pm.h), nbounces=$(pm.nbounces))")
+  print(io, "PekerisRayTracer(h=$(pm.h), maxbounces=$(pm.maxbounces))")
 end
 
 """
@@ -65,9 +65,9 @@ function arrivals(pm::PekerisRayTracer, tx::AbstractAcousticSource, rx::Abstract
   d1 = -p1.z
   d2 = -p2.z
   if paths
-    [_arrival(j, pm, R, R², d1, d2, f, p1, p2) for j ∈ 1:1+2*pm.nbounces]
+    [_arrival(j, pm, R, R², d1, d2, f, p1, p2) for j ∈ 1:1+2*pm.maxbounces]
   else
-    [_arrival(j, pm, R, R², d1, d2, f) for j ∈ 1:1+2*pm.nbounces]
+    [_arrival(j, pm, R, R², d1, d2, f) for j ∈ 1:1+2*pm.maxbounces]
   end
 end
 

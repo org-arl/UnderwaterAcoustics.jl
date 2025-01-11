@@ -1,18 +1,20 @@
 import MAT: matread
-import SignalAnalysis: duration, nchannels, SampledSignal, samples, signal, framerate, nframes, resample, isanalytic, analytic
+import SignalAnalysis: duration, nchannels, SampledSignal, samples, signal
+import SignalAnalysis: framerate, nframes, resample, isanalytic, analytic, padded
 
 export BasebandReplayChannel
 
-struct BasebandReplayChannel{T1} <: AbstractChannelModel
-  h::Array{Complex{T1},3}   # channel impulse responses (delay x rx × time)
-  θ::Matrix{T1}             # phase estimates (rx × time)
+struct BasebandReplayChannel{T1,T2} <: AbstractChannelModel
+  h::Array{Complex{T1},3}   # channel impulse responses (delay × rx × time)
+  θ::Matrix{T1}             # phase estimates (time × rx)
   fs::T1                    # sampling frequency (Sa/s)
   fc::T1                    # carrier frequency (Hz)
   step::Int                 # step size for h time axis (fs ÷ step IRs/s)
-  function BasebandReplayChannel(h, θ, fs, fc, step=1)
+  noise::T2                 # noise model
+  function BasebandReplayChannel(h, θ, fs, fc, step::Int=1; noise=nothing)
     h = ComplexF32.(h)
     θ = Float32.(θ)
-    new{Float32}(h, θ, Float32(fs), Float32(fc), step)
+    new{Float32,typeof(noise)}(h, θ, Float32(fs), Float32(fc), step, noise)
   end
 end
 
@@ -21,20 +23,23 @@ function Base.show(io::IO, ch::BasebandReplayChannel)
 end
 
 """
-    BasebandReplayChannel(h, θ, fs, fc, step=1)
-    BasebandReplayChannel(h, fs, fc, step=1)
+    BasebandReplayChannel(h, θ, fs, fc, step=1; noise=nothing)
+    BasebandReplayChannel(h, fs, fc, step=1; noise=nothing)
 
 Construct a baseband replay channel with impulse responses `h` and phase
 estimates `θ`. The phase estimates are optional. `fs` is the sampling
 frequency in Sa/s, `fc` is the carrier frequency in Hz, and `step` is the
 decimation rate for the time axis of `h`. The effective sampling frequency
 of the impulse responses is `fs ÷ step` impulse responses per second.
+
+An additive noise model may be optionally specified as `noise`. If specified,
+it is used to corrupt the received signals.
 """
-function BasebandReplayChannel(h, fs, fc, step=1)
+function BasebandReplayChannel(h, fs, fc, step::Int=1; noise=nothing)
   fs = in_units(u"Hz", fs)
   fc = in_units(u"Hz", fc)
   θ = Matrix{Float64}(undef, size(h,2), 0)
-  BasebandReplayChannel(h, θ, fs, fc, step)
+  BasebandReplayChannel(h, θ, fs, fc, step; noise)
 end
 
 """
@@ -48,10 +53,11 @@ sampling rate. This makes applying the channel faster but requires more memory.
 are loaded.
 
 Supported formats:
-- `.mat` (MATLAB) file in underwater acoustic channel repository format.
+- `.mat` (MATLAB) file in underwater acoustic channel repository (UACR) format.
   See https://github.com/uwa-channels/replay for details.
 """
 function BasebandReplayChannel(filename::AbstractString; upsample=false, rxs=:)
+  # TODO: support UACR noise models
   if endswith(filename, ".mat")
     data = matread(filename)
     all(["version", "h_hat", "theta_hat", "params"] .∈ Ref(keys(data))) || error("Bad channel file format")
@@ -63,7 +69,7 @@ function BasebandReplayChannel(filename::AbstractString; upsample=false, rxs=:)
     h = h[:,rxs,:]
     θ = data["theta_hat"]
     size(θ, 1) == M || error("Invalid phase estimates size")
-    θ = θ[rxs,:]
+    θ = transpose(θ[rxs,:])
     fs = data["params"]["fs_delay"]
     fc = data["params"]["fc"]
     if upsample && fs != data["params"]["fs_time"]
@@ -78,9 +84,8 @@ function BasebandReplayChannel(filename::AbstractString; upsample=false, rxs=:)
   end
 end
 
-# TODO: support noise models
 function transmit(ch::BasebandReplayChannel, x; txs=:, rxs=:, abstime=false, noisy=true, fs=framerate(x), start=nothing)
-  D, M, T = size(ch.h)
+  L, M, T = size(ch.h)
   maxtime = (T - 1) / ch.fs * ch.step
   txs === (:) && (txs = 1)
   rxs === (:) && (rxs = 1:M)
@@ -97,23 +102,40 @@ function transmit(ch::BasebandReplayChannel, x; txs=:, rxs=:, abstime=false, noi
   # convert to baseband and downsample
   x̄ = samples(resample(x .* cispi.(-2 * ch.fc * (0:nframes(x)-1) ./ fs), ch.fs/fs))
   # choose a random start time if not specified
-  Treq = ceil(Int, length(x̄) / ch.step) + 1
+  Treq = ceil(Int, (nframes(x̄) + L - 1) / ch.step) + 1
   start = something(start, rand(1:T-Treq))
   # apply the channel
-  ȳ = Array{ComplexF64}(undef, nframes(x̄) + D - 1, length(rxs))
+  ȳ = similar(x̄, nframes(x̄) + L - 1, length(rxs))
   h = @view ch.h[:,rxs,start:start+Treq]
   _apply_tvir!(ȳ, x̄, ch.step == 1 ? h : resample(h, ch.step; dims=3))
   if size(ch.θ, 2) > 0
+    # adjust phase
+    i = start * ch.step
+    ȳ .*= cis.(@view(ch.θ[i:i+nframes(ȳ)-1,rxs]))
     # TODO: apply drift
   end
   # resample to original sampling rate and upconvert to passband
   y = resample(ȳ, fs/ch.fs; dims=1)
   y .*= cispi.(2 * ch.fc * (0:nframes(y)-1) ./ fs)
-  signal(input_was_analytic ? y : real(y), fs)
+  y = signal(input_was_analytic ? y : real(y), fs)
+  # add noise
+  if noisy && ch.noise !== nothing
+    if input_was_analytic
+      y .+= analytic(rand(ch.noise, size(y), fs))
+    else
+      y .+= rand(ch.noise, size(y), fs)
+    end
+  end
+  y
 end
 
 # helpers
 
 function _apply_tvir!(y, x, h)
-  # TODO: apply time-varying impulse response
+  L = size(h, 1)
+  x = padded(x, L - 1)
+  for i ∈ 1:size(y,1)
+    y[i,:] .= @views transpose(h[:,:,i]) * x[i-L+1:i]
+  end
+  y
 end

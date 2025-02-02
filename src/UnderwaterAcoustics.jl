@@ -4,12 +4,12 @@ module UnderwaterAcoustics
 include("utils.jl")
 
 # underwater acoustics
-include("uw_basic.jl")
+include("basic.jl")
 
 # propagation modeling
-include("pm_api.jl")
-include("pm_stdlib.jl")
-include("pm_pekeris.jl")
-include("pm_replay.jl")
+include("api.jl")
+include("stdlib.jl")
+include("pekeris.jl")
+include("replay.jl")
 
 end # module

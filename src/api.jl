@@ -274,7 +274,7 @@ mutable struct UnderwaterEnvironment
   function UnderwaterEnvironment(;
     bathymetry = 100.0,
     altimetry = 0.0,
-    temperature = 25.0,
+    temperature = 27.0,
     salinity = 35.0,
     soundspeed = nothing,
     density = nothing,

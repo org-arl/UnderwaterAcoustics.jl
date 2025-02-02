@@ -40,7 +40,7 @@ end
 Compute volume acoustic absorption coefficient in water, given:
 - `frequency` in Hz
 - `distance` in meters
-- `salinity` in ppm
+- `salinity` in ppt
 - water `temperature` in °C
 - `depth` in meters
 - `pH` of water
@@ -85,7 +85,7 @@ end
 """
     water_density(temperature=27, salinity=35)
 
-Compute density of water (kg/m³), given `temperature` in °C and `salinity` in ppm.
+Compute density of water (kg/m³), given `temperature` in °C and `salinity` in ppt.
 
 Implementation based on Fofonoff (1985 - IES 80).
 """
@@ -184,7 +184,7 @@ Compute resonance frequency of a freely oscillating has bubble in water, given:
 - bubble `radius` in meters
 - `depth` of bubble in water in meters
 - gas ratio of specific heats 'γ'
-- atmospheric pressure 'p₀'
+- atmospheric pressure 'p₀' in Pa
 - density of water 'ρ' in kg/m³
 - acceleration due to gravity 'g' in m/s²
 

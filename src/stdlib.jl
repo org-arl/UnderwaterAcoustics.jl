@@ -69,15 +69,15 @@ struct FluidBoundary{T} <: AbstractAcousticBoundary
   function FluidBoundary(ρ, c, δ)
     ρ = in_units(u"kg/m^3", ρ)
     c = in_units(u"m/s", c)
-    ρ, c, δ = promote(ρ, c, δ)
-    new{typeof(ρ)}(ρ, c, δ)
+    isinf(c) && return new{typeof(c)}(zero(c), c, zero(c))
+    new{typeof(ρ)}(promote(ρ, c, δ)...)
   end
 end
 
 FluidBoundary(ρ, c) = FluidBoundary(ρ, c, 0)
 
 function Base.show(io::IO, b::FluidBoundary)
-  if b.c == Inf
+  if isinf(b.c)
     print(io, "RigidBoundary")
   elseif b.c == 0
     print(io, "PressureReleaseBoundary")
@@ -100,12 +100,12 @@ end
 """
 Rigid boundary condition.
 """
-const RigidBoundary = FluidBoundary(0, Inf, 0)
+const RigidBoundary = FluidBoundary(0.0, Inf, 0.0)
 
 """
 Pressure-release boundary condition.
 """
-const PressureReleaseBoundary = FluidBoundary(0, 0, 0)
+const PressureReleaseBoundary = FluidBoundary(0.0, 0.0, 0.0)
 
 # seabeds from APL-UW TR 9407 (1994), IV-6 Table 2
 const Rock = FluidBoundary(2.5 * 1023, 2.5 * 1528, 0.01374)

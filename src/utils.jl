@@ -50,14 +50,14 @@ Convert a location to a named tuple with fields `x`, `y`, and `z`. If any of the
 coordinates is not provided, they are assumed to be zero. If the coordinates have
 units, they are converted to meters.
 """
-XYZ(xyz::NTuple{3,Real}) = NamedTuple{(:x,:y,:z)}(float.(in_units.(u"m", promote(xyz...))))
-XYZ(xz::NTuple{2,Real}) = XYZ((xz[1], 0, xz[2]))
+XYZ(xyz::NTuple{3,Number}) = NamedTuple{(:x,:y,:z)}(float.(in_units.(u"m", xyz)))
+XYZ(xz::NTuple{2,Number}) = XYZ(promote(in_units(u"m",xz[1]), 0, in_units(u"m",xz[2])))
 XYZ(xyz::NamedTuple{(:x,:y,:z)}) = XYZ(xyz.x, xyz.y, xyz.z)
 XYZ(xz::NamedTuple{(:x,:z)}) = XYZ(xz.x, xz.z)
 XYZ(z::NamedTuple{(:z,)}) = XYZ(z.z)
-XYZ(x::Number, y::Number, z::Number) = XYZ((x, y, z))
-XYZ(x::Number, z::Number) = XYZ((x, 0, z))
-XYZ(z::Number) = XYZ((0, 0, z))
+XYZ(x::Number, y::Number, z::Number) = XYZ(promote(in_units.(u"m", (x, y, z))...))
+XYZ(x::Number, z::Number) = XYZ(promote(in_units(u"m", x), 0, in_units(u"m", z)))
+XYZ(z::Number) = XYZ(promote(0, 0, in_units(u"m", z)))
 XYZ(::Nothing) = nothing
 XYZ(::Missing) = missing
 

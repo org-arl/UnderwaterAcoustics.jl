@@ -54,7 +54,7 @@ are loaded.
 
 Supported formats:
 - `.mat` (MATLAB) file in underwater acoustic channel repository (UACR) format.
-  See https://github.com/uwa-channels/replay for details.
+  See https://github.com/uwa-channels/ for details.
 """
 function BasebandReplayChannel(filename::AbstractString; upsample=false, rxs=:)
   # TODO: support UACR noise models

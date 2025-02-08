@@ -19,11 +19,22 @@ julia>]
 pkg> add UnderwaterAcoustics
 ```
 
+!!! warning "API change"
+
+    The API has changed significantly in `UnderwaterAcoustics v0.4`. If you have code that depends
+    on the old API, you may wish to refer to the [Porting guide](@ref) before you upgrade.
+
 ## Getting started
 
-- [Propagation modeling toolkit]() quickstart guide.
-- [Underwater acoustics]() utility functions.
-- [Developing your own propagation or channel models](@ref).
+- [Propagation & channel modeling](@ref)
+
+## Documentation
+
+- [Underwater acoustics](@ref)
+- [Propagation & channel modeling API](@ref)
+- [Developing your own propagation or channel models](@ref)
+- [General utilities](@ref)
+- [Porting guide](@ref) from `v0.3` to `v0.4` API
 
 ## Talks & publications
 

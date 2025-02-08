@@ -91,13 +91,13 @@ function acoustic_field(pm::PekerisRayTracer, tx::AbstractAcousticSource, rx::Ab
   end
 end
 
-function impulse_response(pm::PekerisRayTracer, tx::AbstractAcousticSource, rx::AbstractAcousticReceiver, fs; abstime=false)
+function impulse_response(pm::PekerisRayTracer, tx::AbstractAcousticSource, rx::AbstractAcousticReceiver, fs; abstime=false, ntaps=nothing)
   arr = arrivals(pm, tx, rx; paths=false)
   T = _phasortype(eltype(arr))
   length(arr) == 0 && return Vector{T}(undef, 0)
   t0, tmax = extrema(a -> a.t, arr)
   abstime && (t0 = zero(t0))
-  n = ceil(Int, (tmax - t0) * fs) + 1
+  n = something(ntaps, ceil(Int, (tmax - t0) * fs) + 1)
   x = zeros(T, n)
   for a ∈ arr
     # allocate arrival energy to 2 nearest samples
@@ -105,8 +105,8 @@ function impulse_response(pm::PekerisRayTracer, tx::AbstractAcousticSource, rx::
     t̄ = floor(Int, t)
     α = sqrt(t - t̄)
     β = sqrt(1 - t + t̄)
-    x[t̄] += β * a.ϕ
-    x[t̄+1] += α * a.ϕ
+    t̄ ≤ n && (x[t̄] += β * a.ϕ)
+    t̄ < n && (x[t̄+1] += α * a.ϕ)
   end
   signal(x, fs)
 end

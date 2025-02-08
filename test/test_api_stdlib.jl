@@ -4,7 +4,7 @@ using TestItems
   env = UnderwaterEnvironment(
     bathymetry = 20.0u"m",
     temperature = 27.0u"°C",
-    salinity = 35.0u"ppt",
+    salinity = 35.0u"ppt"
   )
 end
 

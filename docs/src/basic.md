@@ -1,6 +1,8 @@
 # Underwater acoustics
 
+Commonly underwater acoustics utility functions
+
 ```@autodocs
 Modules = [UnderwaterAcoustics]
-Pages   = ["uw_basic.jl"]
+Pages   = ["basic.jl"]
 ```

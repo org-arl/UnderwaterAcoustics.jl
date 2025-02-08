@@ -1,7 +1,4 @@
 using Documenter
-# using Plots
-
-# push!(LOAD_PATH,"../src/")
 using UnderwaterAcoustics
 
 makedocs(
@@ -12,18 +9,14 @@ makedocs(
   pages = Any[
     "Home" => "index.md",
     "Manual" => Any[
-      "uw_basic.md",
-      "pm_api.md",
-      "pm_ext.md",
-      "utils.md"
-    ],
-    # "Propagation models" => Any[
-    #   "pm_pekeris.md"
-    # ],
-    # "Tutorials" => Any[
-    #   "tut_turing.md",
-    #   "tut_autodiff.md"
-    # ]
+      "basic.md",
+      "quickstart.md",
+      "api.md",
+      "ext.md",
+      "utils.md",
+      "porting.md",
+      "reference.md"
+    ]
   ]
 )
 

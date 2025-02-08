@@ -1,13 +1,15 @@
-# Propagation modeling API
+# Propagation & channel modeling API
 
 ```@meta
 CurrentModule = UnderwaterAcoustics
 ```
 
-## Propagation modeling
+## Propagation models
 
 ```@docs
 AbstractPropagationModel
+AbstractRayPropagationModel
+AbstractModePropagationModel
 AbstractAcousticArrival
 RayArrival
 ModeArrival
@@ -20,17 +22,19 @@ impulse_response
 Implementations:
 ```@docs
 PekerisRayTracer
+PekerisModeSolver
 ```
 
-## Channel modeling and simulation
+## Channel models and simulation
 
 ```@docs
 AbstractChannelModel
+BasebandReplayChannel
 channel
 transmit
 ```
 
-## Environment modeling
+## Environment models
 
 ```@docs
 UnderwaterEnvironment

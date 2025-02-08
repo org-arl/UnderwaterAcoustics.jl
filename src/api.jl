@@ -1,5 +1,5 @@
 import Random: default_rng
-import SignalAnalysis: amp2db, SampledSignal, samples, signal, framerate
+import SignalAnalysis: amp2db, SampledSignal, samples, signal, framerate, db2amp
 import SignalAnalysis: nchannels, isanalytic, analytic, filt
 import Printf: @printf
 
@@ -160,7 +160,7 @@ function channel(pm, txs, rxs, fs; abstime=false, noise=nothing)
   txs isa AbstractArray || (txs = [txs])
   rxs isa AbstractArray || (rxs = [rxs])
   ch = [
-    samples(impulse_response(pm, tx, rx, fs; abstime=true))
+    samples(impulse_response(pm, tx, rx, fs; abstime=true)) .* db2amp(spl(tx))
     for tx in vec(txs), rx in vec(rxs)
   ]
   t0 = minimum(findfirst(x -> abs(x) > 0, ch1) for ch1 ∈ ch)
@@ -342,8 +342,10 @@ Superclass for all acoustic receivers.
 abstract type AbstractAcousticReceiver end
 
 function Base.show(io::IO, tx::AbstractAcousticSource)
+  f = frequency(tx)
+  s = spl(tx)
   p = Tuple(location(tx))
-  print(io, "TX$p")
+  print(io, "TX[$f Hz, $s dB]$p")
 end
 
 function Base.show(io::IO, tx::AbstractAcousticReceiver)
@@ -352,7 +354,9 @@ function Base.show(io::IO, tx::AbstractAcousticReceiver)
 end
 
 """
-    AcousticSource(pos, frequency, spl=0)
+    AcousticSource(pos, frequency; spl=0)
+    AcousticSource(x, z, frequency; spl=0)
+    AcousticSource(x, y, z, frequency; spl=0)
 
 An source at location `pos` with nominal `frequency` and source level `spl`
 (dB re 1 µPa @ 1 m). The source is assumed to be omnidirectional and well
@@ -368,13 +372,16 @@ struct AcousticSource{T1,T2,T3} <: AbstractAcousticSource
   pos::T1
   frequency::T2
   spl::T3
-  function AcousticSource(pos, frequency, spl=0)
+  function AcousticSource(pos, frequency; spl=0)
     p = XYZ(pos)
     f = in_units(u"Hz", frequency)
     s = in_units(u"dB", spl)
     new{typeof(p),typeof(f),typeof(s)}(p, f, s)
   end
 end
+
+AcousticSource(x, z, frequency; spl=0) = AcousticSource(XYZ(x, z), frequency; spl)
+AcousticSource(x, y, z, frequency; spl=0) = AcousticSource(XYZ(x, y, z), frequency; spl)
 
 """
     AcousticReceiver(pos)

@@ -1,6 +1,7 @@
 import Random: AbstractRNG
 import SignalAnalysis: RedGaussian, signal, db2amp
-import Interpolations: interpolate, extrapolate, Gridded, Flat, Linear, linear_interpolation
+import Interpolations: interpolate, extrapolate, Gridded, Flat, Linear, Throw
+import Interpolations: linear_interpolation, cubic_spline_interpolation
 
 export FluidBoundary, RigidBoundary, PressureReleaseBoundary, Rock, Pebbles
 export SandyGravel, CoarseSand, MediumSand, FineSand, VeryFineSand, ClayeySand
@@ -19,36 +20,21 @@ Create a Pekeris waveguide environment with the given parameters. All parameters
 are optional (have default values). Default values are specified below:
 
 - `h`  = water depth (m)
-- `c₁` = sound speed in water (m/s, computed from temperature and salinity)
-- `ρ₁` = density of water (kg/m³, computed from temperature and salinity)
-- `c₂` = sound speed in seabed (`Inf` m/s)
-- `ρ₂` = density of seabed (`2000` kg/m³)
-- `δ₂` = dimensionless absorption coefficient for seabed (`0`)
-- `σ₂` = seabed roughness (`0` m)
-- `cₛ` = sound speed for surface (`0` m/s)
-- `ρₛ` = density of surface (`0` kg/m³)
-- `δₛ` = dimensionless absorption coefficient for surface (`0`)
-- `σₛ` = surface roughness (`0` m)
+- `c` = sound speed in water (m/s, computed from temperature and salinity)
+- `ρ` = density of water (kg/m³, computed from temperature and salinity)
 
 Other parameters for `UnderwaterEnvironment` may be specified as well. For
-example, `temperature`, `salinity` and `density` may be specified.
-
-A sound speed of `0` denotes a pressure release boundary. A sound speed of `Inf`
-denotes a rigid boundary.
+example, `seabed`, `surface`, `temperature`, `salinity` and `density` may be
+specified.
 
 Returns an underwater environment with the specified parameters to ensure it
 is a Pekeris waveguide.
 """
-function PekerisWaveguide(;
-  h=100.0, c₁=nothing, ρ₁=nothing, c₂=Inf, ρ₂=2000.0, δ₂=0.0, σ₂=0.0, cₛ=0.0,
-  ρₛ=0.0, δₛ=0.0, σₛ=0.0, kwargs...
-)
+function PekerisWaveguide(; h=100.0, c=nothing, ρ=nothing, kwargs...)
   UnderwaterEnvironment(;
     bathymetry = h,
-    soundspeed = c₁,
-    density = ρ₁,
-    seabed = FluidBoundary(ρ₂, c₂, δ₂),
-    surface = FluidBoundary(ρₛ, cₛ, δₛ),
+    soundspeed = c,
+    density = ρ,
     kwargs...
   )
 end
@@ -275,28 +261,60 @@ fields, the `x` and `y` coordinates or the `x` and `z` coordinates are
 required, and `v` is a matrix. For 3D fields, the `x`, `y`, and `z` coordinates
 are required, and `v` is a 3D array.
 
-Keyword `interp` is used to specify the interpolation method. Only `:linear`
-interpolation is supported at present. For 2D and 3D fields, the data must be
-sampled on a regular grid.
+Keyword argument `interp` is used to specify the interpolation method. `:linear`
+interpolation is supported for 1D, 2D and 3D fields. For 2D and 3D fields, the
+data must be sampled on a regular grid. For uniformly sampled `1D` fields,
+`:cubic` interpolation is also supported.
 """
 function SampledField(v; x=nothing, y=nothing, z=nothing, interp=:linear)
   # TODO: support PCHIP interpolation (see HLS-2021-01.pdf in OALIB distribution)
-  interp === :linear || error("Only linear interpolation supported")
   if x === nothing && y === nothing && z !== nothing
+    v = float(v)
+    z = float(z)
     ndx = sortperm(z)
-    f = linear_interpolation(z[ndx], v[ndx]; extrapolation_bc=Flat())
+    if interp === :cubic
+      z isa AbstractRange || error("Cubic interpolation requires `z` to be an `AbstractRange`")
+      f = cubic_spline_interpolation(z[ndx], v[ndx]; extrapolation_bc=Flat())
+    elseif interp === :linear
+      f = linear_interpolation(z[ndx], v[ndx]; extrapolation_bc=Flat())
+    else
+      error("Unsupported interpolation")
+    end
     SampledFieldZ(f, z)
   elseif x !== nothing && y === nothing && z === nothing
+    interp ∈ (:linear, :cubic) || error("Unsupported interpolation")
+    v = float(v)
+    x = float(x)
     ndx = sortperm(x)
-    f = linear_interpolation(x[ndx], v[ndx]; extrapolation_bc=Flat())
+    if interp === :cubic
+      x isa AbstractRange || error("Cubic interpolation requires `x` to be an `AbstractRange`")
+      f = cubic_spline_interpolation(x[ndx], v[ndx]; extrapolation_bc=Flat())
+    elseif interp === :linear
+      f = linear_interpolation(x[ndx], v[ndx]; extrapolation_bc=Flat())
+    else
+      error("Unsupported interpolation")
+    end
     SampledFieldX(f, x)
   elseif x !== nothing && y === nothing && z !== nothing
+    interp === :linear || error("Unsupported interpolation")
+    v = float(v)
+    x = float(x)
+    z = float(z)
     f = extrapolate(interpolate((x, z), v, Gridded(Linear())), Flat())
     SampledFieldXZ(f, x, z)
   elseif x !== nothing && y !== nothing && z === nothing
+    interp === :linear || error("Unsupported interpolation")
+    v = float(v)
+    y = float(y)
+    z = float(z)
     f = extrapolate(interpolate((x, y), v, Gridded(Linear())), Flat())
     SampledFieldXY(f, x, y)
   elseif x !== nothing && y !== nothing && z !== nothing
+    interp === :linear || error("Unsupported interpolation")
+    v = float(v)
+    x = float(x)
+    y = float(y)
+    z = float(z)
     f = extrapolate(interpolate((x, y, z), v, Gridded(Linear())), Flat())
     SampledFieldXYZ(f, x, y, z)
   else

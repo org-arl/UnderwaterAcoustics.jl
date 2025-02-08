@@ -24,7 +24,7 @@ struct PekerisRayTracer{T1,T2,T3,T4,T5,T6,T7} <: AbstractRayPropagationModel
   seabed::T6        # seabed properties
   surface::T7       # surface properties
   maxbounces::Int   # maximum number of bounces
-  function PekerisRayTracer(env, maxbounces=16)
+  function PekerisRayTracer(env, maxbounces=3)
     maxbounces ≥ 0 || error("Maximum number of bounces cannot be negative")
     isospeed(env) || error("Environment must be isovelocity")
     is_range_dependent(env) && error("Environment must be range independent")

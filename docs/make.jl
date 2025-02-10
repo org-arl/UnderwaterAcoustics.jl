@@ -11,6 +11,7 @@ makedocs(
     "Manual" => Any[
       "basic.md",
       "quickstart.md",
+      "replay.md",
       "api.md",
       "ext.md",
       "utils.md",

@@ -43,7 +43,7 @@ function BasebandReplayChannel(h, fs, fc, step::Int=1; noise=nothing)
 end
 
 """
-    BasebandReplayChannel(filename; upsample=false, rxs=:)
+    BasebandReplayChannel(filename; upsample=false, rxs=:, noise=nothing)
 
 Load a baseband replay channel from a file.
 
@@ -52,11 +52,14 @@ sampling rate. This makes applying the channel faster but requires more memory.
 `rxs` controls which receivers to load from the file. By default, all receivers
 are loaded.
 
+An additive noise model may be optionally specified as `noise`. If specified,
+it is used to corrupt the received signals.
+
 Supported formats:
 - `.mat` (MATLAB) file in underwater acoustic channel repository (UACR) format.
   See https://github.com/uwa-channels/ for details.
 """
-function BasebandReplayChannel(filename::AbstractString; upsample=false, rxs=:)
+function BasebandReplayChannel(filename::AbstractString; upsample=false, rxs=:, noise=nothing)
   # TODO: support UACR noise models
   if endswith(filename, ".mat")
     data = matread(filename)
@@ -78,13 +81,37 @@ function BasebandReplayChannel(filename::AbstractString; upsample=false, rxs=:)
     else
       step = round(Int, fs / data["params"]["fs_time"])
     end
-    return BasebandReplayChannel(h, θ, fs, fc, step)
+    return BasebandReplayChannel(h, θ, fs, fc, step; noise)
   else
     error("Unsupported file format")
   end
 end
 
-function transmit(ch::BasebandReplayChannel, x; txs=:, rxs=:, abstime=false, noisy=true, fs=framerate(x), start=nothing)
+"""
+    transmit(ch::BasebandReplayChannel, x; rxs=:, abstime=false, noisy=true, fs=nothing, start=nothing)
+
+Simulate the transmission of passband signal `x` through the channel model `ch`.
+If `txs` is specified, it specifies the indices of the sources active in the
+simulation. The number of sources must match the number of channels in the
+input signal. If `rxs` is specified, it specifies the indices of the
+receivers active in the simulation. Returns the received signal at the
+specified (or all) receivers.
+
+`fs` specifies the sampling rate of the input signal. The output signal is
+sampled at the same rate. If `fs` is not specified but `x` is a `SampledSignal`,
+the sampling rate of `x` is used. Otherwise, the signal is assumed to be
+sampled at the channel's sampling rate.
+
+If `abstime` is `true`, the returned signals begin at the start of transmission.
+Otherwise, the result is relative to the earliest arrival time of the signal
+at any receiver. If `noisy` is `true` and the channel has a noise model
+associated with it, the received signal is corrupted by additive noise.
+
+If `start` is specified, it specifies the starting time index in the replay channel.
+If not specified, a random start time is chosen.
+"""
+function transmit(ch::BasebandReplayChannel, x; txs=:, rxs=:, abstime=false, noisy=true, fs=nothing, start=nothing)
+  fs = something(fs, x isa SampledSignal ? framerate(x) : ch.fs)
   L, M, T = size(ch.h)
   maxtime = (T - 1) / ch.fs * ch.step
   txs === (:) && (txs = 1)

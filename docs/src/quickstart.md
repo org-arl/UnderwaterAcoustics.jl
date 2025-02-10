@@ -219,7 +219,7 @@ This channel accepts one input acoustic channel and yields one output acoustic c
 ```julia-repl
 julia> using SignalAnalysis
 
-julia> x = cw(10000, 0.001, 48000; window=(tukey, 0.5)) |> real
+julia> x = cw(10000, 0.001, 192000; window=(tukey, 0.5)) |> real
 SampledSignal @ 192000.0 Hz, 192-element Vector{Float64}:
   0.0
   0.001024363917860783
@@ -267,7 +267,7 @@ julia> plot(plot(x; xlims=(0,5)), plot(y; xlims=(0,5)); layout=(2,1))
 
 ![](images/cw2.png)
 
-We can see the noise in the timeseries. We can see the `1/f²` variation in the power spectral density superimposed on the 10 kHz peak from the transmitted pulse:
+We can see the noise in the timeseries. We can see the `1/f²` variation (red Gaussian noise) in the power spectral density superimposed on the 10 kHz peak from the transmitted pulse:
 
 ```julia-repl
 julia> psd(y)

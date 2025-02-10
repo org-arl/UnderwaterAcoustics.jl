@@ -171,7 +171,7 @@ function channel(pm, txs, rxs, fs; abstime=false, noise=nothing)
 end
 
 """
-    transmit(ch, x; txs=:, rxs=:, abstime=false)
+    transmit(ch, x; txs=:, rxs=:, abstime=false, noisy=true, fs=nothing)
 
 Simulate the transmission of passband signal `x` through the channel model `ch`.
 If `txs` is specified, it specifies the indices of the sources active in the

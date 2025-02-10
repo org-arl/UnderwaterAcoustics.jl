@@ -27,6 +27,7 @@ pkg> add UnderwaterAcoustics
 ## Getting started
 
 - [Propagation & channel modeling](@ref)
+- [Channel replay](@ref)
 
 ## Documentation
 

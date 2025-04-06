@@ -10,6 +10,7 @@ CurrentModule = UnderwaterAcoustics
 AbstractPropagationModel
 AbstractRayPropagationModel
 AbstractModePropagationModel
+models
 AbstractAcousticArrival
 RayArrival
 ModeArrival

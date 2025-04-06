@@ -4,9 +4,19 @@
 
 The underwater acoustic propagation & channel modeling toolkit provides a framework for modeling and simulating underwater acoustic environments with multiple sources and receivers. The toolkit provides a pluggable interface that allows different propagation models to be used with the same scene description. While `UnderwaterAcoustics.jl` provides several propagation model implementations that can be used out-of-the-box, the interface is designed to allow third party propagation models to be easily plugged in to the toolkit as well.
 
-Available models:
+#### Available models:
 
-TODO
+| Model | Package | Description | Language | Strengths | Limitations |
+|-------|---------|-------------|----------|-----------|-------------|
+| `PekerisRayTracer` | `UnderwaterAcoustics` | Ray model for Pekeris waveguides | Julia | fast, differentiable, multi-threaded | isovelocity, range independent, high frequency |
+| `PekerisModeSolver` | `UnderwaterAcoustics` | Normal mode model for Pekeris waveguides | Julia | fast, differentiable, multi-threaded | isovelocity, range independent, low frequency |
+| `RaySolver` | [`AcousticRayTracers`](https://github.com/org-arl/AcousticRayTracers.jl) | Ray / Gaussian beam tracer | Julia | differentiable, multi-threaded | - |
+| `Bellhop` | [`AcousticToolbox`](https://github.com/org-arl/AcousticsToolbox.jl) | Interface to [OALIB](http://oalib.hlsresearch.com/AcousticsToolbox/) Bellhop ray tracer | Fortran | well-established benchmark model | not differentiable |
+| `Kraken` | [`AcousticToolbox`](https://github.com/org-arl/AcousticsToolbox.jl) | Interface to [OALIB](http://oalib.hlsresearch.com/AcousticsToolbox/) Kraken normal mode model | Fortran | well-established benchmark model | not differentiable |
+
+!!! note
+
+    The experimental [`DataDrivenAcoustics`](https://github.com/org-arl/DataDrivenAcoustics.jl) models are loosely based on `UnderwaterAcoustics.jl`, but have not been upgraded to the `v0.4` API yet.
 
 ## Quickstart guide
 
@@ -39,7 +49,7 @@ If the defaults don't suit our needs, we can customize the environment. For exam
 ```julia-repl
 julia> env = UnderwaterEnvironment(
                 bathymetry = 20.0, seabed = SandyClay,
-                soundspeed = SampledField([1500, 1490, 1520]; z=0:10:20, interp=:cubic)
+                soundspeed = SampledField([1500, 1490, 1520]; z=0:-10:-20, interp=:cubic)
               )
 UnderwaterEnvironment(
   bathymetry = 20.0,
@@ -84,6 +94,10 @@ Once we have an environment, we need to select a propagation model. Since we hav
 julia> pm = PekerisRayTracer(env)
 PekerisRayTracer(h=20, maxbounces=3)
 ```
+
+!!! tip
+
+    We can get a list of all available propagation models by calling `models()`, and a shortlist of all models compatible with a given environment by calling `models(env)`.
 
 Next, we need a source and a receiver:
 

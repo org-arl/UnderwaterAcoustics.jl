@@ -8,6 +8,19 @@ using TestItems
   )
 end
 
+@testitem "models" setup=[PekerisSetup] begin
+  m = models()
+  @test m isa Vector{Type{<:UnderwaterAcoustics.AbstractPropagationModel}}
+  @test length(m) == 2
+  @test PekerisRayTracer ∈ m
+  @test PekerisModeSolver ∈ m
+  m = models(env)
+  @test m isa Vector{Type{<:UnderwaterAcoustics.AbstractPropagationModel}}
+  @test length(m) == 2
+  @test PekerisRayTracer ∈ m
+  @test PekerisModeSolver ∈ m
+end
+
 @testitem "env" setup=[PekerisSetup] begin
   for e ∈ (env, PekerisWaveguide(h=20.0u"m"))
     @test e isa UnderwaterEnvironment
@@ -25,7 +38,7 @@ end
 end
 
 @testitem "src" begin
-  src = AcousticSource(-5.0, 1000.0, 180.0)
+  src = AcousticSource(-5.0, 1000.0; spl=180.0)
   @test src isa UnderwaterAcoustics.AbstractAcousticSource
   @test location(src) == (x=0.0, y=0.0, z=-5.0)
   @test frequency(src) == 1000.0
@@ -38,7 +51,7 @@ end
   @test location(src) == (x=10.0, y=20.0, z=-5.0)
   @test frequency(src) == 1000.0
   @test spl(src) == 0.0
-  src = AcousticSource(-5u"m", 1u"kHz", 180u"dB")
+  src = AcousticSource(-5u"m", 1u"kHz"; spl=180u"dB")
   @test location(src) == (x=0.0, y=0.0, z=-5.0)
   @test frequency(src) == 1000.0
   @test spl(src) == 180.0

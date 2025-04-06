@@ -1,9 +1,10 @@
 import Random: default_rng
+import InteractiveUtils: subtypes
 import SignalAnalysis: amp2db, SampledSignal, samples, signal, framerate, db2amp
 import SignalAnalysis: nchannels, isanalytic, analytic, filt
 import Printf: @printf
 
-export UnderwaterEnvironment, transmission_loss, acoustic_field, arrivals
+export UnderwaterEnvironment, transmission_loss, acoustic_field, arrivals, models
 export impulse_response, channel, transmit, spl, frequency, location, samples
 export AcousticSource, AcousticReceiver, AcousticReceiverGrid2D, AcousticReceiverGrid3D
 
@@ -24,6 +25,18 @@ abstract type AbstractRayPropagationModel <: AbstractPropagationModel end
 Superclass for all mode propagation models.
 """
 abstract type AbstractModePropagationModel <: AbstractPropagationModel end
+
+"""
+    models()
+    models(mtype::Type{<:AbstractPropagationModel})
+
+Return a list of all available propagation models. If `mtype` is specified,
+return only models of that type.
+"""
+function models(mtype::Type{<:AbstractPropagationModel}=AbstractPropagationModel)
+  isabstracttype(mtype) || return Type{<:AbstractPropagationModel}[mtype]
+  mapreduce(models, vcat, subtypes(mtype); init=Type{<:AbstractPropagationModel}[])
+end
 
 """
 Superclass for all acoustic arrivals.
@@ -327,6 +340,22 @@ end
 Return `true` if the sound speed in the environment `env` is a constant.
 """
 isospeed(env::UnderwaterEnvironment) = is_constant(env.soundspeed)
+
+"""
+    models(env::UnderwaterEnvironment)
+
+Return only models that are compatible with the environment `env`.
+"""
+function models(env::UnderwaterEnvironment)
+  filter(models()) do model
+    try
+      model(env)
+      true
+    catch e
+      false
+    end
+  end
+end
 
 ###############################################################################
 ### sources and receivers API

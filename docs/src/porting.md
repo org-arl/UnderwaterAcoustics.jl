@@ -1,1 +1,77 @@
 # Porting guide
+
+The `UnderwaterAcoustics.jl` API was changed in `v0.4` to make it more flexible to accommodate more types of acoustic propagation models, and for improved readability. The changes are summarized below to aid in porting old code to the new version.
+
+## Underwater acoustics API
+
+The following functions have been renamed:
+
+| Old function name | New function name          |
+|-------------------|----------------------------|
+| `bubbleresonance` | `bubble_resonance`         |
+| `indBperλ`        | `in_dBperλ`                |
+| `reflectioncoef`  | `reflection_coef`          |
+| `surfaceloss`     | `surface_reflection_coef`  |
+| `waterdensity`    | `water_density`            |
+
+## Propagation modeling API
+
+### Environment description
+
+Various attributes of the environment description are now directly accessed as fields, rather than through accessor methods:
+
+| Old accessor        | New field access |
+|---------------------|------------------|
+| `altimetry(env)`    | `env.altimetry`  |
+| `bathymetry(env)`   | `env.bathymetry` |
+| `ssp(env)`          | `env.soundspeed` |
+| `salinity(env)`     | `env.salinity`   |
+| `waterdensity(env)` | `env.density`    |
+| `seasurface(env)`   | `env.surface`    |
+| `seabed(env)`       | `env.seabed`     |
+
+The environment description supports [Fields](@ref) that can vary with spatial coordinates. This removes the need wrapping of constants with `ConstantDepth()`, `IsoSSP()`, etc. Instead, constant fields are just represented by the real numbers directly. Quantities varying with spatial coordinates are represented generically using a `SampledField` rather than specific types such as `SampledSSP`.
+
+The defaults for an `UnderwaterEnvironment` have also changed to become more generic. For example, the default seabed is now a `RigidBoundary` and the default sea surface is a `PressureReleaseBoundary`. Contrast this against the arbitrary default in `v0.3` of the default seabed being a `SandySilt`.
+
+Noise is no longer defined as part of the environmental description, and is defined as part of the new [Channel modeling](@ref) API.
+
+### Propagation modeling
+
+The `PekerisRayModel` is now renamed to `PekerisRayTracer`, and takes in maximum number of bounces as an optional argument, instead of number of rays. The `eigenrays` function is no longer supported, but its functionality is provided by `arrivals`. While `eigenrays` was specific to ray models, `arrivals` is more generic and may return modes, etc, depending on the propagation model. A few other functions have been renamed:
+
+| Old function                  | New function                        |
+|-------------------------------|-------------------------------------|
+| `PekerisRayModel(env, nrays)` | `PekerisRayTracer(env, maxbounces)` |
+| `eigenrays`                   | `arrivals`                          |
+| `transmissionloss`            | `transmission_loss`                 |
+| `transfercoef`                | `acoustic_field`                    |
+| `impulseresponse`             | `impulse_response`                  |
+
+The plotting API no longer takes special keyword arguments such as `sources` and `receivers`. Instead, plot recipes are provided for each of the data types directly. So we can plot sources, receivers, arrivals, etc directly:
+```julia
+env = PekerisWaveguide(h=20, seabed=SandyClay)
+pm = PekerisRayTracer(env)
+tx = AcousticSource(0.0, -5.0, 1000.0)
+rx = AcousticReceiver(100.0, -10.0)
+rays = arrivals(pm, tx, rx)
+
+plot(env)
+plot!(tx)
+plot!(rx)
+plot!(rays)
+```
+
+### Acoustic simulations
+
+The `record` and `recorder` functions used for acoustic simulations have been removed. Instead, a new [Channel modeling](@ref) API with a `transmit` function provides similar functionality, but is a lot more flexible.
+
+Example:
+```julia
+ch = channel(pm, tx, rx, 192000)
+y = transmit(ch, x)                 # for some signal x
+```
+
+The channel API also supports [Channel replay](@ref) and data-driven acoustic channels that are not derived from propagation models.
+
+Specific sources such as `Pinger` and `NarrowbandAcousticSource` have been removed. Other packages such as `SignalAnalysis` may be used to create a diverse set of sampled signals that can be transmitted through the acoustic channel using the `transmit` function.

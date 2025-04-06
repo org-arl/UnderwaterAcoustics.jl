@@ -305,8 +305,8 @@ function SampledField(v; x=nothing, y=nothing, z=nothing, interp=:linear)
   elseif x !== nothing && y !== nothing && z === nothing
     interp === :linear || error("Unsupported interpolation")
     v = float(v)
+    x = float(x)
     y = float(y)
-    z = float(z)
     f = extrapolate(interpolate((x, y), v, Gridded(Linear())), Flat())
     SampledFieldXY(f, x, y)
   elseif x !== nothing && y !== nothing && z !== nothing

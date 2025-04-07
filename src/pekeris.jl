@@ -94,7 +94,7 @@ end
 function impulse_response(pm::PekerisRayTracer, tx::AbstractAcousticSource, rx::AbstractAcousticReceiver, fs; abstime=false, ntaps=nothing)
   arr = arrivals(pm, tx, rx; paths=false)
   T = _phasortype(eltype(arr))
-  length(arr) == 0 && return Vector{T}(undef, 0)
+  length(arr) == 0 && return signal(Vector{T}(undef, 0), fs)
   t0, tmax = extrema(a -> a.t, arr)
   abstime && (t0 = zero(t0))
   n = something(ntaps, ceil(Int, (tmax - t0) * fs) + 1)

@@ -1,4 +1,5 @@
 import Random: default_rng
+import Logging: NullLogger, with_logger
 import InteractiveUtils: subtypes
 import SignalAnalysis: amp2db, SampledSignal, samples, signal, framerate, db2amp
 import SignalAnalysis: nchannels, isanalytic, analytic, filt
@@ -347,12 +348,14 @@ isospeed(env::UnderwaterEnvironment) = is_constant(env.soundspeed)
 Return only models that are compatible with the environment `env`.
 """
 function models(env::UnderwaterEnvironment)
-  filter(models()) do model
-    try
-      model(env)
-      true
-    catch e
-      false
+  with_logger(NullLogger()) do
+    filter(models()) do model
+      try
+        model(env)
+        true
+      catch e
+        false
+      end
     end
   end
 end

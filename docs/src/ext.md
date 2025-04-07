@@ -8,9 +8,11 @@ CurrentModule = UnderwaterAcoustics
 
 ## Propagation models
 
-A new propagation model (let's call it `MyPropagationModel` for illustration) should define a type that extends:
+A new propagation model (let's call it `MyPropagationModel` for illustration) should define a type that extends one of:
 ```@docs; canonical=false
 AbstractPropagationModel
+AbstractRayPropagationModel
+AbstractModePropagationModel
 ```
 
 The constructor for `MyPropagationModel` usually will take in an environmental description and optionally, keyword options that control the model:
@@ -23,7 +25,7 @@ MyPropagationModel(data; kwargs...)
 MyPropagationModel(env, data; kwargs...)
 ```
 
-The following methods for `MyPropagationModel`:
+The following methods should be defined for `MyPropagationModel`:
 ```@docs; canonical=false
 acoustic_field
 ```

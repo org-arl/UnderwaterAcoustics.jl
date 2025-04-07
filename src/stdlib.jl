@@ -204,23 +204,27 @@ end
 struct SampledFieldZ{T1,T2} <: DepthDependent
   f::T1
   zrange::T2
+  interp::Symbol
 end
 
 struct SampledFieldX{T1,T2} <: DepthDependent
   f::T1
   xrange::T2
+  interp::Symbol
 end
 
 struct SampledFieldXZ{T1,T2} <: PositionDependent
   f::T1
   xrange::T2
   zrange::T2
+  interp::Symbol
 end
 
 struct SampledFieldXY{T1,T2} <: PositionDependent
   f::T1
   xrange::T2
   yrange::T2
+  interp::Symbol
 end
 
 struct SampledFieldXYZ{T1,T2} <: PositionDependent
@@ -228,6 +232,7 @@ struct SampledFieldXYZ{T1,T2} <: PositionDependent
   xrange::T2
   yrange::T2
   zrange::T2
+  interp::Symbol
 end
 
 (v::SampledFieldZ)(z::Number) = v.f(z)
@@ -280,7 +285,7 @@ function SampledField(v; x=nothing, y=nothing, z=nothing, interp=:linear)
     else
       error("Unsupported interpolation")
     end
-    SampledFieldZ(f, z)
+    SampledFieldZ(f, z, interp)
   elseif x !== nothing && y === nothing && z === nothing
     interp ∈ (:linear, :cubic) || error("Unsupported interpolation")
     v = float(v)
@@ -294,21 +299,21 @@ function SampledField(v; x=nothing, y=nothing, z=nothing, interp=:linear)
     else
       error("Unsupported interpolation")
     end
-    SampledFieldX(f, x)
+    SampledFieldX(f, x, interp)
   elseif x !== nothing && y === nothing && z !== nothing
     interp === :linear || error("Unsupported interpolation")
     v = float(v)
     x = float(x)
     z = float(z)
     f = extrapolate(interpolate((x, z), v, Gridded(Linear())), Flat())
-    SampledFieldXZ(f, x, z)
+    SampledFieldXZ(f, x, z, interp)
   elseif x !== nothing && y !== nothing && z === nothing
     interp === :linear || error("Unsupported interpolation")
     v = float(v)
     x = float(x)
     y = float(y)
     f = extrapolate(interpolate((x, y), v, Gridded(Linear())), Flat())
-    SampledFieldXY(f, x, y)
+    SampledFieldXY(f, x, y, interp)
   elseif x !== nothing && y !== nothing && z !== nothing
     interp === :linear || error("Unsupported interpolation")
     v = float(v)
@@ -316,7 +321,7 @@ function SampledField(v; x=nothing, y=nothing, z=nothing, interp=:linear)
     y = float(y)
     z = float(z)
     f = extrapolate(interpolate((x, y, z), v, Gridded(Linear())), Flat())
-    SampledFieldXYZ(f, x, y, z)
+    SampledFieldXYZ(f, x, y, z, interp)
   else
     error("Only x, z, x-z, x-y, or x-y-z interpolation supported")
   end

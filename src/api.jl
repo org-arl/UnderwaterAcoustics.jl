@@ -278,15 +278,15 @@ parameters are supported:
 All parameters are optional and have default values. Parameters may be modified
 after construction by setting the corresponding property in the environment.
 """
-mutable struct UnderwaterEnvironment
-  bathymetry::Any
-  altimetry::Any
-  temperature::Any
-  salinity::Any
-  soundspeed::Any
-  density::Any
-  seabed::Any
-  surface::Any
+struct UnderwaterEnvironment{T1,T2,T3,T4,T5,T6,T7,T8}
+  bathymetry::T1
+  altimetry::T2
+  temperature::T3
+  salinity::T4
+  soundspeed::T5
+  density::T6
+  seabed::T7
+  surface::T8
   function UnderwaterEnvironment(;
     bathymetry = 100.0,
     altimetry = 0.0,
@@ -305,7 +305,9 @@ mutable struct UnderwaterEnvironment
     density = something(density, water_density(temperature, salinity))
     soundspeed isa Number && (soundspeed = in_units(u"m/s", soundspeed))
     soundspeed = something(soundspeed, UnderwaterAcoustics.soundspeed(temperature, salinity))
-    new(bathymetry, altimetry, temperature, salinity, soundspeed, density, seabed, surface)
+    new{typeof(bathymetry),typeof(altimetry),typeof(temperature),typeof(salinity),typeof(soundspeed),typeof(density),typeof(seabed),typeof(surface)}(
+      bathymetry, altimetry, temperature, salinity, soundspeed, density, seabed, surface
+    )
   end
 end
 

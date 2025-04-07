@@ -46,7 +46,7 @@ function Base.show(io::IO, pm::PekerisRayTracer)
 end
 
 """
-    arrivals(pm, tx, rx; paths=true)
+    arrivals(pm::PekerisRayTracer, tx, rx; paths=true)
 
 Compute the arrivals between a transmitter `tx` and a receiver `rx` in the
 Pekeris waveguide described by propagation model `pm`.
@@ -72,7 +72,7 @@ function arrivals(pm::PekerisRayTracer, tx::AbstractAcousticSource, rx::Abstract
 end
 
 """
-    acoustic_field(pm, tx, rxs; mode=:coherent)
+    acoustic_field(pm::PekerisRayTracer, tx, rxs; mode=:coherent)
 
 Compute the acoustic field at a receiver `rxs` due to a transmitter `tx` in the
 Pekeris waveguide. The field is computed incoherently if `mode=:incoherent`.
@@ -200,12 +200,6 @@ function Base.show(io::IO, pm::PekerisModeSolver)
   print(io, "PekerisModeSolver(h=$(pm.h))")
 end
 
-"""
-    arrivals(pm, tx, rx)
-
-Compute the mode arrivals between a transmitter `tx` and a receiver `rx` in the
-Pekeris waveguide.
-"""
 function arrivals(pm::PekerisModeSolver, tx::AbstractAcousticSource, rx::AbstractAcousticReceiver)
   p1 = location(tx)
   p2 = location(rx)
@@ -231,7 +225,7 @@ function arrivals(pm::PekerisModeSolver, tx::AbstractAcousticSource, rx::Abstrac
 end
 
 """
-    acoustic_field(pm, tx, rxs; mode=:coherent)
+    acoustic_field(pm::PekerisModeSolver, tx, rxs; mode=:coherent)
 
 Compute the acoustic field at a receiver `rxs` due to a transmitter `tx` in the
 Pekeris waveguide. The field can be computed incoherently if `mode=:incoherent`.

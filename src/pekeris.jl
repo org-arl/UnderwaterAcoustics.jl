@@ -91,7 +91,7 @@ function acoustic_field(pm::PekerisRayTracer, tx::AbstractAcousticSource, rx::Ab
   end
 end
 
-function impulse_response(pm::PekerisRayTracer, tx::AbstractAcousticSource, rx::AbstractAcousticReceiver, fs; abstime=false, ntaps=nothing)
+function impulse_response(pm::AbstractRayPropagationModel, tx::AbstractAcousticSource, rx::AbstractAcousticReceiver, fs; abstime=false, ntaps=nothing)
   arr = arrivals(pm, tx, rx; paths=false)
   T = _phasortype(eltype(arr))
   length(arr) == 0 && return signal(Vector{T}(undef, 0), fs)

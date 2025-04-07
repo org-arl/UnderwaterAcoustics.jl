@@ -19,6 +19,10 @@ end
   @test length(m) == 2
   @test PekerisRayTracer ∈ m
   @test PekerisModeSolver ∈ m
+  env = UnderwaterEnvironment(soundspeed = SampledField([1500, 1490, 1520]; z=0:-10:-20, interp=:cubic))
+  m = models(env)
+  @test m isa Vector{Type{<:UnderwaterAcoustics.AbstractPropagationModel}}
+  @test length(m) == 0
 end
 
 @testitem "env" setup=[PekerisSetup] begin

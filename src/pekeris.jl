@@ -149,10 +149,9 @@ function _arrival(j, pm, R, R², d1, d2, f, p1=missing, p2=missing)
       end
     end
     path[end] = p2
-    # conj(A) needed to match with Bellhop
-    RayArrival(t, conj(A), s, b, s1 * λ, -s1 * s2 * λ, path)
+    RayArrival(t, A, s, b, s1 * λ, -s1 * s2 * λ, path)
   else
-    RayArrival(t, conj(A), s, b, s1*λ, -s1*s2*λ, missing)
+    RayArrival(t, A, s, b, s1*λ, -s1*s2*λ, missing)
   end
 end
 

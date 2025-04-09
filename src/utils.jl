@@ -1,8 +1,11 @@
 import Unitful: ustrip, Quantity, Units, @u_str
-export @u_str
+export @u_str, °, PosF64, PosF32
 
 ################################################################################
 # unit conversion utilities, with default units if none are specified
+
+# define degree symbol
+const ° = u"°"
 
 """
     in_units(u, x)
@@ -39,6 +42,10 @@ in_units(u::typeof(u"dB"), x::typeof(1u"dB")) = ustrip(x)
 
 ################################################################################
 # locations are represented as named tuples with coordinates in meters
+
+# location types
+const PosF64 = @NamedTuple{x::Float64, y::Float64, z::Float64}
+const PosF32 = @NamedTuple{x::Float32, y::Float32, z::Float32}
 
 """
     XYZ(pos)

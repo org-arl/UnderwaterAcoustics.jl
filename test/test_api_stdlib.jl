@@ -138,7 +138,9 @@ end
 end
 
 @testitem "field" begin
+  import UnderwaterAcoustics: is_range_dependent
   fld = SampledField([0.0, 10.0, 0.0]; x=[0.0, 10.0, 20.0])
+  @test is_range_dependent(fld)
   @test fld(0.0) == 0.0
   @test fld(5.0) == 5.0
   @test fld(10.0) == 10.0
@@ -152,6 +154,7 @@ end
   @test fld((x=10.0, y=0.0, z=5.0)) == 10.0
   @test fld((x=10.0, y=5.0, z=0.0)) == 10.0
   fld = SampledField([0.0, 10.0, 0.0]; z=[0.0, 10.0, 20.0])
+  @test !is_range_dependent(fld)
   @test fld(0.0) == 0.0
   @test fld(5.0) == 5.0
   @test fld(10.0) == 10.0
@@ -165,6 +168,7 @@ end
   @test fld((x=5.0, y=0.0, z=10.0)) == 10.0
   @test fld((x=0.0, y=5.0, z=10.0)) == 10.0
   fld = SampledField([0.0 1.0; 1.0 2.0]; x=[0.0, 1.0], y=[0.0, 1.0])
+  @test is_range_dependent(fld)
   @test fld(0.0, 0.0) == 0.0
   @test fld(0.5, 0.5) == 1.0
   @test fld(1.0, 1.0) == 2.0
@@ -174,6 +178,7 @@ end
   @test fld((x=0.0, y=0.0, z=0.0)) == 0.0
   @test fld((x=1.0, y=0.0, z=1.0)) == 1.0
   fld = SampledField([0.0; 1.0;; 1.0; 2.0;;; 0.0; 1.0;; 1.0; 2.0]; x=[0.0, 1.0], y=[0.0, 1.0], z=[0.0, 1.0])
+  @test is_range_dependent(fld)
   @test fld(0.0, 0.0, 0.0) == 0.0
   @test fld(0.5, 0.5, 0.5) == 1.0
   @test fld(1.0, 1.0, 1.0) == 2.0

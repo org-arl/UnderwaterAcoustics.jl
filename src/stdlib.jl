@@ -207,7 +207,7 @@ struct SampledFieldZ{T1,T2} <: DepthDependent
   interp::Symbol
 end
 
-struct SampledFieldX{T1,T2} <: DepthDependent
+struct SampledFieldX{T1,T2} <: PositionDependent
   f::T1
   xrange::T2
   interp::Symbol

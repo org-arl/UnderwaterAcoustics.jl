@@ -84,9 +84,11 @@ end
   colorbar --> true
   color --> :YlGnBu
   cguide --> "dB"
+  X = copy(x')
+  X[isinf.(X)] .= prevfloat(typemax(eltype(X)))
   @series begin
     seriestype := :heatmap
-    rx.xrange, rx.zrange, x'
+    rx.xrange, rx.zrange, X
   end
 end
 

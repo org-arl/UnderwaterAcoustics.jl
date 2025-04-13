@@ -1,0 +1,21 @@
+---
+engine: julia
+---
+
+```{julia}
+#| echo: false
+#| output: false
+function jdoc(parent, sym, ndx=nothing; filt=nothing)
+  d = Docs.doc(Docs.Binding(parent, sym))
+  println("::: {.callout-tip appearance=\"minimal\"}")
+  ndx === nothing && (ndx = 1:length(d))
+  for i ∈ ndx
+    s = string(d[i])
+    filt !== nothing && !filt(s) && continue
+    s = replace(s, r"^```" => "```julia", r"# Examples" => "#### Examples", r"!!!" => "#####")
+    startswith(s, "```") || (s = "```julia\n$(sym)\n```\n\n" * s)
+    println(s)
+  end
+  println(":::")
+end
+```

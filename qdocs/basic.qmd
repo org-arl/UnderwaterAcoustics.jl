@@ -1,0 +1,24 @@
+---
+title: "Underwater acoustics"
+engine: julia
+---
+
+**API reference**
+
+{{< include jdoc.qmd >}}
+
+```{julia}
+#| echo: false
+#| output: asis
+import UnderwaterAcoustics
+
+jdoc(UnderwaterAcoustics, :soundspeed)
+jdoc(UnderwaterAcoustics, :absorption)
+jdoc(UnderwaterAcoustics, :water_density)
+jdoc(UnderwaterAcoustics, :dBperλ)
+jdoc(UnderwaterAcoustics, :in_dBperλ)
+jdoc(UnderwaterAcoustics, :reflection_coef, 1)
+jdoc(UnderwaterAcoustics, :surface_reflection_coef)
+jdoc(UnderwaterAcoustics, :bubble_resonance)
+jdoc(UnderwaterAcoustics, :doppler)
+```

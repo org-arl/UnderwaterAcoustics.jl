@@ -1,0 +1,162 @@
+---
+title: "Range and depth dependence"
+engine: julia
+---
+
+{{< include jdoc.qmd >}}
+
+```{julia}
+#| echo: false
+#| output: false
+using UnderwaterAcoustics
+using Plots
+default(size=(600, 400))
+```
+
+When describing underwater environments, we often need to work with quantities that vary with position. Some quantities are constant, while others may vary with depth, range, or 3D position (e.g. sound speed profile, bathymetry, etc). We introduce a consistent representation of _fields_ to help formalize position-dependent quantities.
+
+## Interface
+
+Fields that do not vary with position are considered constant, and are represented by scalars. If a field may vary only with depth, but not with horizontal position, it is considered `DepthDependent`. On the other hand, if it may vary with any positional coordinate, it is considered `PositionDependent`. Varying fields are represented by data types that are subtypes of the appropriate abstract type (`DepthDependent` or `PositionDependent`).
+
+```{julia}
+#| echo: false
+#| output: asis
+jdoc(UnderwaterAcoustics, :DepthDependent)
+jdoc(UnderwaterAcoustics, :PositionDependent)
+```
+
+To get the value of a field at a given position, we use the `value` function:
+
+```{julia}
+#| echo: false
+#| output: asis
+jdoc(UnderwaterAcoustics, :value)
+```
+
+We can also check if a field is constant or range-dependent:
+```{julia}
+#| echo: false
+#| output: asis
+jdoc(UnderwaterAcoustics, :is_constant)
+jdoc(UnderwaterAcoustics, :is_range_dependent, 1)
+```
+Fields that only vary with depth are neither constant nor range-dependent.
+
+Some propagation models require knowledge of the extreme values of a field. These can be obtained using the `minimum` and `maximum` functions:
+
+```{julia}
+#| echo: false
+#| output: asis
+jdoc(Base, :minimum; filt=contains("field"))
+jdoc(Base, :maximum; filt=contains("field"))
+```
+
+## Implementations
+
+### Constants
+
+Scalars are trivially constant fields:
+```{julia}
+let q = 1500
+  @show q
+  @show is_constant(q)
+  @show is_range_dependent(q)
+  @show value(q)
+  @show value(q, -10)
+  @show value(q, (1000, -10))
+  @show value(q, (0, 0, -10))
+  @show minimum(q)
+  @show maximum(q)
+end;
+```
+They can be used in environmental descriptions. For example, iso-velocity environments can be described using a constant sound speed:
+```julia
+env = UnderwaterEnvironment(soundspeed=1500)
+```
+
+### Sampled fields
+
+Position-dependent fields can be defined using data samples at a set of positions. Values at other positions are obtained by interpolation. The `SampledField()` function creates a sampled field from a set of data samples:
+
+```{julia}
+#| echo: false
+#| output: asis
+jdoc(UnderwaterAcoustics, :SampledField)
+```
+
+We can understand how to use `SampledField` by looking at some examples. Let's create an environment with a depth-dependent sound speed profile:
+```{julia}
+env = UnderwaterEnvironment(
+  soundspeed = SampledField([1500, 1520]; z=[0, -100])
+)
+
+let q = env.soundspeed
+  @show q
+  @show is_constant(q)
+  @show is_range_dependent(q)
+  @show value(q, 0)
+  @show value(q, -50)
+  @show value(q, -100)
+  @show value(q, (1000, -50))
+  @show value(q, (0, 0, -50))
+  @show minimum(q)
+  @show maximum(q)
+  plot(q)
+end
+```
+The default interpolation method is linear, but we can use cubic interpolation by specifying `interp=:cubic`:
+```{julia}
+plot(SampledField([1500, 1490, 1520]; z=0:-10:-20))
+plot!(SampledField([1500, 1490, 1520]; z=0:-10:-20, interp=:cubic))
+```
+Another example is a range-dependent bathymetry:
+```{julia}
+env = UnderwaterEnvironment(
+  bathymetry = SampledField([100, 110, 105, 110]; x=[0, 1000, 1500, 2000])
+)
+
+plot(env; xlims=(0,2000))
+```
+2D and 3D sampled fields can be created by specifying the `x`, `y`, and `z` coordinates. For example, a 2D field can be created using:
+```{julia}
+let q = SampledField([0.0 1.0; 1.0 2.0]; x=[0.0, 20.0], y=[0.0, 20.0])
+  @show q
+  @show is_constant(q)
+  @show is_range_dependent(q)
+  @show value(q, (10, 10, 0))
+  @show value(q, (10, 10, -10))
+  @show minimum(q)
+  @show maximum(q)
+  plot(q)
+end
+```
+
+### Custom fields
+
+We may define a custom field type by subtyping `DepthDependent` or `PositionDependent`. For example, we can define a Munk sound speed profile:
+
+```{julia}
+struct MunkSSP <: UnderwaterAcoustics.DepthDependent end
+
+function (::MunkSSP)(pos)
+  ϵ = 0.00737
+  z̃ = 2.0 * (-pos.z - 1300.0) / 1300.0
+  1500.0 * (1.0 + ϵ * (z̃ - 1 + exp(-z̃)))
+end
+
+Base.minimum(::MunkSSP) = 1500.0    # 1.3 km depth
+Base.maximum(::MunkSSP) = 1654.0    # 11 km depth (maximum depth of the ocean)
+
+let q = MunkSSP()
+  @show q
+  @show is_constant(q)
+  @show is_range_dependent(q)
+  @show value(q, -1300)
+  @show value(q, (100, 100, -1500))
+  @show minimum(q)
+  @show maximum(q)
+  plot([value(q, z) for z ∈ -11000:100:0], -11000:100:0;
+    legend=false, xlabel="Sound speed (m/s)", ylabel="Depth (m)")
+end
+```

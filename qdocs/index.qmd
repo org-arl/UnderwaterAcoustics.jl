@@ -1,0 +1,48 @@
+---
+title: "Introduction"
+engine: julia
+---
+
+**Julia toolbox for underwater acoustic modeling**
+
+## Overview
+
+The `UnderwaterAcoustics.jl` ecosystem provides a set of tools for modeling and simulating underwater acoustic propagation. The main package, `UnderwaterAcoustics.jl`, defines the core application programming interface (API), and provides a set of core differentiable propagation models and utilities. It also provides support for replay channels, where measurements from the ocean are used to empirically construct channel models. The package is designed to be extensible, allowing other packages to add models to the ecosystem.
+
+The `AcousticsToolbox.jl` package adds support for popular benchmark Fortran models from the Ocean Acoustic Library ([OALIB](http://oalib.hlsresearch.com/AcousticsToolbox/)) such as the [Bellhop](bellhop.qmd) ray tracer and [Kraken](kraken.qmd) normal mode models. The `AcousticRayTracers.jl` package provides a fully differentiable ray tracer [`RaySolver`](raysolver.qmd) written in Julia.
+
+<!--
+The `DataDrivenAcoustics.jl` package provides a set of tools ([`RBNN`](rbnn.qmd) and [`MBNN`](mbnn.qmd)) for building and using data-driven propagation models that can be used with partial or no environmental information.
+-->
+
+The `VirtualAcousticOcean.jl` package enables [real-time acoustic simulation](vao.qmd) of underwater communication networks and sonar systems. Acoustic data is streamed using a real-time acoustic streaming protocol ([UASP2](uasp2.qmd)).
+
+## Highlights
+
+- Underwater acoustic propagation modeling API with pluggable models
+- Differentiable and probabilistic underwater acoustic models
+- 2D/3D underwater acoustic simulation tools
+- Replay channel and noise models
+- Underwater acoustics utility functions
+
+::: {.callout-caution title="Breaking changes"}
+The API has changed significantly in `UnderwaterAcoustics.jl v0.4`. If you have code that depends
+on the old API, you may wish to refer to the [porting guide](porting.qmd) before you upgrade.
+:::
+
+## Installation
+
+```julia
+using Pkg
+Pkg.add("UnderwaterAcoustics")
+```
+
+## Getting started
+
+- [Propagation & channel modeling](quickstart.qmd)
+- [Channel replay](replay.qmd)
+
+## Talks & publications
+
+- Mandar Chitre, "[Underwater Acoustics in the age of differentiable and probabilistic programming](https://www.facebook.com/watch/live/?v=2473971036238315)", UComms 2020 webinar, 3 December 2020.
+- Mandar Chitre, "[Differentiable Ocean Acoustic Propagation Modeling](https://arl.nus.edu.sg/wp-content/uploads/2023/04/Chitre_Differentiable-Ocean-Acoustic-Propagation-Modeling.pdf)," in OCEANS 2023 IEEE/MTS – Limerick, 5-8 June 2023.

@@ -1,0 +1,122 @@
+---
+title: "Propagation & channel modeling"
+engine: julia
+---
+
+**API reference**
+
+{{< include jdoc.qmd >}}
+
+```{julia}
+#| echo: false
+#| output: false
+import UnderwaterAcoustics
+```
+
+## Environment models
+
+```{julia}
+#| echo: false
+#| output: asis
+jdoc(UnderwaterAcoustics, :UnderwaterEnvironment)
+jdoc(UnderwaterAcoustics, :PekerisWaveguide)
+jdoc(UnderwaterAcoustics, :is_range_dependent, 2)
+jdoc(UnderwaterAcoustics, :isospeed)
+```
+
+## Propagation models
+
+```{julia}
+#| echo: false
+#| output: asis
+jdoc(UnderwaterAcoustics, :models)
+jdoc(UnderwaterAcoustics, :PekerisRayTracer)
+jdoc(UnderwaterAcoustics, :PekerisModeSolver)
+jdoc(UnderwaterAcoustics, :RayArrival)
+jdoc(UnderwaterAcoustics, :ModeArrival)
+jdoc(UnderwaterAcoustics, :arrivals)
+jdoc(UnderwaterAcoustics, :acoustic_field)
+jdoc(UnderwaterAcoustics, :transmission_loss)
+jdoc(UnderwaterAcoustics, :impulse_response)
+```
+
+## Channel models and simulation
+
+```{julia}
+#| echo: false
+#| output: asis
+jdoc(UnderwaterAcoustics, :channel)
+jdoc(UnderwaterAcoustics, :BasebandReplayChannel)
+jdoc(UnderwaterAcoustics, :transmit)
+```
+
+## Boundary conditions
+
+```{julia}
+#| echo: false
+#| output: asis
+jdoc(UnderwaterAcoustics, :reflection_coef, 2)
+jdoc(UnderwaterAcoustics, :PressureReleaseBoundary)
+jdoc(UnderwaterAcoustics, :RigidBoundary)
+jdoc(UnderwaterAcoustics, :FluidBoundary)
+jdoc(UnderwaterAcoustics, :WindySurface)
+```
+
+::: {.callout-tip appearance="minimal"}
+Pre-defined boundary conditions based on APL-UW Technical Report 9407:
+```julia
+# sea surface boundary conditions
+const SeaState0    = WindySurface(0.8)
+const SeaState1    = WindySurface(2.6)
+const SeaState2    = WindySurface(4.4)
+const SeaState3    = WindySurface(6.9)
+const SeaState4    = WindySurface(9.8)
+const SeaState5    = WindySurface(12.6)
+const SeaState6    = WindySurface(19.3)
+const SeaState7    = WindySurface(26.5)
+const SeaState8    = WindySurface(30.6)
+const SeaState9    = WindySurface(32.9)
+```
+```julia
+# seabed boundary conditions
+const Rock         = FluidBoundary(2557.5, 3820.0, 0.01374)
+const Pebbles      = FluidBoundary(2557.5, 2750.4, 0.01374)
+const SandyGravel  = FluidBoundary(2547.8, 2041.6, 0.01705)
+const CoarseSand   = FluidBoundary(2282.3, 1911.1, 0.01638)
+const MediumSand   = FluidBoundary(1886.8, 1799.5, 0.01624)
+const FineSand     = FluidBoundary(1483.5, 1690.7, 0.01602)
+const VeryFineSand = FluidBoundary(1297.8, 1613.4, 0.01875)
+const ClayeySand   = FluidBoundary(1251.0, 1581.3, 0.02019)
+const CoarseSilt   = FluidBoundary(1222.1, 1553.3, 0.02158)
+const SandySilt    = FluidBoundary(1195.0, 1525.9, 0.01261)
+const Silt         = FluidBoundary(1175.1, 1508.1, 0.00386)
+const FineSilt     = FluidBoundary(1173.8, 1506.3, 0.00306)
+const SandyClay    = FluidBoundary(1172.5, 1504.6, 0.00242)
+const SiltyClay    = FluidBoundary(1171.2, 1501.7, 0.00163)
+const Clay         = FluidBoundary(1169.8, 1498.4, 0.00148)
+```
+:::
+
+## Sources and receivers
+
+```{julia}
+#| echo: false
+#| output: asis
+jdoc(UnderwaterAcoustics, :AcousticSource)
+jdoc(UnderwaterAcoustics, :AcousticReceiver)
+jdoc(UnderwaterAcoustics, :AcousticReceiverGrid2D)
+jdoc(UnderwaterAcoustics, :AcousticReceiverGrid3D)
+jdoc(UnderwaterAcoustics, :location)
+jdoc(UnderwaterAcoustics, :frequency)
+jdoc(UnderwaterAcoustics, :spl)
+```
+
+## Noise models
+
+```{julia}
+#| echo: false
+#| output: asis
+jdoc(UnderwaterAcoustics, :WhiteGaussianNoise)
+jdoc(UnderwaterAcoustics, :RedGaussianNoise)
+jdoc(UnderwaterAcoustics, :rand; filt=contains("AbstractNoiseModel"))
+```

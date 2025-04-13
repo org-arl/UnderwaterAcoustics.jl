@@ -241,17 +241,28 @@ end
 (v::SampledFieldXY)(x, y) = v.f(x, y)
 (v::SampledFieldXYZ)(x, y, z) = v.f(x, y, z)
 
-(v::SampledFieldZ)(pos::NamedTuple{(:x,:y,:z)}) = v.f(pos.z)
-(v::SampledFieldX)(pos::NamedTuple{(:x,:y,:z)}) = v.f(pos.x)
-(v::SampledFieldXZ)(pos::NamedTuple{(:x,:y,:z)}) = v.f(pos.x, pos.z)
-(v::SampledFieldXY)(pos::NamedTuple{(:x,:y,:z)}) = v.f(pos.x, pos.y)
-(v::SampledFieldXYZ)(pos::NamedTuple{(:x,:y,:z)}) = v.f(pos.x, pos.y, pos.z)
+(v::SampledFieldZ)(pos::Pos) = v.f(pos.z)
+(v::SampledFieldX)(pos::Pos) = v.f(pos.x)
+(v::SampledFieldXZ)(pos::Pos) = v.f(pos.x, pos.z)
+(v::SampledFieldXY)(pos::Pos) = v.f(pos.x, pos.y)
+(v::SampledFieldXYZ)(pos::Pos) = v.f(pos.x, pos.y, pos.z)
 
 Base.show(io::IO, v::SampledFieldZ) = print(io, "SampledField(z-varying, $(length(v.zrange)) samples)")
 Base.show(io::IO, v::SampledFieldX) = print(io, "SampledField(x-varying, $(length(v.xrange)) samples)")
 Base.show(io::IO, v::SampledFieldXZ) = print(io, "SampledField(xz-varying, $(length(v.xrange))×$(length(v.zrange)) samples)")
 Base.show(io::IO, v::SampledFieldXY) = print(io, "SampledField(xy-varying, $(length(v.xrange))×$(length(v.yrange)) samples)")
 Base.show(io::IO, v::SampledFieldXYZ) = print(io, "SampledField(xyz-varying, $(length(v.xrange))×$(length(v.yrange))×$(length(v.zrange)) samples)")
+
+Base.minimum(v::SampledFieldZ) = minimum(v.f.(v.zrange))
+Base.maximum(v::SampledFieldZ) = maximum(v.f.(v.zrange))
+Base.minimum(v::SampledFieldX) = minimum(v.f.(v.xrange))
+Base.maximum(v::SampledFieldX) = maximum(v.f.(v.xrange))
+Base.minimum(v::SampledFieldXZ) = minimum(v.f(x, z) for x ∈ v.xrange for z ∈ v.zrange)
+Base.maximum(v::SampledFieldXZ) = maximum(v.f(x, z) for x ∈ v.xrange for z ∈ v.zrange)
+Base.minimum(v::SampledFieldXY) = minimum(v.f(x, y) for x ∈ v.xrange for y ∈ v.yrange)
+Base.maximum(v::SampledFieldXY) = maximum(v.f(x, y) for x ∈ v.xrange for y ∈ v.yrange)
+Base.minimum(v::SampledFieldXYZ) = minimum(v.f(x, y, z) for x ∈ v.xrange for y ∈ v.yrange for z ∈ v.zrange)
+Base.maximum(v::SampledFieldXYZ) = maximum(v.f(x, y, z) for x ∈ v.xrange for y ∈ v.yrange for z ∈ v.zrange)
 
 """
     SampledField(v; x)

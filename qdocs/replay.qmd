@@ -1,0 +1,76 @@
+---
+title: "Channel replay"
+engine: julia
+---
+
+**Quickstart guide**
+
+```{julia}
+#| echo: false
+#| output: false
+using Plots
+default(size=(600, 400))
+```
+
+The idea of channel replay was popularized in the underwater domain by the [Watermark benchmark](https://ieeexplore.ieee.org/document/7932436). The essential idea is to extract estimates of time-varying impulse response (TVIR) from measurements at sea, and to convolve it with a new signals to estimate what would have been received had that signal been transmitted during the measurement.
+
+### Loading a replay channel
+
+To do channel replay using `UnderwaterAcoustics.jl`, we build a `AbstractAcousticChannel` from the measured TVIR using the `BasebandReplayChannel()` constructor. It can either take in a TVIR as a matrix or load a TVIR from file (e.g. `red.mat`):
+
+```{julia}
+using UnderwaterAcoustics
+using Plots
+
+ch = BasebandReplayChannel("red.mat")
+```
+
+This channel has 4 receiving hydrophones and can replay up to 48.6 seconds of signal through the measured TVIR. The signal must fit within the frequency band that was used to probe the channel (for the `red` channel it is 25 ± 4.8 kHz).
+
+We can visualize the TVIR for the first hydrophone by plotting it:
+
+```{julia}
+plot(ch)
+```
+
+If we were interested in the second hydrophone, we could specify the hydrophone number to plot:
+
+```{julia}
+plot(ch, 2)
+```
+
+### Simulating a transmission
+
+To pass a signal through the channel, we generate a signal and `transmit()` it just like through any other `AbstractAcousticChannel`:
+
+```{julia}
+using SignalAnalysis
+
+x = cw(25000, 0.001, 192000; window=(tukey, 0.5)) |> real
+y = transmit(ch, x; start=1)
+```
+
+We have 4 channels of received data since we have 4 hydrophones in the replay TVIR. We plot the transmitted signal and the first 5 ms of the replayed received signal (hydrophone 2):
+
+```{julia}
+plot(
+  plot(x; xlims=(0,5)),
+  plot(y[:,2]; xlims=(0,5));
+  layout=(2,1)
+)
+```
+
+### Adding noise
+
+We can also simulate channels with noise. For example, if we wanted white Gaussian noise with standard deviation `σ = 0.1`, we can specify that when loading the channel:
+
+```{julia}
+ch = BasebandReplayChannel("red.mat"; noise=WhiteGaussianNoise(0.1))
+y = transmit(ch, x; start=1)
+
+plot(
+  plot(x; xlims=(0,5)),
+  plot(y[:,2]; xlims=(0,5));
+  layout=(2,1)
+)
+```

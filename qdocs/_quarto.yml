@@ -1,0 +1,50 @@
+project:
+  type: website
+
+website:
+  title: "UnderwaterAcoustics.jl"
+  navbar:
+    search: true
+  sidebar:
+    style: "docked"
+    contents:
+    - section: <b>UnderwaterAcoustics.jl</b>
+      contents:
+      - index.qmd
+      - text: <b>Quickstart</b>
+      - quickstart.qmd
+      - replay.qmd
+      - text: <b>Guides</b>
+      - fields.qmd
+      - ext.qmd
+      - porting.qmd
+      - text: <b>Tutorials</b>
+      - text: TODO
+      - text: <b>API reference</b>
+      - basic.qmd
+      - api.qmd
+    - text: "---"
+    - section: <b>Propagation models</b>
+      contents:
+      - text: <b>UnderwaterAcoustics.jl</b>
+      - pekeris-rays.qmd
+      - pekeris-modes.qmd
+      - text: <b>AcousticsToolbox.jl</b>
+      - bellhop.qmd
+      - kraken.qmd
+      - text: <b>AcousticRayTracers.jl</b>
+      - raysolver.qmd
+    - text: "---"
+    - section: <b>VirtualAcousticOcean.jl</b>
+      contents:
+      - vao.qmd
+      - uasp2.qmd
+
+execute:
+  echo: true
+
+format:
+  html:
+    theme: cerulean
+    css: styles.css
+    toc: true

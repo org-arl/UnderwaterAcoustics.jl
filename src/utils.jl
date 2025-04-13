@@ -1,5 +1,5 @@
 import Unitful: ustrip, Quantity, Units, @u_str
-export @u_str, °, PosF64, PosF32
+export @u_str, °, Pos, PosF64, PosF32, is_constant, is_range_dependent, value
 
 ################################################################################
 # unit conversion utilities, with default units if none are specified
@@ -44,6 +44,7 @@ in_units(u::typeof(u"dB"), x::typeof(1u"dB")) = ustrip(x)
 # locations are represented as named tuples with coordinates in meters
 
 # location types
+const Pos = NamedTuple{(:x,:y,:z)}
 const PosF64 = @NamedTuple{x::Float64, y::Float64, z::Float64}
 const PosF32 = @NamedTuple{x::Float32, y::Float32, z::Float32}
 
@@ -110,12 +111,34 @@ is_constant(q) = true
     value(q, pos)
 
 Get the value of the varying quantity `q` at the given position `pos`. `pos`
-may be specified as a `(x, y, z)` tuple, a `(x, z)` tuple, a `z` value.
+may be specified as a `(x, y, z)` tuple, a `(x, z)` tuple, or a `z` value.
+
+# Examples
+```julia
+value(q)             # get value of a constant quantity
+value(q, -10)        # get value of a depth-dependent quantity at z=-10
+value(q, (1000,-10)) # get value of a position-dependent quantity at x=1000, z=-10
+value(q, (0,0,-10))  # get value of a position-dependent quantity at (0,0,-10)
+```
 """
 value(q, pos) = q
 value(q::DepthDependent, pos) = q(XYZ(pos))
 value(q) = value(q, nothing)
 value(q::DepthDependent) = error("Position not specified")
+
+"""
+    minimum(q)
+
+Get the minimum value of a field quantity `q`.
+"""
+Base.minimum
+
+"""
+    maximum(q)
+
+Get the maximum value of a field quantity `q`.
+"""
+Base.maximum
 
 ################################################################################
 # general utilities

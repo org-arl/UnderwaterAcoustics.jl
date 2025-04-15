@@ -156,7 +156,6 @@ let q = MunkSSP()
   @show value(q, (100, 100, -1500))
   @show minimum(q)
   @show maximum(q)
-  plot([value(q, z) for z ∈ -11000:100:0], -11000:100:0;
-    legend=false, xlabel="Sound speed (m/s)", ylabel="Depth (m)")
+  plot(q, -11000:0; xlabel="Sound speed (m/s)")
 end
 ```

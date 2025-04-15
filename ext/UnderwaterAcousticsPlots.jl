@@ -5,7 +5,7 @@ using Colors
 using UnderwaterAcoustics
 import UnderwaterAcoustics: AbstractAcousticSource, AbstractAcousticReceiver, RayArrival, value
 import UnderwaterAcoustics: SampledFieldZ, SampledFieldX, SampledFieldXZ, SampledFieldXY, ModeArrival
-import UnderwaterAcoustics: BasebandReplayChannel
+import UnderwaterAcoustics: BasebandReplayChannel, DepthDependent, PositionDependent
 import DSP: amp2db
 
 @recipe function plot(env::UnderwaterEnvironment)
@@ -129,6 +129,28 @@ end
   end
 end
 
+@recipe function plot(fld::DepthDependent, zrange; npts=1000)
+  zr = range(minimum(zrange), maximum(zrange); length=npts)
+  ticks --> :native
+  legend --> false
+  yguide --> "z (m)"
+  @series begin
+    seriestype := :path
+    [value(fld, z) for z ∈ zr], zr
+  end
+end
+
+@recipe function plot(fld::DepthDependent, zmin, zmax; npts=1000)
+  zr = range(zmin, zmax; length=npts)
+  ticks --> :native
+  legend --> false
+  yguide --> "z (m)"
+  @series begin
+    seriestype := :path
+    [value(fld, z) for z ∈ zr], zr
+  end
+end
+
 @recipe function plot(fld::SampledFieldX; npts=1000)
   xr = range(minimum(fld.xrange), maximum(fld.xrange); length=npts)
   ticks --> :native
@@ -137,6 +159,28 @@ end
   @series begin
     seriestype := :path
     xr, [fld(x) for x ∈ xr]
+  end
+end
+
+@recipe function plot(fld::PositionDependent, xrange; npts=1000)
+  xr = range(minimum(xrange), maximum(xrange); length=npts)
+  ticks --> :native
+  legend --> false
+  xguide --> "x (m)"
+  @series begin
+    seriestype := :path
+    [value(fld, x) for x ∈ xr], xr
+  end
+end
+
+@recipe function plot(fld::PositionDependent, xmin, xmax; npts=1000)
+  xr = range(xmin, xmax; length=npts)
+  ticks --> :native
+  legend --> false
+  xguide --> "x (m)"
+  @series begin
+    seriestype := :path
+    [value(fld, x) for x ∈ xr], xr
   end
 end
 

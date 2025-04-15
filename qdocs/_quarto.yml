@@ -15,6 +15,7 @@ website:
       - quickstart.qmd
       - replay.qmd
       - text: <b>Guides</b>
+      - pos.qmd
       - fields.qmd
       - ext.qmd
       - porting.qmd

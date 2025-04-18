@@ -141,11 +141,11 @@ function _arrival(j, pm, R, R², d1, d2, f, p1=missing, p2=missing)
       dy = p2[2] - p1[2]
       z = (1 - upward) * pm.h
       r = abs(z - d1) * tan(θ)
-      path[2] = XYZ(p1[1] + r/R * dx, p1[2] + r/R * dy, -z)
+      path[2] = xyz(p1[1] + r/R * dx, p1[2] + r/R * dy, -z)
       for i ∈ 3:length(path)-1
         r += pm.h * tan(θ)
         z = pm.h - z
-        path[i] = XYZ(p1[1] + r/R * dx, p1[2] + r/R * dy, -z)
+        path[i] = xyz(p1[1] + r/R * dx, p1[2] + r/R * dy, -z)
       end
     end
     path[end] = p2

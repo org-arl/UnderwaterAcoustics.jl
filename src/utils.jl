@@ -1,5 +1,5 @@
 import Unitful: ustrip, Quantity, Units, @u_str
-export @u_str, °, Pos, PosF64, PosF32, is_constant, is_range_dependent, value
+export @u_str, °, XYZ, is_constant, is_range_dependent, value
 
 ################################################################################
 # unit conversion utilities, with default units if none are specified
@@ -41,33 +41,31 @@ in_units(u::typeof(u"dB"), x::Real) = x
 in_units(u::typeof(u"dB"), x::typeof(1u"dB")) = ustrip(x)
 
 ################################################################################
-# locations are represented as named tuples with coordinates in meters
+# positions are represented as named tuples with coordinates in meters
 
-# location types
-const Pos = NamedTuple{(:x,:y,:z)}
-const PosF64 = @NamedTuple{x::Float64, y::Float64, z::Float64}
-const PosF32 = @NamedTuple{x::Float32, y::Float32, z::Float32}
+# position type
+const XYZ = NamedTuple{(:x,:y,:z)}
 
 """
-    XYZ(pos)
-    XYZ(x, y, z)
-    XYZ(x, z)
-    XYZ(z)
+    xyz(pos)
+    xyz(x, y, z)
+    xyz(x, z)
+    xyz(z)
 
-Convert a location to a named tuple with fields `x`, `y`, and `z`. If any of the
+Convert a position to a named tuple with fields `x`, `y`, and `z`. If any of the
 coordinates is not provided, they are assumed to be zero. If the coordinates have
 units, they are converted to meters.
 """
-XYZ(xyz::NTuple{3,Number}) = NamedTuple{(:x,:y,:z)}(float.(in_units.(u"m", xyz)))
-XYZ(xz::NTuple{2,Number}) = XYZ(promote(in_units(u"m",xz[1]), 0, in_units(u"m",xz[2])))
-XYZ(xyz::NamedTuple{(:x,:y,:z)}) = XYZ(xyz.x, xyz.y, xyz.z)
-XYZ(xz::NamedTuple{(:x,:z)}) = XYZ(xz.x, xz.z)
-XYZ(z::NamedTuple{(:z,)}) = XYZ(z.z)
-XYZ(x::Number, y::Number, z::Number) = XYZ(promote(in_units.(u"m", (x, y, z))...))
-XYZ(x::Number, z::Number) = XYZ(promote(in_units(u"m", x), 0, in_units(u"m", z)))
-XYZ(z::Number) = XYZ(promote(0, 0, in_units(u"m", z)))
-XYZ(::Nothing) = nothing
-XYZ(::Missing) = missing
+xyz(pos::NTuple{3,Number}) = NamedTuple{(:x,:y,:z)}(float.(in_units.(u"m", pos)))
+xyz(xz::NTuple{2,Number}) = xyz(promote(in_units(u"m",xz[1]), 0, in_units(u"m",xz[2])))
+xyz(pos::NamedTuple{(:x,:y,:z)}) = xyz(pos.x, pos.y, pos.z)
+xyz(xz::NamedTuple{(:x,:z)}) = xyz(xz.x, xz.z)
+xyz(z::NamedTuple{(:z,)}) = xyz(z.z)
+xyz(x::Number, y::Number, z::Number) = xyz(promote(in_units.(u"m", (x, y, z))...))
+xyz(x::Number, z::Number) = xyz(promote(in_units(u"m", x), 0, in_units(u"m", z)))
+xyz(z::Number) = xyz(promote(0, 0, in_units(u"m", z)))
+xyz(::Nothing) = nothing
+xyz(::Missing) = missing
 
 ################################################################################
 # fields - types and utilities for quantities that may depend on position
@@ -122,7 +120,7 @@ value(q, (0,0,-10))  # get value of a position-dependent quantity at (0,0,-10)
 ```
 """
 value(q, pos) = q
-value(q::DepthDependent, pos) = q(XYZ(pos))
+value(q::DepthDependent, pos) = q(xyz(pos))
 value(q) = value(q, nothing)
 value(q::DepthDependent) = error("Position not specified")
 

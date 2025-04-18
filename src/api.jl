@@ -407,15 +407,15 @@ struct AcousticSource{T1,T2,T3} <: AbstractAcousticSource
   frequency::T2
   spl::T3
   function AcousticSource(pos, frequency; spl=0)
-    p = XYZ(pos)
+    p = xyz(pos)
     f = in_units(u"Hz", frequency)
     s = in_units(u"dB", spl)
     new{typeof(p),typeof(f),typeof(s)}(p, f, s)
   end
 end
 
-AcousticSource(x, z, frequency; spl=0) = AcousticSource(XYZ(x, z), frequency; spl)
-AcousticSource(x, y, z, frequency; spl=0) = AcousticSource(XYZ(x, y, z), frequency; spl)
+AcousticSource(x, z, frequency; spl=0) = AcousticSource(xyz(x, z), frequency; spl)
+AcousticSource(x, y, z, frequency; spl=0) = AcousticSource(xyz(x, y, z), frequency; spl)
 
 """
     AcousticReceiver(pos)
@@ -427,13 +427,13 @@ Receiver at location `pos`.
 struct AcousticReceiver{T1} <: AbstractAcousticReceiver
   pos::T1
   function AcousticReceiver(pos)
-    p = XYZ(pos)
+    p = xyz(pos)
     new{typeof(p)}(p)
   end
 end
 
-AcousticReceiver(x, z) = AcousticReceiver(XYZ(x, z))
-AcousticReceiver(x, y, z) = AcousticReceiver(XYZ(x, y, z))
+AcousticReceiver(x, z) = AcousticReceiver(xyz(x, z))
+AcousticReceiver(x, y, z) = AcousticReceiver(xyz(x, y, z))
 
 """
     AcousticReceiverGrid2D(xrange, zrange)

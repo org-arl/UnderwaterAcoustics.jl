@@ -5,7 +5,7 @@ engine: julia
 
 **API reference**
 
-{{< include jdoc.qmd >}}
+{{< include jdoc.snippet >}}
 
 ```{julia}
 #| echo: false

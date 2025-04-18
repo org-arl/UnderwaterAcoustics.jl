@@ -3,7 +3,7 @@ title: "Positions and units"
 engine: julia
 ---
 
-{{< include jdoc.qmd >}}
+{{< include jdoc.snippet >}}
 
 ```{julia}
 #| echo: false
@@ -15,16 +15,14 @@ default(size=(600, 400))
 
 ## Positions
 
-We often need 1D, 2D or 3D positions to describe the location of a source, receiver, or other object in the underwater environment. The canonical representation for positions is a named 3-tuple of coordinates of the form `(x=0.0, y=0.0, z=0.0)`. We define the generic data type `Pos` to represent such a named tuple, and concrete data types `PosF32` and `PosF64` to represent 32-bit and 64-bit floating point versions respectively:
+We often need 1D, 2D or 3D positions to describe the location of a source, receiver, or other object in the underwater environment. The canonical representation for positions is a named 3-tuple of coordinates of the form `(x=0.0, y=0.0, z=0.0)`. We define the generic data type `XYZ` to represent such a named tuple:
 
 ```julia
-const Pos = NamedTuple{(:x,:y,:z)}
-const PosF64 = @NamedTuple{x::Float64, y::Float64, z::Float64}
-const PosF32 = @NamedTuple{x::Float32, y::Float32, z::Float32}
+const XYZ = NamedTuple{(:x,:y,:z)}
 ```
 <br>
 
-It is sometimes more convenient to represent positions in simpler forms, with just a single or two-coordinates. In most places where positions are expected, we automatically convert various input representations to a `Pos`. This allows the user to specify scalars, tuples, or named tuples as input. For example, the `AcousticReceiver(⋯)` accepts receiver position as input:
+It is sometimes more convenient to represent positions in simpler forms, with just a single or two-coordinates. In most places where positions are expected, we automatically convert various input representations to a `XYZ`. This allows the user to specify scalars, tuples, or named tuples as input. For example, the `AcousticReceiver(⋯)` accepts receiver position as input:
 ```{julia}
 using UnderwaterAcoustics
 
@@ -72,12 +70,12 @@ env = UnderwaterEnvironment(
 
 ## Extending
 
-While standard `UnderwaterAcoustics.jl` API functions automatically convert input values to the appropriate `Pos` and units, you may wish to support these features in your own code when extending `UnderwaterAcoustics.jl`. To do so, you may use the unexported function `XYZ(⋯)` to create a position from various different forms. You may also use the unexported `in_units(⋯)` function to convert input values to the appropriate units:
+While standard `UnderwaterAcoustics.jl` API functions automatically convert input values to the appropriate `XYZ` and units, you may wish to support these features in your own code when extending `UnderwaterAcoustics.jl`. To do so, you may use the unexported function `xyz(⋯)` to create a position from various different forms. You may also use the unexported `in_units(⋯)` function to convert input values to the appropriate units:
 ```julia
 using UnderwaterAcoustics: XYZ, in_units
 
 function myfunction(pos, temperature)
-  pos = XYZ(pos)
+  pos = xyz(pos)
   temperature = in_units(u"°C", temperature)
   # ⋯
 end
@@ -88,6 +86,6 @@ end
 ```{julia}
 #| echo: false
 #| output: asis
-jdoc(UnderwaterAcoustics, :XYZ)
+jdoc(UnderwaterAcoustics, :xyz)
 jdoc(UnderwaterAcoustics, :in_units)
 ```

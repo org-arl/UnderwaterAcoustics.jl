@@ -332,7 +332,7 @@ function SampledField(v; x=nothing, y=nothing, z=nothing, interp=:linear)
     y = float(y)
     z = float(z)
     f = extrapolate(interpolate((x, y, z), v, Gridded(Linear())), Flat())
-    SampledFieldxyz(f, x, y, z, interp)
+    SampledFieldXYZ(f, x, y, z, interp)
   else
     error("Only x, z, x-z, x-y, or x-y-z interpolation supported")
   end

@@ -1,0 +1,27 @@
+---
+title: "PekerisRayTracer"
+engine: julia
+---
+
+{{< include jdoc.snippet >}}
+
+| <span> | <span> |
+|---|---|
+| **Model** | `UnderwaterAcoustics.PekerisRayTracer` |
+| **Description** | Ray tracer for constant depth iso-velocity environments |
+| **Language** | Julia |
+| **Advantages** | Fast, differentiable, multi-threaded |
+| **Limitations** | Iso-velocity, range-independent, high-frequency |
+
+: {tbl-colwidths="[25,75]"}
+
+```{julia}
+#| echo: false
+#| output: asis
+import UnderwaterAcoustics
+jdoc(UnderwaterAcoustics, :PekerisRayTracer)
+```
+
+## Details
+
+xxx

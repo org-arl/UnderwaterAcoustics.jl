@@ -3,7 +3,7 @@ title: "Range and depth dependence"
 engine: julia
 ---
 
-{{< include jdoc.qmd >}}
+{{< include jdoc.snippet >}}
 
 ```{julia}
 #| echo: false

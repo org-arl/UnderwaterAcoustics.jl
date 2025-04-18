@@ -241,11 +241,11 @@ end
 (v::SampledFieldXY)(x, y) = v.f(x, y)
 (v::SampledFieldXYZ)(x, y, z) = v.f(x, y, z)
 
-(v::SampledFieldZ)(pos::Pos) = v.f(pos.z)
-(v::SampledFieldX)(pos::Pos) = v.f(pos.x)
-(v::SampledFieldXZ)(pos::Pos) = v.f(pos.x, pos.z)
-(v::SampledFieldXY)(pos::Pos) = v.f(pos.x, pos.y)
-(v::SampledFieldXYZ)(pos::Pos) = v.f(pos.x, pos.y, pos.z)
+(v::SampledFieldZ)(pos::XYZ) = v.f(pos.z)
+(v::SampledFieldX)(pos::XYZ) = v.f(pos.x)
+(v::SampledFieldXZ)(pos::XYZ) = v.f(pos.x, pos.z)
+(v::SampledFieldXY)(pos::XYZ) = v.f(pos.x, pos.y)
+(v::SampledFieldXYZ)(pos::XYZ) = v.f(pos.x, pos.y, pos.z)
 
 Base.show(io::IO, v::SampledFieldZ) = print(io, "SampledField(z-varying, $(length(v.zrange)) samples)")
 Base.show(io::IO, v::SampledFieldX) = print(io, "SampledField(x-varying, $(length(v.xrange)) samples)")
@@ -332,7 +332,7 @@ function SampledField(v; x=nothing, y=nothing, z=nothing, interp=:linear)
     y = float(y)
     z = float(z)
     f = extrapolate(interpolate((x, y, z), v, Gridded(Linear())), Flat())
-    SampledFieldXYZ(f, x, y, z, interp)
+    SampledFieldxyz(f, x, y, z, interp)
   else
     error("Only x, z, x-z, x-y, or x-y-z interpolation supported")
   end

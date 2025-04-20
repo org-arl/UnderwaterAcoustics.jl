@@ -1,0 +1,81 @@
+---
+title: "Bellhop"
+engine: julia
+---
+
+{{< include jdoc.snippet >}}
+
+| <span> | <span> |
+|---|---|
+| **Model** | `AcousticsToolbox.Bellhop` |
+| **Description** | [Bellhop ray/beam tracer](https://oalib-acoustics.org/models-and-software/rays/) (wrapper) |
+| **Language** | Fortran |
+| **Advantages** | Well-established benchmark model |
+| **Limitations** | Not differentiable, 2½D or 3D modeling not supported |
+
+: {tbl-colwidths="[25,75]"}
+
+```{julia}
+#| echo: false
+#| output: asis
+import AcousticsToolbox
+jdoc(AcousticsToolbox, :Bellhop, 2)
+```
+
+A good overview of the Bellhop model can be found at:
+
+- O. C. Rodríguez, "General description of the BELLHOP ray tracing program (June 2008 release)", Technical report, v1.0, Universidade do Algarve, 2008 [(pdf)](http://oalib.hlsresearch.com/Rays/GeneralDescription.pdf).
+
+## Example
+
+```{julia}
+#| echo: false
+#| output: false
+using Plots
+default(size=(600, 400))
+```
+
+```{julia}
+using UnderwaterAcoustics
+using AcousticsToolbox
+using Plots
+
+env = UnderwaterEnvironment(
+  bathymetry = SampledField([200, 150]; x=[0, 1000], interp=:linear),
+  soundspeed = SampledField([1500, 1480, 1495, 1510, 1520]; z=0:-50:-200, interp=:cubic),
+  seabed = SandyClay
+)
+pm = Bellhop(env)
+
+tx = AcousticSource(0, -50, 300)
+rx = AcousticReceiver(1000, -100)
+rays = arrivals(pm, tx, rx)
+
+plot(env; xlims=(-10, 1010))
+plot!(tx)
+plot!(rx)
+plot!(rays)
+```
+
+```{julia}
+rxs = AcousticReceiverGrid2D(1:1000, -200:0)
+x = transmission_loss(pm, tx, rxs; mode=:semicoherent)
+
+plot(rxs, x; crange=70)
+plot!(env; xlims=(0,1000), linewidth=3)
+```
+
+## Notes
+
+The Fortran Bellhop propagation model requires that the transmitter is located at $(x=0, y=0)$ and all receivers are located in the right half-plane (i.e., $x>0$ and $y=0$). While this limitation can be worked around in the wrapper by a coordinate transformation, automatic transformation is not yet implemented.
+
+Additionally, this wrapper does not yet support all the features of the original Fortran model. In particular, it does NOT support:
+
+- 3D environments (i.e., Bellhop 3D)
+- Range-dependent sound speed
+- N2-linear, analytic or quadratic interpolation for sound speed
+- Arbitrary reflection coefficients
+- Directional or line sources
+- Cartesian or ray-centered beams
+
+Receivers on an irregular grid are supported, but not currently optimized for speed (by using the irregular grid option in the Fortran model).

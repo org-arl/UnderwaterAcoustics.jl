@@ -29,7 +29,7 @@ We typically start with an environmental description:
 env = UnderwaterEnvironment()
 ```
 
-If the defaults don't suit our needs, we can customize the environment. For example, if we wanted an environment with 20 m water depth, sandy-clay seabed, and a smooth soundspeed profile with 1500 m/s near the surface, 1490 m/s at 10 m depth, and 1520 m/s near the seabed, we could define:
+If the defaults don't suit our needs, we can customize the environment. For example, if we wanted an environment with 20 m water depth, sandy-clay seabed, and a smooth sound speed profile with 1500 m/s near the surface, 1490 m/s at 10 m depth, and 1520 m/s near the seabed, we could define:
 
 ```{julia}
 env = UnderwaterEnvironment(
@@ -39,7 +39,7 @@ env = UnderwaterEnvironment(
 )
 ```
 
-If we have `Plots.jl` installed, we can use plot recipes to plot the environment or the soundspeed profile. For example:
+If we have `Plots.jl` installed, we can use plot recipes to plot the environment or the sound speed profile. For example:
 
 ```{julia}
 plot(env.soundspeed)

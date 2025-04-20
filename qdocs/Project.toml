@@ -1,4 +1,5 @@
 [deps]
+AcousticsToolbox = "268a15bc-5756-47d6-9bea-fa5dc21c97f8"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 QMDDocTools = "c50e25eb-ade4-4c96-a757-2a1fd62cbd8c"
 QuartoNotebookRunner = "4c0109c6-14e9-4c88-93f0-2b974d3468f4"

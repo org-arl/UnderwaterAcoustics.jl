@@ -1,0 +1,75 @@
+---
+title: "Kraken"
+engine: julia
+---
+
+{{< include jdoc.snippet >}}
+
+| <span> | <span> |
+|---|---|
+| **Model** | `AcousticsToolbox.Kraken` |
+| **Description** | [Kraken and KrakenC normal mode models](https://oalib-acoustics.org/models-and-software/normal-modes/) (wrapper) |
+| **Language** | Fortran |
+| **Advantages** | Well-established benchmark models |
+| **Limitations** | Not differentiable, range-independent |
+
+: {tbl-colwidths="[25,75]"}
+
+```{julia}
+#| echo: false
+#| output: asis
+import AcousticsToolbox
+jdoc(AcousticsToolbox, :Kraken, 2)
+```
+
+A good overview of the Bellhop model can be found at:
+
+- M. B. Porter, "The KRAKEN normal mode program", Technical report NRL/MR/5120-92-6920, Naval Research Laboratory, 1992 [(original report pdf)](https://apps.dtic.mil/sti/tr/pdf/ADA252409.pdf) [(updated draft pdf)](https://oalib-acoustics.org/website_resources/Modes/kraken.pdf).
+
+## Example
+
+```{julia}
+#| echo: false
+#| output: false
+using Plots
+default(size=(600, 400))
+```
+
+```{julia}
+using UnderwaterAcoustics
+using AcousticsToolbox
+using Plots
+
+env = PekerisWaveguide(h=20, seabed=Rock)
+pm = Kraken(env)
+
+tx = AcousticSource(0, -5, 1000)
+rx = AcousticReceiver(100, -10)
+modes = arrivals(pm, tx, rx)
+```
+```{julia}
+# plot modes to a depth of 20m
+plot(modes, 20)
+```
+```{julia}
+rxs = AcousticReceiverGrid2D(1.0:0.1:100, -20:0.1:0)
+x = transmission_loss(pm, tx, rxs)
+
+plot(env; xlims=(0,100))
+plot!(rxs, x)
+```
+
+## Notes
+
+The Fortran Kraken propagation model requires that the transmitter is located at $(x=0, y=0)$ and all receivers are located in the right half-plane (i.e., $x>0$ and $y=0$). While this limitation can be worked around in the wrapper by a coordinate transformation, automatic transformation is not yet implemented.
+
+Additionally, this wrapper does not yet support all the features of the original Fortran model. In particular, it does NOT support:
+
+- Range-dependent environments (adiabatic or coupled mode approximations)
+- N2-linear, analytic or quadratic interpolation for sound speed
+- Arbitrary reflection coefficients
+- Layered seabed
+- Twersky scattering
+- Interfacial roughness
+
+Receivers on an irregular grid are supported, but not currently optimized for speed (by using the irregular grid option in the Fortran model).

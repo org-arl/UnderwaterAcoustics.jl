@@ -11,7 +11,7 @@ engine: julia
 | **Description** | Ray tracer for constant depth iso-velocity environments |
 | **Language** | Julia |
 | **Advantages** | Fast, differentiable, multi-threaded |
-| **Limitations** | Iso-velocity, range-independent, high-frequency |
+| **Limitations** | Iso-velocity, range-independent |
 
 : {tbl-colwidths="[25,75]"}
 
@@ -22,6 +22,40 @@ import UnderwaterAcoustics
 jdoc(UnderwaterAcoustics, :PekerisRayTracer)
 ```
 
-## Details
+Implementation based on mathematical description in:
 
-xxx
+- M. A. Chitre, "A high-frequency warm shallow water acoustic communications channel model and measurements", The Journal Of The Acoustical Society Of America, vol. 122, pp. 2580–2586, November 2007 [(pdf)](https://arl.nus.edu.sg/wp-content/publications/Chitre2007b.pdf).
+
+## Example
+
+```{julia}
+#| echo: false
+#| output: false
+using Plots
+default(size=(600, 400))
+```
+
+```{julia}
+using UnderwaterAcoustics
+using Plots
+
+env = PekerisWaveguide(h=20, seabed=SandyClay)
+pm = PekerisRayTracer(env)
+
+tx = AcousticSource(0, -5, 1000)
+rx = AcousticReceiver(100, -10)
+rays = arrivals(pm, tx, rx)
+
+plot(env; xlims=(-10, 110))
+plot!(tx)
+plot!(rx)
+plot!(rays)
+```
+
+```{julia}
+rxs = AcousticReceiverGrid2D(1.0:0.1:100, -20:0.1:0)
+x = transmission_loss(pm, tx, rxs)
+
+plot(env; xlims=(0,100))
+plot!(rxs, x)
+```

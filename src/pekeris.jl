@@ -261,7 +261,7 @@ end
 # impulse response computation is designed for Pekeris mode solver, but should
 # work for any mode solver that returns ModeArrival, and hence is marked as
 # a fallback for any AbstractModePropagationModel
-function impulse_response(pm::AbstractModePropagationModel, tx::AbstractAcousticSource, rx::AbstractAcousticReceiver, fs; abstime=false)
+function impulse_response(pm::AbstractModePropagationModel, tx::AbstractAcousticSource, rx::AbstractAcousticReceiver, fs; abstime=false, ntaps=nothing)
   arr = arrivals(pm, tx, rx)
   isempty(arr) && return signal(ComplexF64[], fs)
   p1 = location(tx)
@@ -278,14 +278,20 @@ function impulse_response(pm::AbstractModePropagationModel, tx::AbstractAcoustic
     acoustic_field(pm, tx1, rx) |> conj
   end
   x = ifft(X)
-  x = circshift(x, -mod(M, N) + N ÷ 100)    # heuristic to position first arrival
   if abstime
     absx = abs.(x)
     i = findfirst(>(maximum(absx) / 10), absx)
     while i < length(absx) && absx[i+1] > absx[i]
-      i += 1
+     i += 1
     end
-    x = vcat(zeros(eltype(x), M - i), x)
+    x = vcat(zeros(eltype(x), M - i - 1), x)
+  end
+  if ntaps !== nothing
+    if length(x) ≥ ntaps
+      x = x[1:ntaps]
+    else
+      x = vcat(x, zeros(eltype(x), ntaps - length(x)))
+    end
   end
   signal(x, fs)
 end
@@ -309,9 +315,9 @@ function _group_velocity(ω, γ, kᵣ, c, ρ, cb, ρb, D)
 end
 
 # callable structure representing a mode
-struct Mode
-  γ::Float64
-  C::Float64
+struct Mode{T}
+  γ::T
+  C::T
 end
 
 (m::Mode)(z) = m.C * sin(m.γ * -z)

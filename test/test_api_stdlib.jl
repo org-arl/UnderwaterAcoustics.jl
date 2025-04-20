@@ -26,7 +26,7 @@ end
 end
 
 @testitem "env" setup=[PekerisSetup] begin
-  for e ∈ (env, PekerisWaveguide(h=20.0u"m"))
+  for e ∈ (env, UnderwaterEnvironment(bathymetry=20.0u"m"))
     @test e isa UnderwaterEnvironment
     @test UnderwaterAcoustics.is_range_dependent(e) == false
     @test UnderwaterAcoustics.isospeed(e) == true

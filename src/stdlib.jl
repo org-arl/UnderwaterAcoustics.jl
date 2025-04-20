@@ -8,36 +8,7 @@ export SandyGravel, CoarseSand, MediumSand, FineSand, VeryFineSand, ClayeySand
 export CoarseSilt, SandySilt, Silt, FineSilt, SandyClay, SiltyClay, Clay
 export SeaState0, SeaState1, SeaState2, SeaState3, SeaState4, SeaState5
 export SeaState6, SeaState7, SeaState8, SeaState9, WhiteGaussianNoise
-export RedGaussianNoise, PekerisWaveguide, WindySurface, SampledField
-
-################################################################################
-# standard environments
-
-"""
-    PekerisWaveguide(; kwargs...)
-
-Create a Pekeris waveguide environment with the given parameters. All parameters
-are optional (have default values). Default values are specified below:
-
-- `h`  = water depth (m)
-- `c` = sound speed in water (m/s, computed from temperature and salinity)
-- `ρ` = density of water (kg/m³, computed from temperature and salinity)
-
-Other parameters for `UnderwaterEnvironment` may be specified as well. For
-example, `seabed`, `surface`, `temperature`, `salinity` and `density` may be
-specified.
-
-Returns an underwater environment with the specified parameters to ensure it
-is a Pekeris waveguide.
-"""
-function PekerisWaveguide(; h=100.0, c=nothing, ρ=nothing, kwargs...)
-  UnderwaterEnvironment(;
-    bathymetry = h,
-    soundspeed = c,
-    density = ρ,
-    kwargs...
-  )
-end
+export RedGaussianNoise, WindySurface, SampledField
 
 ################################################################################
 # boundary conditions

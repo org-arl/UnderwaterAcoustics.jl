@@ -28,6 +28,8 @@ A good overview of the Bellhop model can be found at:
 
 ## Example
 
+Here's an example showing results for the PEKERIS test problem from the Kraken technical report:
+
 ```{julia}
 #| echo: false
 #| output: false
@@ -40,23 +42,28 @@ using UnderwaterAcoustics
 using AcousticsToolbox
 using Plots
 
-env = PekerisWaveguide(h=20, seabed=Rock)
-pm = Kraken(env)
+env = UnderwaterEnvironment(
+  bathymetry = 5000,
+  soundspeed = 1500,
+  density = 1000,
+  seabed = FluidBoundary(2000, 2000)
+)
+pm = Kraken(env; chigh=2000)
 
-tx = AcousticSource(0, -5, 1000)
-rx = AcousticReceiver(100, -10)
-modes = arrivals(pm, tx, rx)
+tx = AcousticSource(0, -500, 10)
+rx = AcousticReceiver(200000, -2500)
+modes = arrivals(pm, tx, rx)[1:7]     # first 7 modes
 ```
 ```{julia}
-# plot modes to a depth of 20m
-plot(modes, 20)
+# plot the modes to a depth of 5 km
+plot(modes[1:7], 5000)
 ```
 ```{julia}
-rxs = AcousticReceiverGrid2D(1.0:0.1:100, -20:0.1:0)
+rxs = AcousticReceiverGrid2D(200000:10:220000, -2500)
 x = transmission_loss(pm, tx, rxs)
 
-plot(env; xlims=(0,100))
-plot!(rxs, x)
+plot(200:0.01:220, x; ylims=(70,110), yflip=true, legend=false,
+  xlabel="Range (km)", ylabel="Transmission loss (dB)")
 ```
 
 ## Notes

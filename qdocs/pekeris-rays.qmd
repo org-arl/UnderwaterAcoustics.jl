@@ -39,7 +39,7 @@ default(size=(600, 400))
 using UnderwaterAcoustics
 using Plots
 
-env = PekerisWaveguide(h=20, seabed=SandyClay)
+env = UnderwaterEnvironment(bathymetry=20, seabed=SandyClay)
 pm = PekerisRayTracer(env)
 
 tx = AcousticSource(0, -5, 1000)

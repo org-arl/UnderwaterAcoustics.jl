@@ -50,7 +50,7 @@ The `PekerisRayModel` is now renamed to `PekerisRayTracer`, and takes in maximum
 
 The plotting API no longer takes special keyword arguments such as `sources` and `receivers`. Instead, plot recipes are provided for each of the data types directly. So we can plot sources, receivers, arrivals, etc directly:
 ```julia
-env = PekerisWaveguide(h=20, seabed=SandyClay)
+env = UnderwaterEnvironment(bathymetry=20, seabed=SandyClay)
 pm = PekerisRayTracer(env)
 tx = AcousticSource(0.0, -5.0, 1000.0)
 rx = AcousticReceiver(100.0, -10.0)

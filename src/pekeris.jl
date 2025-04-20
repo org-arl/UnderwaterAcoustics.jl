@@ -237,18 +237,19 @@ function acoustic_field(pm::PekerisModeSolver, tx::AbstractAcousticSource, rx::A
 end
 
 function acoustic_field(pm::PekerisModeSolver, tx::AbstractAcousticSource, rxs::AbstractArray{<:AbstractAcousticReceiver}; mode=:coherent)
-  mode ∈ (:coherent, :incoherent) || error("Unknown mode: $mode")
+  mode ∈ (:coherent, :incoherent) || error("Unknown mode :$mode")
   p1 = location(tx)
   # modes don't depend on the receiver, so we can compute based on any receiver
   modes = arrivals(pm, tx, first(rxs))
   kᵣ = [m.kᵣ for m ∈ modes]
   k² = (2π * frequency(tx) / pm.c)^2
   γ = sqrt.(k² .- kᵣ.^2)
+  a = absorption(frequency(tx), 1.0, pm.S, pm.T, pm.h / 2)
   tmap(rxs) do rx
     p2 = location(rx)
     R = sqrt(abs2(p1.x - p2.x) + abs2(p1.y - p2.y))
     modal_terms = @. sin(γ * -p1.z) * sin(γ * -p2.z) * cis(kᵣ * R) / sqrt(kᵣ)
-    multiplier = cis(-π/4) * sqrt(2 / (π * R))
+    multiplier = cis(-π/4 - sqrt(k²)) * 4π * sqrt(2 / (π * R)) * a ^ R
     if mode === :coherent
       sum(modal_terms) * im / (2 * pm.h) * db2amp(spl(tx)) * multiplier
     else

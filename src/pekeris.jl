@@ -184,7 +184,6 @@ struct PekerisModeSolver{T1,T2,T3,T4,T5,T6,T7} <: AbstractModePropagationModel
     is_constant(env.density) || error("Density must be constant")
     env.seabed isa FluidBoundary || error("Seabed must be a fluid boundary")
     env.surface.c == 0 || error("Surface must be a pressure release boundary")
-    env.seabed.δ == 0 || @warn "Seabed absorption will be ignored"
     h = value(env.bathymetry)
     c = value(env.soundspeed)
     ρ = value(env.density)
@@ -207,20 +206,23 @@ function arrivals(pm::PekerisModeSolver, tx::AbstractAcousticSource, rx::Abstrac
   k₁ = ω / pm.c
   if pm.seabed.c == 0                            # pressure release boundary
     M = floor(Int, k₁ * pm.h / π)
-    m = _mode.(1:M, (1:M) .* (π / pm.h), k₁, R, pm.c)
+    return _mode.(1:M, ω, (1:M) .* (π / pm.h), k₁, pm.c, pm.ρ, pm.seabed.c, pm.seabed.ρ, pm.h)
   elseif isinf(pm.seabed.c)                      # rigid boundary
     M = floor(Int, k₁ * pm.h / π + 0.5)
-    m = _mode.(1:M, ((1:M) .- 0.5) .* (π / pm.h), k₁, R, pm.c)
+    return _mode.(1:M, ω, ((1:M) .- 0.5) .* (π / pm.h), k₁, pm.c, pm.ρ, pm.seabed.c, pm.seabed.ρ, pm.h)
   else                                           # acousto-elastic boundary
     k₂ = ω / pm.seabed.c
-    k₂ < k₁ || return ModeArrival[]
+    if k₂ > k₁
+      # dummy computation only to get the correct type
+      m = _mode(0, ω, 0.0, k₁, pm.c, pm.ρ, pm.seabed.c, pm.seabed.ρ, pm.h)
+      return Vector{typeof(m)}(undef, 0)
+    end
     γgrid = range(0, sqrt(k₁^2 - k₂^2) - sqrt(eps()); length=1000)
     J(γ) = pm.seabed.ρ * γ * cos(γ * pm.h) + pm.ρ * sqrt(k₁^2 - k₂^2 - γ^2) * sin(γ * pm.h)
     ndx = findall(i -> sign(J(γgrid[i+1])) * sign(J(γgrid[i])) < 0, 1:length(γgrid)-1)
     γ = [find_zero(J, (γgrid[i], γgrid[i+1]), Bisection()) for i ∈ ndx]
-    m = _mode.(1:length(γ), ω, γ, k₁, pm.c, pm.ρ, pm.seabed.c, pm.seabed.ρ, pm.h)
+    return _mode.(1:length(γ), ω, γ, k₁, pm.c, pm.ρ, pm.seabed.c, pm.seabed.ρ, pm.h)
   end
-  m
 end
 
 """
@@ -290,6 +292,8 @@ end
 ### helpers
 
 function _group_velocity(ω, γ, kᵣ, c, ρ, cb, ρb, D)
+  cb == 0 && return real(c * c * kᵣ / ω)
+  isinf(cb) && return real(c * c * kᵣ / ω)
   k₁ = ω / c
   kb = ω / cb
   ζ = sqrt(k₁^2 - γ^2 - kb^2)
@@ -303,9 +307,16 @@ function _group_velocity(ω, γ, kᵣ, c, ρ, cb, ρb, D)
   real(1 / (k₁ / (c * kᵣ) - γ / kᵣ * ∂γ))
 end
 
+# callable structure representing a mode
+struct Mode
+  γ::Float64
+  C::Float64
+end
+
+(m::Mode)(z) = m.C * sin(m.γ * -z)
+
 function _mode(m, ω, γ, k, c, ρ, cb, ρb, D)
   kᵣ = complex(sqrt(k^2 - γ^2))
-  v = _group_velocity(ω, γ, kᵣ, c, ρ, cb, ρb, D)
-  ψ(z) = sqrt(2/D) * sin(γ * z)
-  ModeArrival{typeof(kᵣ),typeof(ψ),typeof(v)}(m, kᵣ, ψ, v)
+  v = m > 0 ? _group_velocity(ω, γ, kᵣ, c, ρ, cb, ρb, D) : 0.0
+  ModeArrival(m, kᵣ, Mode(γ, sqrt(2/D)), v)
 end

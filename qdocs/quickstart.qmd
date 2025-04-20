@@ -15,7 +15,6 @@ default(size=(600, 400))
 ## Propagation modeling
 
 Let's get started:
-
 ```{julia}
 using UnderwaterAcoustics
 using Plots
@@ -24,13 +23,11 @@ using Plots
 ### Creating an environmental description
 
 We typically start with an environmental description:
-
 ```{julia}
 env = UnderwaterEnvironment()
 ```
 
 If the defaults don't suit our needs, we can customize the environment. For example, if we wanted an environment with 20 m water depth, sandy-clay seabed, and a smooth sound speed profile with 1500 m/s near the surface, 1490 m/s at 10 m depth, and 1520 m/s near the seabed, we could define:
-
 ```{julia}
 env = UnderwaterEnvironment(
   bathymetry = 20.0,
@@ -40,21 +37,18 @@ env = UnderwaterEnvironment(
 ```
 
 If we have `Plots.jl` installed, we can use plot recipes to plot the environment or the sound speed profile. For example:
-
 ```{julia}
 plot(env.soundspeed)
 ```
 
-We could also use a convenience constructor `PekerisWaveguide()` to quickly construct a range-independent iso-velocity environment:
-
+Let us construct a range-independent iso-velocity environment with water depth of 20 m:
 ```{julia}
-env = PekerisWaveguide(h=20, seabed=SandyClay)
+env = UnderwaterEnvironment(bathymetry=20, seabed=SandyClay)
 ```
 
 ### Selecting a propagation model
 
 Once we have an environment, we need to select a propagation model. Since we have a range-independent iso-velocity environment, we can use the `PekerisRayTracer`:
-
 ```{julia}
 pm = PekerisRayTracer(env)
 ```
@@ -66,21 +60,17 @@ We can get a list of all available propagation models by calling `models()`, and
 ### Setting up transmitters and receivers
 
 Next, we need a source and a receiver:
-
 ```{julia}
 tx = AcousticSource(0.0, -5.0, 1000.0)
 ```
-
 ```{julia}
 rx = AcousticReceiver(100.0, -10.0)
 ```
 
 For improved readability, positions can be specified as tuples or named tuples, and the API fully supports `Unitful.jl`:
-
 ```{julia}
 tx = AcousticSource((x=0u"m", z=-5u"m"), 1u"kHz")
 ```
-
 ```{julia}
 rx = AcousticReceiver(100u"m", -10u"m")
 ```
@@ -94,13 +84,11 @@ We just defined an omnidirectional 1 kHz transmitter `tx` at a depth of 5 m at t
 ### Running the model
 
 Now that we have an environment, a propagation model, a transmitter and a receiver, we can modeling. First, we ask for all ray arrivals (eigenrays) between the transmitter and receiver:
-
 ```{julia}
 rays = arrivals(pm, tx, rx)
 ```
 
 For each eigenray, this shows us the launch angle, number of surface bounces, number of bottom bounces, arrival angle, travel time, transmission loss along that ray, and phase change. The last "↝" symbol indicates that the complete ray path is also available. We can plot the ray paths:
-
 ```{julia}
 plot(env; xlims=(-10,110))
 plot!(tx)
@@ -111,23 +99,19 @@ plot!(rays)
 The red star is the transmitter and the blue circle is the receiver. The stronger eigenrays are shown in blue, while the weaker ones are shown in red.
 
 Often, we are interested in the arrival structure at a receiver. We generate an impulse response sampled at 48 kSa/s and plot it:
-
 ```{julia}
 plot(impulse_response(pm, tx, rx, 48000))
 ```
 
 The first arrival is at 0 ms, as the impulse response is generated with timing relative to the first arrival. If we wanted timings relative to the transmission time, we can set keyword argument `abstime` to `true`:
-
 ```{julia}
 plot(impulse_response(pm, tx, rx, 48000; abstime=true))
 ```
 
 We can also get the complex acoustic field or the transmission loss in dB:
-
 ```{julia}
 acoustic_field(pm, tx, rx)
 ```
-
 ```{julia}
 transmission_loss(pm, tx, rx)
 ```
@@ -135,12 +119,10 @@ transmission_loss(pm, tx, rx)
 We can also pass in arrays of receivers, if we want to compute transmission loss at many locations simultaneously. Some models are able to compute transmission loss on a Cartesian grid very efficiently. This is useful to plot transmission loss as a function of space.
 
 To define a 1000×200 Cartesian grid with 0.1 m spacing and compute the transmission loss over the grid:
-
 ```{julia}
 rxs = AcousticReceiverGrid2D(1.0:0.1:100, -20:0.1:0)
 x = transmission_loss(pm, tx, rxs)
 ```
-
 ```{julia}
 plot(env; xlims=(0,100))
 plot!(rxs, x)
@@ -151,14 +133,12 @@ plot!(rxs, x)
 ### Simulating a transmission
 
 Once we have a propagation model, we can setup a channel simulation. Let's say we had a 10 kHz source transmitting at a source level of 170 dB re 1 µPa @ 1m and we wanted to run our simulations at 192 kSa/s:
-
 ```{julia}
 tx = AcousticSource((x=0u"m", z=-5u"m"), 10u"kHz"; spl=170)
 ch = channel(pm, tx, rx, 192000)
 ```
 
 This channel accepts one input acoustic channel and yields one output acoustic channel. To transmit a signal through the channel, we create a windowed pulse using `SignalAnalysis.jl` and `transmit()` it through the channel `ch`:
-
 ```{julia}
 using SignalAnalysis
 
@@ -177,7 +157,6 @@ The received signal is scaled to be in µPa, assuming the source level of the tr
 ### Adding noise
 
 We can also simulate channels with noise. For example, if we wanted red Gaussian noise with standard deviation `σ = 0.5` Pa, we can specify that when generating the channel:
-
 ```{julia}
 ch = channel(pm, tx, rx, 192000; noise=RedGaussianNoise(0.5e6))
 y = transmit(ch, x)
@@ -190,7 +169,6 @@ plot(
 ```
 
 We can see the noise in the timeseries. We can see the `1/f²` variation (red Gaussian noise) in the power spectral density superimposed on the 10 kHz peak from the transmitted pulse:
-
 ```{julia}
 psd(y)
 ```

@@ -19,7 +19,6 @@ import UnderwaterAcoustics
 #| echo: false
 #| output: asis
 jdoc(UnderwaterAcoustics, :UnderwaterEnvironment)
-jdoc(UnderwaterAcoustics, :PekerisWaveguide)
 jdoc(UnderwaterAcoustics, :is_range_dependent, 2)
 jdoc(UnderwaterAcoustics, :isospeed)
 ```

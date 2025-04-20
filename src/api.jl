@@ -89,7 +89,7 @@ struct ModeArrival{T1,T2,T3} <: AbstractAcousticArrival
 end
 
 function Base.show(io::IO, a::ModeArrival)
-  @printf(io, "%3d: %6.3f rad/m, %7.2f m/s", a.m, a.kᵣ, a.v)
+  @printf(io, "%8s: kᵣ = %s rad/m (%0.2f m/s)", "mode $(a.m)", string(round(ComplexF64(a.kᵣ); digits=6)), a.v)
 end
 
 """

@@ -222,12 +222,17 @@ end
   @series begin
     seriestype := :line
     color := :lightgray
-    linestyle := :dash
+    linestyle := :dot
     [1, 1], [0, -D]
   end
   @series begin
     seriestype := :path
-    1 .+ m.ψ.(-zr), zr
+    1 .+ real(m.ψ.(zr)), zr
+  end
+  @series begin
+    seriestype := :path
+    linestyle := :dash
+    1 .+ imag(m.ψ.(zr)), zr
   end
 end
 
@@ -243,12 +248,17 @@ end
     @series begin
       seriestype := :line
       color := :lightgray
-      linestyle := :dash
+      linestyle := :dot
       [i, i], [0, -D]
     end
     @series begin
       seriestype := :path
-      i .+ m[i].ψ.(-zr), zr
+      i .+ real(m[i].ψ.(zr)), zr
+    end
+    @series begin
+      seriestype := :path
+      linestyle := :dash
+      i .+ imag(m[i].ψ.(zr)), zr
     end
   end
 end

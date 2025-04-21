@@ -219,7 +219,7 @@ function arrivals(pm::PekerisModeSolver, tx::AbstractAcousticSource, rx::Abstrac
     end
     γgrid = range(0, sqrt(k₁^2 - k₂^2) - sqrt(eps()); length=1000)
     ndx = findall(i -> sign(_arrivals_cost(γgrid[i+1], (pm, k₁, k₂))) * sign(_arrivals_cost(γgrid[i], (pm, k₁, k₂))) < 0, 1:length(γgrid)-1)
-    γ = [solve(IntervalNonlinearProblem(_arrivals_cost, (γgrid[i], γgrid[i+1]), (pm, k₁, k₂))).u for i ∈ ndx]
+    γ = [solve(IntervalNonlinearProblem{false}(_arrivals_cost, (γgrid[i], γgrid[i+1]), (pm, k₁, k₂))).u for i ∈ ndx]
     return _mode.(1:length(γ), ω, γ, k₁, pm.c, pm.ρ, pm.seabed.c, pm.seabed.ρ, pm.h)
   end
 end

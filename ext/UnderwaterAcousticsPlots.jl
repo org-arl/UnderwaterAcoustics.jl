@@ -225,14 +225,17 @@ end
     linestyle := :dot
     [1, 1], [0, -D]
   end
+  x = m.ψ.(zr)
+  s = max(maximum(abs, real(x)), maximum(abs, imag(x)))
+  s > 0 && (s = 0.25/s)
   @series begin
     seriestype := :path
-    1 .+ real(m.ψ.(zr)), zr
+    1 .+ s * real(x), zr
   end
   @series begin
     seriestype := :path
     linestyle := :dash
-    1 .+ imag(m.ψ.(zr)), zr
+    1 .+ s * imag(x), zr
   end
 end
 
@@ -244,6 +247,12 @@ end
   xguide --> "Mode #"
   yguide --> "z (m)"
   xlims --> (0, n+1)
+  s = mapreduce(min, m) do m1
+    x = m1.ψ.(zr)
+    s = max(maximum(abs, real(x)), maximum(abs, imag(x)))
+    s > 0 && (s = 0.25/s)
+    s
+  end
   for i ∈ 1:n
     @series begin
       seriestype := :line
@@ -251,14 +260,15 @@ end
       linestyle := :dot
       [i, i], [0, -D]
     end
+    x = m[i].ψ.(zr)
     @series begin
       seriestype := :path
-      i .+ real(m[i].ψ.(zr)), zr
+      i .+ s * real(x), zr
     end
     @series begin
       seriestype := :path
       linestyle := :dash
-      i .+ imag(m[i].ψ.(zr)), zr
+      i .+ s * imag(x), zr
     end
   end
 end

@@ -251,42 +251,31 @@ end
   @test length(impulse_response(pm, tx, rx, 8000; ntaps=700, abstime=false)) == 700
 end
 
-# @testitem "pekeris-modes-∂" begin
-#   using DifferentiationInterface
-#   import ForwardDiff, FiniteDifferences, Zygote, Mooncake, Enzyme
-#   fd = AutoFiniteDifferences(fdm=FiniteDifferences.central_fdm(5, 1))
-#   function ℳ₁((D, R, d1, d2, f, c))
-#     env = UnderwaterEnvironment(bathymetry = D, soundspeed = c, seabed = Rock)
-#     pm = PekerisModeSolver(env)
-#     transmission_loss(pm, AcousticSource((x=0.0, z=-d1), f), AcousticReceiver((x=R, z=-d2)))
-#   end
-#   # function ℳ₂((D, R, d1, d2, f, c))
-#   #   env = UnderwaterEnvironment(bathymetry = D, soundspeed = c, seabed = Rock)
-#   #   pm = PekerisModeSolver(env)
-#   #   ir = impulse_response(pm, AcousticSource((x=0.0, z=-d1), f), AcousticReceiver((x=R, z=-d2)), 10000.0; abstime=true)
-#   #   sum(abs2, samples(ir))
-#   # end
-#   x = [20.0, 100.0, 5.0, 10.0, 5000.0, 1500.0]
-#   ∇ℳ₁ = gradient(ℳ₁, fd, x)
-#   # ∇ℳ₂ = gradient(ℳ₂, fd, x)
-#   @test gradient(ℳ₁, AutoForwardDiff(), x) ≈ ∇ℳ₁
-#   @test gradient(ℳ₁, AutoZygote(), x) ≈ ∇ℳ₁
-#   @test gradient(ℳ₁, AutoMooncake(config=nothing), x) ≈ ∇ℳ₁
-#   @test gradient(ℳ₁, AutoEnzyme(), x) ≈ ∇ℳ₁
-#   # @test gradient(ℳ₂, AutoForwardDiff(), x) ≈ ∇ℳ₂
-#   # @test gradient(ℳ₂, AutoZygote(), x) ≈ ∇ℳ₂
-#   # @test gradient(ℳ₂, AutoMooncake(config=nothing), x) ≈ ∇ℳ₂
-#   # @test gradient(ℳ₂, AutoEnzyme(), x) ≈ ∇ℳ₂
-#   x = [25.0, 200.0, 10.0, 8.0, 1000.0, 1540.0]
-#   ∇ℳ₁ = gradient(ℳ₁, fd, x)
-#   # ∇ℳ₂ = gradient(ℳ₂, fd, x)
-#   @test gradient(ℳ₁, AutoForwardDiff(), x) ≈ ∇ℳ₁
-#   @test gradient(ℳ₁, AutoZygote(), x) ≈ ∇ℳ₁
-#   @test gradient(ℳ₁, AutoMooncake(config=nothing), x) ≈ ∇ℳ₁
-#   @test gradient(ℳ₁, AutoEnzyme(), x) ≈ ∇ℳ₁
-#   # @test gradient(ℳ₂, AutoForwardDiff(), x) ≈ ∇ℳ₂
-#   # FIXME: Zygote fails due to mutation in impulse_response()
-#   # @test gradient(ℳ₂, AutoZygote(), x) ≈ ∇ℳ₂
-#   # @test gradient(ℳ₂, AutoMooncake(config=nothing), x) ≈ ∇ℳ₂
-#   # @test gradient(ℳ₂, AutoEnzyme(), x) ≈ ∇ℳ₂
-# end
+@testitem "pekeris-modes-∂" begin
+  using DifferentiationInterface
+  import ForwardDiff, FiniteDifferences
+  fd = AutoFiniteDifferences(fdm=FiniteDifferences.central_fdm(5, 1))
+  function ℳ₁((D, R, d1, d2, f, c))
+    env = UnderwaterEnvironment(bathymetry = D, soundspeed = c, seabed = RigidBoundary)
+    pm = PekerisModeSolver(env)
+    transmission_loss(pm, AcousticSource((x=0.0, z=-d1), f), AcousticReceiver((x=R, z=-d2)))
+  end
+  function ℳ₂((D, R, d1, d2, f, c))
+    env = UnderwaterEnvironment(bathymetry = D, soundspeed = c, seabed = PressureReleaseBoundary)
+    pm = PekerisModeSolver(env)
+    transmission_loss(pm, AcousticSource((x=0.0, z=-d1), f), AcousticReceiver((x=R, z=-d2)))
+  end
+  function ℳ₃((D, R, d1, d2, f, c))
+    env = UnderwaterEnvironment(bathymetry = D, soundspeed = c, seabed = Rock)
+    pm = PekerisModeSolver(env)
+    transmission_loss(pm, AcousticSource((x=0.0, z=-d1), f), AcousticReceiver((x=R, z=-d2)))
+  end
+  x = [20.0, 100.0, 5.0, 10.0, 500.0, 1500.0]
+  @test gradient(ℳ₁, AutoForwardDiff(), x) ≈ gradient(ℳ₁, fd, x)
+  @test gradient(ℳ₂, AutoForwardDiff(), x) ≈ gradient(ℳ₂, fd, x)
+  @test gradient(ℳ₃, AutoForwardDiff(), x) ≈ gradient(ℳ₃, fd, x)
+  x = [25.0, 200.0, 10.0, 8.0, 1000.0, 1540.0]
+  @test gradient(ℳ₁, AutoForwardDiff(), x) ≈ gradient(ℳ₁, fd, x)
+  @test gradient(ℳ₂, AutoForwardDiff(), x) ≈ gradient(ℳ₂, fd, x)
+  @test gradient(ℳ₃, AutoForwardDiff(), x) ≈ gradient(ℳ₃, fd, x)
+end

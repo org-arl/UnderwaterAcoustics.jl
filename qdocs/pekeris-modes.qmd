@@ -10,7 +10,7 @@ engine: julia
 | **Model** | `UnderwaterAcoustics.PekerisModeSolver` |
 | **Description** | Normal mode model for constant depth iso-velocity environments |
 | **Language** | Julia |
-| **Advantages** | Fast, differentiable, multi-threaded |
+| **Advantages** | Fast, differentiable (partially), multi-threaded |
 | **Limitations** | Iso-velocity, range-independent, pressure-release surface, fluid half-space seabed, no seabed absorption (no leaky modes) |
 
 : {tbl-colwidths="[25,75]"}
@@ -24,6 +24,10 @@ jdoc(UnderwaterAcoustics, :PekerisModeSolver)
 
 ::: {.callout-caution title="Experimental"}
 Work in progress. Not benchmarked. Use at your own risk!
+
+**Notes**:
+
+- Differentiability currently works only with `ForwardDiff`, and excludes `impulse_response()`.
 :::
 
 Implementation based on mathematical description in [Theory](#sec-modal-theory) below.

@@ -1,5 +1,5 @@
 import SignalAnalysis: signal
-import Roots: find_zero, Bisection
+import NonlinearSolve: IntervalNonlinearProblem, solve
 import DSP: nextfastfft
 import FFTW: ifft
 
@@ -218,9 +218,8 @@ function arrivals(pm::PekerisModeSolver, tx::AbstractAcousticSource, rx::Abstrac
       return Vector{typeof(m)}(undef, 0)
     end
     γgrid = range(0, sqrt(k₁^2 - k₂^2) - sqrt(eps()); length=1000)
-    J(γ) = pm.seabed.ρ * γ * cos(γ * pm.h) + pm.ρ * sqrt(k₁^2 - k₂^2 - γ^2) * sin(γ * pm.h)
-    ndx = findall(i -> sign(J(γgrid[i+1])) * sign(J(γgrid[i])) < 0, 1:length(γgrid)-1)
-    γ = [find_zero(J, (γgrid[i], γgrid[i+1]), Bisection()) for i ∈ ndx]
+    ndx = findall(i -> sign(_arrivals_cost(γgrid[i+1], (pm, k₁, k₂))) * sign(_arrivals_cost(γgrid[i], (pm, k₁, k₂))) < 0, 1:length(γgrid)-1)
+    γ = [solve(IntervalNonlinearProblem(_arrivals_cost, (γgrid[i], γgrid[i+1]), (pm, k₁, k₂))).u for i ∈ ndx]
     return _mode.(1:length(γ), ω, γ, k₁, pm.c, pm.ρ, pm.seabed.c, pm.seabed.ρ, pm.h)
   end
 end
@@ -327,3 +326,5 @@ function _mode(m, ω, γ, k, c, ρ, cb, ρb, D)
   v = m > 0 ? _group_velocity(ω, γ, kᵣ, c, ρ, cb, ρb, D) : 0.0
   ModeArrival(m, kᵣ, Mode(γ, sqrt(2/D)), v)
 end
+
+_arrivals_cost(γ, (pm, k₁, k₂)) = pm.seabed.ρ * γ * cos(γ * pm.h) + pm.ρ * sqrt(k₁^2 - k₂^2 - γ^2) * sin(γ * pm.h)

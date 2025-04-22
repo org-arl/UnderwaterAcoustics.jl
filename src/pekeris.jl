@@ -163,10 +163,15 @@ end
 #   fluid half-space seabed, no layers, no leaky modes
 
 """
-    PekerisModeSolver(env)
+    PekerisModeSolver(env, nmesh=1000)
 
 A fast differentiable mode propagation model that only supports iso-velocity
 constant depth environments.
+
+`nmesh` is the number of mesh points to use for modal root finding for fluid
+bottom environments. If `nmesh` is too small, the mode solver may miss some
+modes. If `nmesh` is too large, the mode solver may take a long time to
+converge.
 """
 struct PekerisModeSolver{T1,T2,T3,T4,T5,T6,T7} <: AbstractModePropagationModel
   h::T1             # water depth
@@ -176,7 +181,8 @@ struct PekerisModeSolver{T1,T2,T3,T4,T5,T6,T7} <: AbstractModePropagationModel
   S::T5             # salinity
   seabed::T6        # seabed properties
   surface::T7       # surface properties
-  function PekerisModeSolver(env)
+  nmesh::Int        # number of mesh points for mode computation
+  function PekerisModeSolver(env, nmesh=1000)
     isospeed(env) || error("Environment must be iso-velocity")
     is_range_dependent(env) && error("Environment must be range independent")
     is_constant(env.temperature) || error("Temperature must be constant")
@@ -184,13 +190,14 @@ struct PekerisModeSolver{T1,T2,T3,T4,T5,T6,T7} <: AbstractModePropagationModel
     is_constant(env.density) || error("Density must be constant")
     env.seabed isa FluidBoundary || error("Seabed must be a fluid boundary")
     env.surface.c == 0 || error("Surface must be a pressure release boundary")
+    nmesh > 2 || error("A minimum of 2 mesh points are required")
     h = value(env.bathymetry)
     c = value(env.soundspeed)
     ρ = value(env.density)
     T = value(env.temperature)
     S = value(env.salinity)
     ps = (h, c, ρ, T, S, env.seabed, env.surface)
-    new{typeof.(ps)...}(ps...)
+    new{typeof.(ps)...}(ps..., nmesh)
   end
 end
 
@@ -217,7 +224,7 @@ function arrivals(pm::PekerisModeSolver, tx::AbstractAcousticSource, rx::Abstrac
       m = _mode(0, ω, 0.0, k₁, pm.c, pm.ρ, pm.seabed.c, pm.seabed.ρ, pm.h)
       return Vector{typeof(m)}(undef, 0)
     end
-    γgrid = range(0, sqrt(k₁^2 - k₂^2) - sqrt(eps()); length=1000)
+    γgrid = range(0, sqrt(k₁^2 - k₂^2) - sqrt(eps()); length=pm.nmesh)
     ndx = findall(i -> sign(_arrivals_cost(γgrid[i+1], (pm, k₁, k₂))) * sign(_arrivals_cost(γgrid[i], (pm, k₁, k₂))) < 0, 1:length(γgrid)-1)
     γ = [solve(IntervalNonlinearProblem{false}(_arrivals_cost, (γgrid[i], γgrid[i+1]), (pm, k₁, k₂))).u for i ∈ ndx]
     return _mode.(1:length(γ), ω, γ, k₁, pm.c, pm.ρ, pm.seabed.c, pm.seabed.ρ, pm.h)

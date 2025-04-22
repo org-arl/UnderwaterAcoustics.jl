@@ -138,7 +138,6 @@ end
 end
 
 @testitem "field" begin
-  import UnderwaterAcoustics: is_range_dependent
   fld = SampledField([0.0, 10.0, 0.0]; x=[0.0, 10.0, 20.0])
   @test is_range_dependent(fld)
   @test fld(0.0) == 0.0
@@ -190,5 +189,60 @@ end
 @testitem "noise" begin
   @test WhiteGaussianNoise <: UnderwaterAcoustics.AbstractNoiseModel
   @test RedGaussianNoise <: UnderwaterAcoustics.AbstractNoiseModel
-  # TODO: add tests to check that noise models are working as expected
+  @test WhiteGaussianNoise(1.0) == WhiteGaussianNoise(0.0, 2.0)
+  @test WhiteGaussianNoise(1f0) == WhiteGaussianNoise(0f0, 2f0)
+  x = rand(WhiteGaussianNoise(1.0), 100; fs=1)
+  @test x isa AbstractVector{Float64}
+  @test length(x) == 100
+  x = rand(WhiteGaussianNoise(1f0), 100; fs=1)
+  @test x isa AbstractVector{Float32}
+  @test length(x) == 100
+  x = rand(WhiteGaussianNoise(0.0, 2.0), 100; fs=1)
+  @test x isa AbstractVector{Float64}
+  @test length(x) == 100
+  x = rand(WhiteGaussianNoise(0f0, 2f0), 100; fs=1)
+  @test x isa AbstractVector{Float32}
+  @test length(x) == 100
+  x = rand(RedGaussianNoise(1.0), 100; fs=1)
+  @test x isa AbstractVector{Float64}
+  @test length(x) == 100
+  x = rand(RedGaussianNoise(1f0), 100; fs=1)
+  @test x isa AbstractVector{Float32}
+  @test length(x) == 100
+  x = rand(WhiteGaussianNoise(1.0), 100, 2; fs=1)
+  @test x isa AbstractMatrix{Float64}
+  @test size(x) == (100, 2)
+  x = rand(WhiteGaussianNoise(1f0), 100, 2; fs=1)
+  @test x isa AbstractMatrix{Float32}
+  @test size(x) == (100, 2)
+  x = rand(WhiteGaussianNoise(0.0, 2.0), 100, 2; fs=1)
+  @test x isa AbstractMatrix{Float64}
+  @test size(x) == (100, 2)
+  x = rand(WhiteGaussianNoise(0f0, 2f0), 100, 2; fs=1)
+  @test x isa AbstractMatrix{Float32}
+  @test size(x) == (100, 2)
+  x = rand(RedGaussianNoise(1.0), 100, 2; fs=1)
+  @test x isa AbstractMatrix{Float64}
+  @test size(x) == (100, 2)
+  x = rand(RedGaussianNoise(1f0), 100, 2; fs=1)
+  @test x isa AbstractMatrix{Float32}
+  @test size(x) == (100, 2)
+  x = rand(WhiteGaussianNoise(1.0), (100, 2); fs=1)
+  @test x isa AbstractMatrix{Float64}
+  @test size(x) == (100, 2)
+  x = rand(WhiteGaussianNoise(1f0), (100, 2); fs=1)
+  @test x isa AbstractMatrix{Float32}
+  @test size(x) == (100, 2)
+  x = rand(WhiteGaussianNoise(0.0, 2.0), (100, 2); fs=1)
+  @test x isa AbstractMatrix{Float64}
+  @test size(x) == (100, 2)
+  x = rand(WhiteGaussianNoise(0f0, 2f0), (100, 2); fs=1)
+  @test x isa AbstractMatrix{Float32}
+  @test size(x) == (100, 2)
+  x = rand(RedGaussianNoise(1.0), (100, 2); fs=1)
+  @test x isa AbstractMatrix{Float64}
+  @test size(x) == (100, 2)
+  x = rand(RedGaussianNoise(1f0), (100, 2); fs=1)
+  @test x isa AbstractMatrix{Float32}
+  @test size(x) == (100, 2)
 end

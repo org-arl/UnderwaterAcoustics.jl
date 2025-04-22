@@ -1,4 +1,4 @@
-import Random: default_rng
+import Random: default_rng, AbstractRNG
 import Logging: NullLogger, with_logger
 import InteractiveUtils: subtypes
 import SignalAnalysis: amp2db, SampledSignal, samples, signal, framerate, db2amp
@@ -228,11 +228,11 @@ function transmit(ch::SampledPassbandChannel, x; txs=:, rxs=:, abstime=false, no
   end
   # add noise
   if isanalytic(x)
-    noisy && ch.noise !== nothing && (ȳ .+= analytic(rand(ch.noise, size(ȳ), fs)))
+    noisy && ch.noise !== nothing && (ȳ .+= analytic(rand(ch.noise, size(ȳ); fs)))
     signal(ȳ, fs)
   else
     y = real(ȳ)
-    noisy && ch.noise !== nothing && (y .+= rand(ch.noise, size(y), fs))
+    noisy && ch.noise !== nothing && (y .+= rand(ch.noise, size(y); fs))
     signal(y, fs)
   end
 end
@@ -512,13 +512,26 @@ Superclass for all noise models.
 abstract type AbstractNoiseModel end
 
 """
-    rand([rng::AbstractRNG, ] noise::AbstractNoiseModel, nsamples, fs)
+    rand([rng::AbstractRNG, ] noise::AbstractNoiseModel, nsamples; fs)
+    rand([rng::AbstractRNG, ] noise::AbstractNoiseModel, nsamples, nchannels; fs)
 
 Generate random noise samples from the noise model `noise` with the specified
-size `nsamples` (2-tuple for multichannel noise). The noise is returned as a
-signal sampled at `fs`. The optional `rng` argument specifies the random number
-generator to use.
+size `nsamples` (can be a 2-tuple for multichannel noise). The noise is returned
+as a signal sampled at `fs`. The optional `rng` argument specifies the random
+number generator to use.
 """
-function Base.rand(noise::AbstractNoiseModel, nsamples, fs)
-  Base.rand(default_rng(), noise, nsamples, fs)
+function Base.rand(noise::AbstractNoiseModel, nsamples::Integer; fs)
+  Base.rand(default_rng(), noise, nsamples; fs)
+end
+
+function Base.rand(noise::AbstractNoiseModel, nsamples::Integer, nch::Integer; fs)
+  Base.rand(default_rng(), noise, nsamples, nch; fs)
+end
+
+function Base.rand(noise::AbstractNoiseModel, nsamples::NTuple{2,Int64}; fs)
+  rand(default_rng(), noise, nsamples[1], nsamples[2]; fs)
+end
+
+function Base.rand(rng::AbstractRNG, noise::AbstractNoiseModel, nsamples::NTuple{2,Int64}; fs)
+  rand(rng, noise, nsamples[1], nsamples[2]; fs)
 end

@@ -148,9 +148,9 @@ function transmit(ch::BasebandReplayChannel, x; txs=:, rxs=:, abstime=false, noi
   # add noise
   if noisy && ch.noise !== nothing
     if input_was_analytic
-      y .+= analytic(rand(ch.noise, size(y), fs))
+      y .+= analytic(rand(ch.noise, size(y); fs))
     else
-      y .+= rand(ch.noise, size(y), fs)
+      y .+= rand(ch.noise, size(y); fs)
     end
   end
   y

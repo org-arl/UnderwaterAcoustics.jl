@@ -138,9 +138,14 @@ function WhiteGaussianNoise(psd, fs)
   WhiteGaussianNoise(db2amp(psd) * sqrt(fs / 2))
 end
 
-function Base.rand(rng::AbstractRNG, noise::WhiteGaussianNoise, nsamples, fs)
+function Base.rand(rng::AbstractRNG, noise::WhiteGaussianNoise, nsamples::Integer; fs)
   fs = in_units(u"Hz", fs)
-  signal(randn(rng, nsamples) .* noise.σ, fs)
+  signal(randn(rng, typeof(noise.σ), nsamples) .* noise.σ, fs)
+end
+
+function Base.rand(rng::AbstractRNG, noise::WhiteGaussianNoise, nsamples::Integer, nch::Integer; fs)
+  fs = in_units(u"Hz", fs)
+  signal(randn(rng, typeof(noise.σ), nsamples, nch) .* noise.σ, fs)
 end
 
 """
@@ -157,16 +162,17 @@ struct RedGaussianNoise{T<:AbstractFloat} <: AbstractNoiseModel
   end
 end
 
-function Base.rand(rng::AbstractRNG, noise::RedGaussianNoise, nsamples, fs)
+function Base.rand(rng::AbstractRNG, noise::RedGaussianNoise, nsamples::Integer; fs)
   fs = in_units(u"Hz", fs)
-  if length(nsamples) == 1
-    signal(rand(rng, RedGaussian(σ=noise.σ, n=nsamples[1])), fs)
-  else
-    x = mapreduce(hcat, 1:nsamples[2]) do _
-      rand(rng, RedGaussian(σ=noise.σ, n=nsamples[1]))
-    end
-    signal(x, fs)
+  signal(rand(rng, RedGaussian(σ=noise.σ, n=nsamples[1])), fs)
+end
+
+function Base.rand(rng::AbstractRNG, noise::RedGaussianNoise, nsamples::Integer, nch::Integer; fs)
+  fs = in_units(u"Hz", fs)
+  x = mapreduce(hcat, 1:nch) do _
+    rand(rng, RedGaussian(σ=noise.σ, n=nsamples))
   end
+  signal(x, fs)
 end
 
 ################################################################################

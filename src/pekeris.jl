@@ -98,17 +98,7 @@ function impulse_response(pm::AbstractRayPropagationModel, tx::AbstractAcousticS
   t0, tmax = extrema(a -> a.t, arr)
   abstime && (t0 = zero(t0))
   n = something(ntaps, ceil(Int, (tmax - t0) * fs) + 1)
-  x = zeros(T, n)
-  for a ∈ arr
-    # allocate arrival energy to 2 nearest samples
-    t = (a.t - t0) * fs + 1
-    t̄ = floor(Int, t)
-    α = sqrt(t - t̄)
-    β = sqrt(1 - t + t̄)
-    t̄ ≤ n && (x[t̄] += β * a.ϕ)
-    t̄ < n && (x[t̄+1] += α * a.ϕ)
-  end
-  signal(x, fs)
+  signal(_arr2ir([a.t for a ∈ arr], [a.ϕ for a ∈ arr]; T, t0, fs, n), fs)
 end
 
 ### helpers
@@ -117,6 +107,21 @@ _phasortype(::Type{RayArrival{T1,T2,T3,T4,T5}}) where {T1,T2,T3,T4,T5} = Complex
 
 # complex ForwardDiff friendly version of x^n
 _ipow(x, n::Int) = prod(x for _ ∈ 1:n)
+
+# Create an array of length n and type T with ϕs values at times ts, sampled at fs
+# and time origin t0. Times ts need not correspond to integer samples.
+function _arr2ir(ts, ϕs; T, t0, fs, n)
+  x = zeros(T, n)
+  for i ∈ eachindex(ts)
+    # allocate arrival energy to 2 nearest samples
+    t = (ts[i] - t0) * fs + 1
+    t̄ = floor(Int, t)
+    α, β = sincospi(0.5 * (t - t̄))
+    t̄ ≤ n && (x[t̄] += β * ϕs[i])
+    t̄ < n && (x[t̄+1] += α * ϕs[i])
+  end
+  x
+end
 
 function _arrival(j, pm, R, R², d1, d2, f, p1=missing, p2=missing)
   upward = iseven(j)

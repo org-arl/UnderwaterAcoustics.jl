@@ -6,7 +6,7 @@ import SignalAnalysis: nchannels, isanalytic, analytic, filt
 import Printf: @printf
 
 export UnderwaterEnvironment, transmission_loss, acoustic_field, arrivals, models
-export impulse_response, channel, transmit, spl, frequency, location, samples
+export impulse_response, channel, transmit, spl, frequency, location, samples, isospeed
 export AcousticSource, AcousticReceiver, AcousticReceiverGrid2D, AcousticReceiverGrid3D
 
 ###############################################################################
@@ -34,7 +34,7 @@ abstract type AbstractModePropagationModel <: AbstractPropagationModel end
 Return a list of all available propagation models. If `mtype` is specified,
 return only models of that type.
 """
-function models(mtype::Type{<:AbstractPropagationModel}=AbstractPropagationModel)
+function models(mtype::Type{<:AbstractPropagationModel}=AbstractPropagationModel)::Vector{Type{<:AbstractPropagationModel}}
   isabstracttype(mtype) || return Type{<:AbstractPropagationModel}[mtype]
   mapreduce(models, vcat, subtypes(mtype); init=Type{<:AbstractPropagationModel}[])
 end

@@ -1,11 +1,11 @@
 using TestItems
 
 @testitem "pekeris-rays-arrivals+ir" begin
-  env = UnderwaterEnvironment(bathymetry = 20.0u"m", temperature = 27.0u"°C", salinity = 35.0u"ppt", seabed = SandySilt)
-  pm = PekerisRayTracer(env, 3)
-  tx = AcousticSource((x=0.0, z=-5.0), 1000.0)
-  rx = AcousticReceiver((x=100.0, z=-10.0))
-  arr = arrivals(pm, tx, rx)
+  env = @inferred UnderwaterEnvironment(bathymetry = 20.0u"m", temperature = 27.0u"°C", salinity = 35.0u"ppt", seabed = SandySilt)
+  pm = @inferred PekerisRayTracer(env, 3)
+  tx = @inferred AcousticSource((x=0.0, z=-5.0), 1000.0)
+  rx = @inferred AcousticReceiver((x=100.0, z=-10.0))
+  arr = @inferred arrivals(pm, tx, rx)
   @test arr isa AbstractArray{<:UnderwaterAcoustics.RayArrival}
   @test length(arr) == 7
   @test arr[1].t ≈ 0.0650 atol=0.0001
@@ -21,8 +21,8 @@ using TestItems
   @test all([arr[j].path[1] == (x=0.0, y=0.0, z=-5.0) for j ∈ 1:7])
   @test all([arr[j].path[end] == (x=100.0, y=0.0, z=-10.0) for j ∈ 1:7])
   @test all([length(arr[j].path) == arr[j].ns + arr[j].nb + 2 for j ∈ 1:7])
-  ir1 = impulse_response(pm, tx, rx, 10000.0; abstime=false)
-  ir2 = impulse_response(pm, tx, rx, 10000.0; abstime=true)
+  ir1 = @inferred impulse_response(pm, tx, rx, 10000.0; abstime=false)
+  ir2 = @inferred impulse_response(pm, tx, rx, 10000.0; abstime=true)
   @test ir1 isa AbstractVector{<:Complex}
   @test ir2 isa AbstractVector{<:Complex}
   @test length(ir2) ≈ length(ir1) + round(Int, 10000.0 * arr[1].t) atol=1
@@ -36,52 +36,52 @@ using TestItems
 end
 
 @testitem "pekeris-rays-field+tl" begin
-  env = UnderwaterEnvironment(bathymetry = 20.0u"m", soundspeed = 1500.0u"m/s",
+  env = @inferred UnderwaterEnvironment(bathymetry = 20.0u"m", soundspeed = 1500.0u"m/s",
     seabed = FluidBoundary(water_density(), 1500.0u"m/s", 0.0))  # non-reflecting
-  pm = PekerisRayTracer(env, 1)
+  pm = @inferred PekerisRayTracer(env, 1)
   d = (√1209.0)/4.0
-  x = acoustic_field(pm, AcousticSource((x=0.0, z=-d), 1000.0), AcousticReceiver((x=100.0, z=-d)))
+  x = @inferred acoustic_field(pm, AcousticSource((x=0.0, z=-d), 1000.0), AcousticReceiver((x=100.0, z=-d)))
   @test x isa Complex
   @test abs(x) ≈ 0.0 atol=0.0002
-  x′ = acoustic_field(pm, AcousticSource((x=0.0, z=-d), 1000.0), AcousticReceiver((x=100.0, z=-d)); mode=:incoherent)
+  x′ = @inferred acoustic_field(pm, AcousticSource((x=0.0, z=-d), 1000.0), AcousticReceiver((x=100.0, z=-d)); mode=:incoherent)
   @test x′ isa Complex
   @test imag(x′) == 0.0
   @test abs(x′) > 1/100.0
   d = (√2409.0)/8.0
-  x = acoustic_field(pm, AcousticSource((x=0.0, z=-d), 1000.0), AcousticReceiver((x=100.0, z=-d)))
+  x = @inferred acoustic_field(pm, AcousticSource((x=0.0, z=-d), 1000.0), AcousticReceiver((x=100.0, z=-d)))
   @test abs(x) > abs(x′)
-  y = transmission_loss(pm, AcousticSource((x=0.0, z=-d), 1000.0), AcousticReceiver((x=100.0, z=-d)))
+  y = @inferred transmission_loss(pm, AcousticSource((x=0.0, z=-d), 1000.0), AcousticReceiver((x=100.0, z=-d)))
   @test -10 * log10(abs2(x)) ≈ y atol=0.1
-  x = acoustic_field(pm, AcousticSource((x=0.0, z=-d), 1000.0), AcousticReceiver((x=100.0, z=-d)); mode=:incoherent)
+  x = @inferred acoustic_field(pm, AcousticSource((x=0.0, z=-d), 1000.0), AcousticReceiver((x=100.0, z=-d)); mode=:incoherent)
   @test abs(x) ≈ abs(x′) atol=0.0001
-  y = transmission_loss(pm, AcousticSource((x=0.0, z=-d), 1000.0), AcousticReceiver((x=100.0, z=-d)); mode=:incoherent)
+  y = @inferred transmission_loss(pm, AcousticSource((x=0.0, z=-d), 1000.0), AcousticReceiver((x=100.0, z=-d)); mode=:incoherent)
   @test -10 * log10(abs2(x)) ≈ y atol=0.1
-  tx = AcousticSource((x=0.0, z=-5.0), 1000.0)
-  x1 = acoustic_field(pm, tx, AcousticReceiver((x=100.0, z=-5.0)))
-  x2 = acoustic_field(pm, tx, AcousticReceiver((x=100.0, z=-10.0)))
-  x3 = acoustic_field(pm, tx, AcousticReceiver((x=100.0, z=-15.0)))
-  x = acoustic_field(pm, tx, [AcousticReceiver((x=100.0, z=-d)) for d ∈ 5.0:5.0:15.0])
+  tx = @inferred AcousticSource((x=0.0, z=-5.0), 1000.0)
+  x1 = @inferred acoustic_field(pm, tx, AcousticReceiver((x=100.0, z=-5.0)))
+  x2 = @inferred acoustic_field(pm, tx, AcousticReceiver((x=100.0, z=-10.0)))
+  x3 = @inferred acoustic_field(pm, tx, AcousticReceiver((x=100.0, z=-15.0)))
+  x = @inferred acoustic_field(pm, tx, [AcousticReceiver((x=100.0, z=-d)) for d ∈ 5.0:5.0:15.0])
   @test x isa AbstractVector
   @test [x1, x2, x3] == x
-  x = acoustic_field(pm, tx, AcousticReceiverGrid2D(100.0:100.0, -5.0:-5.0:-15.0))
+  x = @inferred acoustic_field(pm, tx, AcousticReceiverGrid2D(100.0:100.0, -5.0:-5.0:-15.0))
   @test x isa AbstractMatrix
   @test size(x) == (1, 3)
   @test [x1 x2 x3] == x
-  x = acoustic_field(pm, tx, AcousticReceiverGrid2D(100.0:10.0:120.0, -5.0:-5.0:-15.0))
+  x = @inferred acoustic_field(pm, tx, AcousticReceiverGrid2D(100.0:10.0:120.0, -5.0:-5.0:-15.0))
   @test x isa AbstractMatrix
   @test size(x) == (3, 3)
   @test [x1, x2, x3] == x[1,:]
-  x1 = transmission_loss(pm, tx, AcousticReceiver(100.0, -5.0))
-  x2 = transmission_loss(pm, tx, AcousticReceiver(100.0, -10.0))
-  x3 = transmission_loss(pm, tx, AcousticReceiver(100.0, -15.0))
-  x = transmission_loss(pm, tx, [AcousticReceiver(100.0, -d) for d ∈ 5.0:5.0:15.0])
+  x1 = @inferred transmission_loss(pm, tx, AcousticReceiver(100.0, -5.0))
+  x2 = @inferred transmission_loss(pm, tx, AcousticReceiver(100.0, -10.0))
+  x3 = @inferred transmission_loss(pm, tx, AcousticReceiver(100.0, -15.0))
+  x = @inferred transmission_loss(pm, tx, [AcousticReceiver(100.0, -d) for d ∈ 5.0:5.0:15.0])
   @test x isa AbstractVector
   @test [x1, x2, x3] == x
-  x = transmission_loss(pm, tx, AcousticReceiverGrid2D(100.0:100.0, -5.0:-5.0:-15.0))
+  x = @inferred transmission_loss(pm, tx, AcousticReceiverGrid2D(100.0:100.0, -5.0:-5.0:-15.0))
   @test x isa AbstractMatrix
   @test size(x) == (1, 3)
   @test [x1 x2 x3] == x
-  x = transmission_loss(pm, tx, AcousticReceiverGrid2D(100.0:10.0:120.0, -5.0:-5.0:-15.0))
+  x = @inferred transmission_loss(pm, tx, AcousticReceiverGrid2D(100.0:10.0:120.0, -5.0:-5.0:-15.0))
   @test x isa AbstractMatrix
   @test size(x) == (3, 3)
   @test [x1, x2, x3] == x[1,:]
@@ -129,16 +129,16 @@ end
 end
 
 @testitem "pekeris-modes-arrivals+tl" begin
-  env = UnderwaterEnvironment(
+  env = @inferred UnderwaterEnvironment(
     bathymetry = 5000,
     soundspeed = 1500,
     density = 1000,
     seabed = FluidBoundary(2000, 2000)
   )
-  pm = PekerisModeSolver(env)
-  tx = AcousticSource(0, -500, 10)
-  rx = AcousticReceiver(200000, -2500)
-  m = arrivals(pm, tx, rx)
+  pm = @inferred PekerisModeSolver(env)
+  tx = @inferred AcousticSource(0, -500, 10)
+  rx = @inferred AcousticReceiver(200000, -2500)
+  m = @inferred arrivals(pm, tx, rx)
   @test m isa Vector{<:UnderwaterAcoustics.ModeArrival}
   @test length(m) == 44
   k = [0.04188332253060325,  0.04186958032482773,  0.04184666447436872,  0.041814556737327056,
@@ -165,8 +165,8 @@ end
        1256.367558960934,  1241.6113298892863, 1226.315020091816,  1210.4831113878572,
        1194.142277997334,  1177.3795592307317, 1160.4981933682222, 1145.3224086789537]
   @test [m1.v for m1 ∈ m] ≈ v
-  rxs = AcousticReceiverGrid2D(200000:1000:220000, -2500)
-  x = transmission_loss(pm, tx, rxs)
+  rxs = @inferred AcousticReceiverGrid2D(200000:1000:220000, -2500)
+  x = @inferred transmission_loss(pm, tx, rxs)
   y = [93.12294364780713, 86.50268953343257, 86.44886663114649,  84.0362459489373,
        88.77243070715846, 86.52199965747599, 97.59552929416957,  89.697653630194,
        92.2097226818825,  95.47903086283519, 88.48249620410911,  87.33789340605915,
@@ -174,48 +174,48 @@ end
       87.12267265661998,  87.92951345976743, 90.81157040842854, 102.8825858777283,
       95.08527791225038]
   @test vec(x) ≈ y
-  env = UnderwaterEnvironment(
+  env = @inferred UnderwaterEnvironment(
     bathymetry = 5000,
     soundspeed = 1500,
     density = 1000,
     seabed = RigidBoundary
   )
-  pm = PekerisModeSolver(env)
-  m = arrivals(pm, tx, rx)
+  pm = @inferred PekerisModeSolver(env)
+  m = @inferred arrivals(pm, tx, rx)
   @test length(m) == 67
   k = [0.041887, 0.041877, 0.041858, 0.04183, 0.041792, 0.041745, 0.041688, 0.041622, 0.041546, 0.04146]
   v = [1499.96, 1499.62, 1498.94, 1497.93, 1496.58, 1494.89, 1492.85, 1490.48, 1487.76, 1484.69]
   @test [m1.kᵣ for m1 ∈ m[1:10]] ≈ k atol=0.01
   @test [m1.v for m1 ∈ m[1:10]] ≈ v atol=0.01
-  x = transmission_loss(pm, tx, rxs)
+  x = @inferred transmission_loss(pm, tx, rxs)
   y = [94.3836, 86.7388, 90.8998, 83.0766, 85.6271, 91.2697, 85.4745, 80.0225, 81.1577, 85.27,
        84.0323, 101.713, 88.4222, 88.8432, 82.2533, 87.7657, 90.7141, 91.4239, 91.3287, 87.339, 86.9366]
   @test vec(x) ≈ y atol=0.001
-  env = UnderwaterEnvironment(
+  env = @inferred UnderwaterEnvironment(
     bathymetry = 5000,
     soundspeed = 1500,
     density = 1000,
     seabed = PressureReleaseBoundary
   )
-  pm = PekerisModeSolver(env)
-  m = arrivals(pm, tx, rx)
+  pm = @inferred PekerisModeSolver(env)
+  m = @inferred arrivals(pm, tx, rx)
   @test length(m) == 66
   k = [0.04188318, 0.0418690, 0.0418454, 0.0418124, 0.0417699, 0.04171791, 0.0416563, 0.0415852, 0.0415044, 0.041413]
   v = [1499.831, 1499.324, 1498.480, 1497.297, 1495.775, 1493.912, 1491.708, 1489.160, 1486.268, 1483.028]
   @test [m1.kᵣ for m1 ∈ m[1:10]] ≈ k atol=0.01
   @test [m1.v for m1 ∈ m[1:10]] ≈ v atol=0.01
-  x = transmission_loss(pm, tx, rxs)
+  x = @inferred transmission_loss(pm, tx, rxs)
   y = [92.4121, 87.5373, 109.99, 84.9219, 91.5823, 94.6702, 89.9848, 90.8624, 92.803, 85.8212, 94.3161, 82.8287, 89.2737, 82.7979, 89.2751, 92.9164, 85.2361, 82.5535, 82.8422, 88.6535, 94.7227]
   @test vec(x) ≈ y atol=0.001
 end
 
 @testitem "pekeris-modes-ir" begin
-  env = UnderwaterEnvironment(bathymetry=100, seabed=SandyGravel)
-  pm = PekerisModeSolver(env)
-  tx = AcousticSource(0, -30, 100)
-  rx = AcousticReceiver(1000, -40)
-  ir1 = impulse_response(pm, tx, rx, 8000; abstime=false)
-  ir2 = impulse_response(pm, tx, rx, 8000; abstime=true)
+  env = @inferred UnderwaterEnvironment(bathymetry=100, seabed=SandyGravel)
+  pm = @inferred PekerisModeSolver(env)
+  tx = @inferred AcousticSource(0, -30, 100)
+  rx = @inferred AcousticReceiver(1000, -40)
+  ir1 = @inferred impulse_response(pm, tx, rx, 8000; abstime=false)
+  ir2 = @inferred impulse_response(pm, tx, rx, 8000; abstime=true)
   @test ir1 isa AbstractVector{<:Complex}
   @test ir2 isa AbstractVector{<:Complex}
   x = abs.(ir2)
@@ -247,8 +247,8 @@ end
   d52 = get_Δt_first5(abs.(ir2))
   @test d51 == [12, 31, 49, 21]
   @test d52 == [12, 31, 49, 21]
-  @test length(impulse_response(pm, tx, rx, 8000; ntaps=4096, abstime=false)) == 4096
-  @test length(impulse_response(pm, tx, rx, 8000; ntaps=700, abstime=false)) == 700
+  @test length(@inferred(impulse_response(pm, tx, rx, 8000; ntaps=4096, abstime=false))) == 4096
+  @test length(@inferred(impulse_response(pm, tx, rx, 8000; ntaps=700, abstime=false))) == 700
 end
 
 @testitem "pekeris-modes-∂" begin

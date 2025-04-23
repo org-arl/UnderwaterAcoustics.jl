@@ -110,8 +110,7 @@ end
   @test gradient(ℳ₁, AutoMooncake(config=nothing), x) ≈ ∇ℳ₁
   @test gradient(ℳ₁, AutoEnzyme(), x) ≈ ∇ℳ₁
   @test gradient(ℳ₂, AutoForwardDiff(), x) ≈ ∇ℳ₂
-  # FIXME: Zygote fails due to mutation in impulse_response()
-  # @test gradient(ℳ₂, AutoZygote(), x) ≈ ∇ℳ₂
+  @test gradient(ℳ₂, AutoZygote(), x) ≈ ∇ℳ₂
   @test gradient(ℳ₂, AutoMooncake(config=nothing), x) ≈ ∇ℳ₂
   @test gradient(ℳ₂, AutoEnzyme(), x) ≈ ∇ℳ₂
   x = [25.0, 200.0, 10.0, 8.0, 1000.0, 1540.0]
@@ -122,8 +121,7 @@ end
   @test gradient(ℳ₁, AutoMooncake(config=nothing), x) ≈ ∇ℳ₁
   @test gradient(ℳ₁, AutoEnzyme(), x) ≈ ∇ℳ₁
   @test gradient(ℳ₂, AutoForwardDiff(), x) ≈ ∇ℳ₂
-  # FIXME: Zygote fails due to mutation in impulse_response()
-  # @test gradient(ℳ₂, AutoZygote(), x) ≈ ∇ℳ₂
+  @test gradient(ℳ₂, AutoZygote(), x) ≈ ∇ℳ₂
   @test gradient(ℳ₂, AutoMooncake(config=nothing), x) ≈ ∇ℳ₂
   @test gradient(ℳ₂, AutoEnzyme(), x) ≈ ∇ℳ₂
 end

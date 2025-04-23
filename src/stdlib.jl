@@ -164,13 +164,15 @@ end
 
 function Base.rand(rng::AbstractRNG, noise::RedGaussianNoise, nsamples::Integer; fs)
   fs = in_units(u"Hz", fs)
-  signal(rand(rng, RedGaussian(σ=noise.σ, n=nsamples[1])), fs)
+  signal(rand(rng, RedGaussian(σ=noise.σ, n=nsamples)), fs)
 end
 
 function Base.rand(rng::AbstractRNG, noise::RedGaussianNoise, nsamples::Integer, nch::Integer; fs)
   fs = in_units(u"Hz", fs)
-  x = mapreduce(hcat, 1:nch) do _
-    rand(rng, RedGaussian(σ=noise.σ, n=nsamples))
+  x = Array{typeof(noise.σ), 2}(undef, nsamples, nch)
+  dist = RedGaussian(σ=noise.σ, n=nsamples)
+  for i ∈ 1:nch
+    x[:,i] .= rand(rng, dist)
   end
   signal(x, fs)
 end

@@ -6,7 +6,7 @@ import SignalAnalysis: nchannels, isanalytic, analytic, filt
 import Printf: @printf
 
 export UnderwaterEnvironment, transmission_loss, acoustic_field, arrivals, models
-export impulse_response, channel, transmit, spl, frequency, location, samples, isospeed
+export impulse_response, channel, transmit, spl, frequency, location, samples, is_isovelocity
 export AcousticSource, AcousticReceiver, AcousticReceiverGrid2D, AcousticReceiverGrid3D
 
 ###############################################################################
@@ -338,11 +338,11 @@ function is_range_dependent(env::UnderwaterEnvironment)
 end
 
 """
-    isospeed(env)
+    is_isovelocity(env)
 
 Return `true` if the sound speed in the environment `env` is a constant.
 """
-isospeed(env::UnderwaterEnvironment) = is_constant(env.soundspeed)
+is_isovelocity(env::UnderwaterEnvironment) = is_constant(env.soundspeed)
 
 """
     models(env::UnderwaterEnvironment)

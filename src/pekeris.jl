@@ -9,10 +9,10 @@ export PekerisRayTracer, PekerisModeSolver
 # Pekeris ray tracer
 
 """
-    PekerisRayTracer(env, maxbounces=16)
+    PekerisRayTracer(env; max_bounces=3)
 
-A fast differentiable ray tracer that only supports isovelocity constant depth
-environments. `maxbounces` is the number of surface/bottom bounces to consider
+A fast differentiable ray tracer that only supports iso-velocity constant depth
+environments. `max_bounces` is the number of surface/bottom bounces to consider
 in the ray tracing.
 """
 struct PekerisRayTracer{T1,T2,T3,T4,T5,T6,T7} <: AbstractRayPropagationModel
@@ -23,10 +23,10 @@ struct PekerisRayTracer{T1,T2,T3,T4,T5,T6,T7} <: AbstractRayPropagationModel
   S::T5             # salinity
   seabed::T6        # seabed properties
   surface::T7       # surface properties
-  maxbounces::Int   # maximum number of bounces
-  function PekerisRayTracer(env, maxbounces=3)
-    maxbounces ≥ 0 || error("Maximum number of bounces cannot be negative")
-    isospeed(env) || error("Environment must be isovelocity")
+  max_bounces::Int  # maximum number of bounces
+  function PekerisRayTracer(env; max_bounces=3)
+    max_bounces ≥ 0 || error("Maximum number of bounces cannot be negative")
+    is_isovelocity(env) || error("Environment must be iso-velocity")
     is_range_dependent(env) && error("Environment must be range independent")
     is_constant(env.temperature) || error("Temperature must be constant")
     is_constant(env.salinity) || error("Salinity must be constant")
@@ -37,12 +37,12 @@ struct PekerisRayTracer{T1,T2,T3,T4,T5,T6,T7} <: AbstractRayPropagationModel
     T = value(env.temperature)
     S = value(env.salinity)
     ps = (h, c, ρ, T, S, env.seabed, env.surface)
-    new{typeof.(ps)...}(ps..., maxbounces)
+    new{typeof.(ps)...}(ps..., max_bounces)
   end
 end
 
 function Base.show(io::IO, pm::PekerisRayTracer)
-  print(io, "PekerisRayTracer(h=$(pm.h), maxbounces=$(pm.maxbounces))")
+  print(io, "PekerisRayTracer(h=$(pm.h), max_bounces=$(pm.max_bounces))")
 end
 
 """
@@ -65,9 +65,9 @@ function arrivals(pm::PekerisRayTracer, tx::AbstractAcousticSource, rx::Abstract
   d1 = -p1.z
   d2 = -p2.z
   if paths
-    [_arrival(j, pm, R, R², d1, d2, f, p1, p2) for j ∈ 1:1+2*pm.maxbounces]
+    [_arrival(j, pm, R, R², d1, d2, f, p1, p2) for j ∈ 1:1+2*pm.max_bounces]
   else
-    [_arrival(j, pm, R, R², d1, d2, f) for j ∈ 1:1+2*pm.maxbounces]
+    [_arrival(j, pm, R, R², d1, d2, f) for j ∈ 1:1+2*pm.max_bounces]
   end
 end
 
@@ -189,7 +189,7 @@ struct PekerisModeSolver{T1,T2,T3,T4,T5,T6,T7} <: AbstractModePropagationModel
   surface::T7       # surface properties
   ngrid::Int        # number of grid points for mode computation
   function PekerisModeSolver(env; ngrid=0)
-    isospeed(env) || error("Environment must be iso-velocity")
+    is_isovelocity(env) || error("Environment must be iso-velocity")
     is_range_dependent(env) && error("Environment must be range independent")
     is_constant(env.temperature) || error("Temperature must be constant")
     is_constant(env.salinity) || error("Salinity must be constant")

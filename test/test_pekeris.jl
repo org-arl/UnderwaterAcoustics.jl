@@ -2,7 +2,7 @@ using TestItems
 
 @testitem "pekeris-rays-arrivals+ir" begin
   env = @inferred UnderwaterEnvironment(bathymetry = 20.0u"m", temperature = 27.0u"°C", salinity = 35.0u"ppt", seabed = SandySilt)
-  pm = @inferred PekerisRayTracer(env, 3)
+  pm = @inferred PekerisRayTracer(env)
   tx = @inferred AcousticSource((x=0.0, z=-5.0), 1000.0)
   rx = @inferred AcousticReceiver((x=100.0, z=-10.0))
   arr = @inferred arrivals(pm, tx, rx)
@@ -38,7 +38,7 @@ end
 @testitem "pekeris-rays-field+tl" begin
   env = @inferred UnderwaterEnvironment(bathymetry = 20.0u"m", soundspeed = 1500.0u"m/s",
     seabed = FluidBoundary(water_density(), 1500.0u"m/s", 0.0))  # non-reflecting
-  pm = @inferred PekerisRayTracer(env, 1)
+  pm = @inferred PekerisRayTracer(env; max_bounces=1)
   d = (√1209.0)/4.0
   x = @inferred acoustic_field(pm, AcousticSource((x=0.0, z=-d), 1000.0), AcousticReceiver((x=100.0, z=-d)))
   @test x isa Complex
@@ -93,12 +93,12 @@ end
   fd = AutoFiniteDifferences(fdm=FiniteDifferences.central_fdm(5, 1))
   function ℳ₁((D, R, d1, d2, f, c))
     env = UnderwaterEnvironment(bathymetry = D, soundspeed = c, seabed = SandySilt)
-    pm = PekerisRayTracer(env, 3)
+    pm = PekerisRayTracer(env)
     transmission_loss(pm, AcousticSource((x=0.0, z=-d1), f), AcousticReceiver((x=R, z=-d2)))
   end
   function ℳ₂((D, R, d1, d2, f, c))
     env = UnderwaterEnvironment(bathymetry = D, soundspeed = c, seabed = SandySilt)
-    pm = PekerisRayTracer(env, 3)
+    pm = PekerisRayTracer(env)
     ir = impulse_response(pm, AcousticSource((x=0.0, z=-d1), f), AcousticReceiver((x=R, z=-d2)), 10000.0; abstime=true)
     sum(abs2, samples(ir))
   end

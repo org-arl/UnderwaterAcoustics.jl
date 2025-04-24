@@ -20,7 +20,7 @@ website:
       - ext.qmd
       - porting.qmd
       - text: <b>Tutorials</b>
-      - text: TODO
+      - tut1.qmd
       - text: <b>API reference</b>
       - basic.qmd
       - api.qmd

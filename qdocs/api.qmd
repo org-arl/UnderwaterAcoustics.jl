@@ -20,7 +20,7 @@ import UnderwaterAcoustics
 #| output: asis
 jdoc(UnderwaterAcoustics, :UnderwaterEnvironment)
 jdoc(UnderwaterAcoustics, :is_range_dependent, 2)
-jdoc(UnderwaterAcoustics, :isospeed)
+jdoc(UnderwaterAcoustics, :is_isovelocity)
 ```
 
 ## Propagation models

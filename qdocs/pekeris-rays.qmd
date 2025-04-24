@@ -10,8 +10,9 @@ engine: julia
 | **Model** | `UnderwaterAcoustics.PekerisRayTracer` |
 | **Description** | Ray tracer for constant depth iso-velocity environments |
 | **Language** | Julia |
-| **Advantages** | Fast, differentiable, multi-threaded |
+| **Advantages** | Fast, differentiable |
 | **Limitations** | Iso-velocity, range-independent |
+| **Differentiability** | `ForwardDiff`, `Zygote`, `Mooncake`, `Enzyme` |
 
 : {tbl-colwidths="[25,75]"}
 

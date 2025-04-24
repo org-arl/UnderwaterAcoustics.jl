@@ -1,11 +1,10 @@
-module UnderwaterAcousticsChainRules
+module UnderwaterAcousticsChainRulesExt
 
 using ChainRulesCore
 import UnderwaterAcoustics: _arr2ir
 
 function ChainRulesCore.rrule(::typeof(_arr2ir), ts, ϕs; T, t0, fs, n)
   ir = _arr2ir(ts, ϕs; T, t0, fs, n)
-  # TODO: check if this needs a let block to avoid boxing
   function _arr2ir_pullback(dx)
     dx = unthunk(dx)
     T1 = promote_type(eltype(ts), eltype(dx))

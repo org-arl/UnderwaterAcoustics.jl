@@ -29,7 +29,7 @@ end
   for e ∈ (env, UnderwaterEnvironment(bathymetry=20.0u"m"))
     @test e isa UnderwaterEnvironment
     @test ! @inferred is_range_dependent(e)
-    @test @inferred isospeed(e)
+    @test @inferred is_isovelocity(e)
     @test e.bathymetry == 20.0
     @test e.altimetry == 0.0
     @test e.temperature == 27.0

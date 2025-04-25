@@ -130,15 +130,15 @@ Let us consider a geo-acoustic inversion problem where we have a static omnidire
 
 ### Dataset
 
-To illustrate this idea, let us generate a synthetic dataset for a known set of seabed parameters (density `ρ` = 1500 kg/m³, relative soundspeed `c` = 1850 m/s, and attenuation `δ` = 0.001). The environment is assumed to be an iso-velocity and with a constant depth of 20 m. The source is at a depth of 5 m. The receiver is at a range of 100 m from the source, and makes measurements at depths from 10 to 19 m in steps of 1 m.
+To illustrate this idea, let us generate a synthetic dataset for a known set of seabed parameters (density `ρ` = 1500 kg/m³, relative soundspeed `c` = 1850 m/s, and attenuation `δ` = 0.001). The environment is assumed to be an iso-velocity and with a constant depth of 20 m. The source is at a depth of 5 m. The receiver is at a range of 100 m from the source, and makes measurements at depths from 1 to 19 m in steps of 1 m.
 
 ```{julia}
 #| echo: false
 plot(UnderwaterEnvironment(bathymetry = 20.0); xlims=(-20, 120), ylims=(-22, 1))
 scatter!([(0, -5)]; markersize=4, marker=:star, color=:red)
-scatter!([(100, -d) for d ∈ 10:19]; markersize=4, color=:blue)
+scatter!([(100, -d) for d ∈ 1:19]; markersize=4, color=:blue)
 annotate!(0, -4, text("TX (5-7 kHz)", 10, :red))
-annotate!(100, -9, text("RX", 10, :blue))
+annotate!(105, -1, text("RX", 10, :blue))
 annotate!(50, -21, text("ρ=1500, c=1850, δ=0.001", 10, :brown))
 ```
 
@@ -163,7 +163,7 @@ end
 
 data = DataFrame([
   (depth=d, frequency=f, xloss=𝒴([100.0, d, f, 1500.0, 1850.0, 0.001]))
-  for d ∈ 10.0:1.0:19.0 for f ∈ 5000.0:100.0:7000.0
+  for d ∈ 1.0:1.0:19.0 for f ∈ 5000.0:100.0:7000.0
 ])
 ```
 
@@ -179,10 +179,10 @@ using Turing
 
 # depths d, frequencies f, transmission loss measurements x
 @model function geoacoustic(d, f, x)
-  ρᵣ ~ Uniform(1.0, 3.0)
-  cᵣ ~ Uniform(0.5, 3.5)
+  ρ ~ Uniform(1000.0, 2000.0)
+  c ~ Uniform(750.0, 2000.0)
   δ ~ Uniform(0.0, 0.003)
-  μ = [𝒴([100.0, d[i], f[i], 1000ρᵣ, 1500cᵣ, δ]) for i ∈ 1:length(d)]
+  μ = [𝒴([100.0, d[i], f[i], ρ, c, δ]) for i ∈ 1:length(d)]
   x ~ MvNormal(μ, 0.5)
 end
 ```
@@ -195,16 +195,17 @@ Once we have the model defined, we can run Bayesian inference on it. We could ei
 #| output: false
 using Turing: Variational
 
+# this may take a minute or two to run...
 q = vi(
   geoacoustic(data.depth, data.frequency, data.xloss),
-  ADVI(100, 1000)
+  ADVI(10, 1000)
 )
 ```
 
-The returned `q` is a 3-dimensional posterior probability distribution over the parameters `ρ`, `c` and `δ`. We can estimate the mean of the distribution by drawing random variates and taking the sample mean:
+The returned `q` is a 3-dimensional posterior probability distribution over the parameters `ρᵣ`, `cᵣ` and `δᵣ`. We can estimate the mean of the distribution by drawing random variates and taking the sample mean:
 
 ```{julia}
-mean(rand(q, 10000); dims=2) .* [1000, 1500, 1]
+mean(rand(q, 10000); dims=2)
 ```
 
 We see that the estimated parameter means for `ρ`, `c` and `δ` are quite close to the actual values used in generating the data.
@@ -214,11 +215,11 @@ We can also plot the conditional distributions of each parameter:
 ```{julia}
 using StatsPlots
 
-plot(ρ -> pdf(q, [ρ/1000, 1.2, 0.001]), 1300, 1700; xlabel="ρ")
+plot(ρ -> pdf(q, [ρ, 1850, 0.001]), 1300, 1700; xlabel="ρ", legend=false)
 ```
 ```{julia}
-plot(c -> pdf(q, [1.5, c/1500, 0.001]), 1650, 1950; xlabel="c")
+plot(c -> pdf(q, [1500, c, 0.001]), 1650, 1950; xlabel="c", legend=false)
 ```
 ```{julia}
-plot(δ -> pdf(q, [1.5, 1.2, δ]), 0.0, 0.003; xlabel="δ")
+plot(δ -> pdf(q, [1500, 1850, δ]), 0.0, 0.003; xlabel="δ", legend=false)
 ```

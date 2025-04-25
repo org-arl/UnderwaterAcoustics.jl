@@ -1,0 +1,115 @@
+---
+title: "Geo-acoustic inversion with an acoustic profiler"
+engine: julia
+---
+
+::: {.callout-note title="References"}
+This tutorial is adapted from `Example B` presented in:<br>
+
+- Mandar Chitre, "[Differentiable Ocean Acoustic Propagation Modeling](https://arl.nus.edu.sg/wp-content/uploads/2023/04/Chitre_Differentiable-Ocean-Acoustic-Propagation-Modeling.pdf)," in OCEANS 2023 IEEE/MTS – Limerick, 5-8 June 2023.
+
+A version of this example was also presented in the UComms 2020 webinar:<br>
+
+- Mandar Chitre, "[Underwater Acoustics in the age of differentiable and probabilistic programming](https://www.facebook.com/watch/live/?v=2473971036238315)", UComms 2020 webinar, 3 December 2020.
+:::
+
+## Problem statement
+
+We consider a geo-acoustic inversion problem where we have a static omnidirectional broadband acoustic source transmitting in a 5–7 kHz band, and a single omnidirectional receiver that records the signal at a fixed range. The receiver is able to profile the water column, and therefore makes transmission loss measurements at various depths. We wish to estimate seabed parameters from the transmission loss measurements. Do note that although we have acoustic measurements at various depths, they cannot be used for beamforming to separate out the bottom reflected arrival from other arrivals. We therefore only have transmission loss at each depth for our inversion.
+
+## Dataset
+
+To illustrate this idea, let us generate a synthetic dataset for a known set of seabed parameters (density `ρ` = 1500 kg/m³, relative soundspeed `c` = 1850 m/s, and attenuation `δ` = 0.001). The environment is assumed to be an iso-velocity and with a constant depth of 20 m. The source is at a depth of 5 m. The receiver is at a range of 100 m from the source, and makes measurements at depths from 1 to 19 m in steps of 1 m.
+
+```{julia}
+#| echo: false
+using UnderwaterAcoustics
+using Plots
+default(size=(600, 400))
+plot(UnderwaterEnvironment(bathymetry = 20.0); xlims=(-20, 120), ylims=(-22, 1))
+scatter!([(0, -5)]; markersize=4, marker=:star, color=:red)
+scatter!([(100, -d) for d ∈ 1:19]; markersize=4, color=:blue)
+annotate!(0, -4, text("TX (5-7 kHz)", 10, :red))
+annotate!(105, -1, text("RX", 10, :blue))
+annotate!(50, -21, text("ρ=1500, c=1850, δ=0.001", 10, :brown))
+```
+
+Since we have an range-independent iso-velocity environment, we can use the `PekerisRayTracer` (otherwise we could use the `RaySolver`):
+
+```{julia}
+#| output: false
+using UnderwaterAcoustics
+using DataFrames
+
+function 𝒴(θ)
+  r, d, f, ρ, c, δ = θ
+  env = UnderwaterEnvironment(
+    bathymetry = 20.0,
+    seabed = FluidBoundary(ρ, c, δ)
+  )
+  tx = AcousticSource(0.0, -5.0, f)
+  rx = AcousticReceiver(r, -d)
+  pm = PekerisRayTracer(env)
+  transmission_loss(pm, tx, rx)
+end
+
+data = DataFrame([
+  (depth=d, frequency=f, xloss=𝒴([100.0, d, f, 1500.0, 1850.0, 0.001]))
+  for d ∈ 1.0:1.0:19.0 for f ∈ 5000.0:100.0:7000.0
+])
+```
+
+## Probabilistic model
+
+We use some very loose uniform priors for `ρ`, `c` and `δ`, and estimate the transmission loss using the same model 𝒴, as used in the data generation, but without information on the actual seabed parameters. We assume that the measurements of transmission loss are normally distributed around the modeled transmission loss, with a covariance of 0.5 dB.
+
+We define the probabilistic model as a [`Turing.jl`](https://github.com/TuringLang/Turing.jl) model:
+
+```{julia}
+#| output: false
+using Turing
+
+# depths d, frequencies f, transmission loss measurements x
+@model function geoacoustic(d, f, x)
+  ρ ~ Uniform(1000.0, 2000.0)
+  c ~ Uniform(750.0, 2000.0)
+  δ ~ Uniform(0.0, 0.003)
+  μ = [𝒴([100.0, d[i], f[i], ρ, c, δ]) for i ∈ 1:length(d)]
+  x ~ MvNormal(μ, 0.5)
+end
+```
+
+## Variational inference
+
+Once we have the model defined, we can run Bayesian inference on it. We could either use MCMC methods from Turing, or variational inference. Since our model is differentiable, we choose to use the automatic differentiation variational inference (ADVI):
+
+```{julia}
+#| output: false
+# this may take a minute or two to run...
+q = vi(
+  geoacoustic(data.depth, data.frequency, data.xloss),
+  ADVI(10, 1000)
+)
+```
+
+The returned `q` is a 3-dimensional posterior probability distribution over the parameters `ρᵣ`, `cᵣ` and `δᵣ`. We can estimate the mean of the distribution by drawing random variates and taking the sample mean:
+
+```{julia}
+mean(rand(q, 10000); dims=2)
+```
+
+We see that the estimated parameter means for `ρ`, `c` and `δ` are quite close to the actual values used in generating the data.
+
+We can also plot the conditional distributions of each parameter:
+
+```{julia}
+using StatsPlots
+
+plot(ρ -> pdf(q, [ρ, 1850, 0.001]), 1300, 1700; xlabel="ρ", legend=false)
+```
+```{julia}
+plot(c -> pdf(q, [1500, c, 0.001]), 1650, 1950; xlabel="c", legend=false)
+```
+```{julia}
+plot(δ -> pdf(q, [1500, 1850, δ]), 0.0, 0.003; xlabel="δ", legend=false)
+```

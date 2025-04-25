@@ -14,13 +14,17 @@ We assume familiarity with git, Github, markdown and Julia. If you need to brush
 
 While we haven't adopted a formal code of conduct, there is an implicit expectation that all of us shall be professional, respectful of differing opinions and viewpoints, empathetic and kind, and open to giving and gracefully accepting constructive feedback. By contributing, you accept to abide by this code.
 
-Finally, read and understand the [ROADMAP](ROADMAP.md) document to understand what UnderwaterAcoustics.jl is meant to be, and meant not to be, so that all of us work from a common set of expectations. If you have suggestions on the scope, directions or roadmap for the project, we are open to [discussing](https://github.com/org-arl/UnderwaterAcoustics.jl/discussions) those too.
+Finally, read and understand the [ROADMAP](ROADMAP.md) document to understand what `UnderwaterAcoustics.jl` is meant to be, and meant not to be, so that all of us work from a common set of expectations. If you have suggestions on the scope, directions or roadmap for the project, we are open to [discussing](https://github.com/org-arl/UnderwaterAcoustics.jl/discussions) those too.
+
+In some cases, your contributions may be to some of the related packages (e.g. [`AcousticsToolbox.jl`](https://github.com/org-arl/AcousticsToolbox.jl), [`AcousticRayTracers.jl`](https://github.com/org-arl/AcousticRayTracers.jl), [`VirtualAcousticOcean.jl`](https://github.com/org-arl/VirtualAcousticOcean.jl), etc). The guidelines below apply to those packages too (other than commit scope).
+
+Contributions to the `UnderwaterAcoustics.jl` ecosystem in terms of new related packages are also most welcome! Please let us know if you develop a related package that we could link to from our documentation.
 
 ## Bug reports, features requests & discussions
 
 ### Bug reports
 
-Bug reports are an important part of making UnderwaterAcoustics.jl more stable and reliable. Having a good bug report will allow others to reproduce it and provide insight into fixing. See [this stackoverflow article](https://stackoverflow.com/help/mcve) for tips on writing a good bug report.
+Bug reports are an important part of making `UnderwaterAcoustics.jl` more stable and reliable. Having a good bug report will allow others to reproduce it and provide insight into fixing. See [this stackoverflow article](https://stackoverflow.com/help/mcve) for tips on writing a good bug report.
 
 Trying out the bug-producing code on the `master` branch is often a worthwhile exercise to confirm that the bug still exists. You'd also want to search for existing bug reports and pull requests to see if the issue has already been reported and/or fixed before [filing a new issue](https://github.com/org-arl/UnderwaterAcoustics.jl/issues/new/choose).
 
@@ -44,7 +48,7 @@ If you wish to take up an issue for a PR, please indicate so in the issue, so th
 
 ## Bug fixes, new features & documentation enhancements
 
-In order to contribute to the code and/or documentation for UnderwaterAcoustics.jl, you'll need to be familiar with git and have a Github account. We have some useful links in the [Getting Started](#getting-started) section above, if you're new to git or Github.
+In order to contribute to the code and/or documentation for `UnderwaterAcoustics.jl`, you'll need to be familiar with git and have a Github account. We have some useful links in the [Getting Started](#getting-started) section above, if you're new to git or Github.
 
 The general process to contribute code or documentation is as follows:
 1. Fork the repository, and make a clone of the fork on your own machine.
@@ -69,7 +73,7 @@ The general process to contribute code or documentation is as follows:
 7. Commit your changes (you may want to do this often during your development and testing phases) and push them to your forked repository. Ensure you use [good commit messages](#commit-messages).
 8. Raise a [pull request (PR)](https://docs.github.com/en/github/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests) from your branch in your forked repository to the `master` branch in the main repository. Provide details of your changes, and links to one or more original issues that may have led to this PR. You may raise PRs before you are ready with the final changes, but please mark them as _draft_ (Github allows you to create a _draft PR_) until it's ready for others to review.
 9. Once your PR is ready for review, one of the maintainers of the repository will assign a reviewer. The job of the reviewer is to ensure code and documentation quality before the PR is merged. The reviewer will provide constructive feedback to help address any concerns with the PR.
-10. Once all concerns are addressed and marked _resolved_, the PR will be ready for merging. One of the maintainers will merge the PR, and the changes will become part of the next release of UnderwaterAcoustics.jl.
+10. Once all concerns are addressed and marked _resolved_, the PR will be ready for merging. One of the maintainers will merge the PR, and the changes will become part of the next release of `UnderwaterAcoustics.jl`.
 
 ## Commit messages
 
@@ -102,7 +106,7 @@ Allowable **scope** include:
 - **pekeris**: Pekeris ray propagation model
 - **plot**: plotting support functionality
 
-NOTE: As we evolve the UnderwaterAcoustics.jl library, the allowable scope list will evolve. If you find something you're doing doesn't fit in this scope list, please [open an issue](https://github.com/org-arl/UnderwaterAcoustics.jl/issues/new/choose) to propose addition of a new scope.
+NOTE: As we evolve the `UnderwaterAcoustics.jl` library, the allowable scope list will evolve. If you find something you're doing doesn't fit in this scope list, please [open an issue](https://github.com/org-arl/UnderwaterAcoustics.jl/issues/new/choose) to propose addition of a new scope.
 
 In some cases, the scope of a commit cuts across multiple scopes. In that case, a comma-separated scope list may be used. In cases, where all scopes are affected, a "`*`" may be used as scope, or the scope may be omitted.
 

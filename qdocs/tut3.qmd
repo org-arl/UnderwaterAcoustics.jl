@@ -3,7 +3,7 @@ title: "Estimating channel geometry from impulse response"
 engine: julia
 ---
 
-::: {.callout-note title="References"}
+::: {.callout-note title="Reference"}
 This tutorial is adapted from `Example C` presented in:<br>
 
 - Mandar Chitre, "[Differentiable Ocean Acoustic Propagation Modeling](https://arl.nus.edu.sg/wp-content/uploads/2023/04/Chitre_Differentiable-Ocean-Acoustic-Propagation-Modeling.pdf)," in OCEANS 2023 IEEE/MTS – Limerick, 5-8 June 2023.
@@ -72,9 +72,19 @@ q = vi(pmodel(data), ADVI(10, 10000))
 μ
 ```
 
-We see that the estimated values of `h`, `r`, `d1` and `d2` are fairly close to the ground truth values. We can also estimate the uncertainty in the estimates:
+We see that the estimated values of `h`, `r`, `d1` and `d2` are fairly close to the ground truth values. We can also plot the uncertainty in the estimates:
 
 ```{julia}
-# extract standard deviation of distribution over parameters h, r, d1 and d2
-σ = std(rand(q, 10000); dims=2)
+using StatsPlots
+
+plot(h -> pdf(q, [h, μ[2], μ[3], μ[4]]), 18, 22; xlabel="h", legend=false)
+```
+```{julia}
+plot(r -> pdf(q, [μ[1], r, μ[3], μ[4]]), 50, 150; xlabel="r", legend=false)
+```
+```{julia}
+plot(d1 -> pdf(q, [μ[1], μ[2], d1, μ[4]]), 5, 9; xlabel="d1", legend=false)
+```
+```{julia}
+plot(d2 -> pdf(q, [μ[1], μ[2], μ[3], d2]), 0, 20; xlabel="d2", legend=false)
 ```

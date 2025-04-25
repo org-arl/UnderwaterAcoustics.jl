@@ -1,0 +1,80 @@
+---
+title: "Estimating channel geometry from impulse response"
+engine: julia
+---
+
+::: {.callout-note title="References"}
+This tutorial is adapted from `Example C` presented in:<br>
+
+- Mandar Chitre, "[Differentiable Ocean Acoustic Propagation Modeling](https://arl.nus.edu.sg/wp-content/uploads/2023/04/Chitre_Differentiable-Ocean-Acoustic-Propagation-Modeling.pdf)," in OCEANS 2023 IEEE/MTS – Limerick, 5-8 June 2023.
+:::
+
+## Problem statement
+
+Consider a scenario where a bottom-mounted sensor is deployed on a sub-surface mooring at an unknown altitude over the seabed. The exact location of the sensor is unknown, but we know the general area where it is deployed. The sensor is equipped with an acoustic transponder that we can query from a surface unit when we are within a 250 m range of it. We deploy the transducer of the surface unit from the boat on a 7 m rope with a weight attached. Due to currents, the transducer is not hanging perfectly vertically, and so it’s exact depth `d1` is not known. The depth sounder of our boat tells us that the water depth `h` is 20 m, and the Captain of the boat assures us that the bathymetry is quite flat. We query the transponder and get a response. The broadband acoustic response from the transponder allows us to estimate the delays of 4 multipath arrivals. We wish to estimate the depth `d2` of the sensor and the range `r` between the boat and the sensor using the multipath arrival delays.
+
+## Dataset
+
+To illustrate this idea, let us generate a synthetic dataset with `d1 = 7.2` m, `d2 = 12.7` m, `h = 20` m, and `r = 97.3` m. Since we have an range-independent iso-velocity environment, we can use the `PekerisRayTracer` (otherwise we could use the `RaySolver`):
+
+```{julia}
+#| echo: false
+using UnderwaterAcoustics
+using Plots
+default(size=(600, 400))
+plot(UnderwaterEnvironment(bathymetry = 20.0); xlims=(-20, 120), ylims=(-22, 1))
+scatter!([(97.3, -12.7)]; markersize=4, marker=:star, color=:red)
+scatter!([(0, -7.2)]; markersize=4, color=:blue)
+annotate!(97.3, -11.7, text("TX (1 kHz)", 10, :red))
+annotate!(0, -6.2, text("RX", 10, :blue))
+```
+
+```{julia}
+using UnderwaterAcoustics
+
+function model(h, r, d1, d2)
+  env = UnderwaterEnvironment(bathymetry=h)
+  pm = PekerisRayTracer(env)
+  tx = AcousticSource(r, -d2, 1000.0)
+  rx = AcousticReceiver(0.0, -d1)
+  arr = arrivals(pm, tx, rx)
+  t = getfield.(arr, :t)        # get a.t for each arrival a in arr
+  (t[2:end] .- t[1]) .* 1000    # relative time in milliseconds
+end
+
+data = model(20, 97.3, 7.2, 12.7)
+```
+
+## Probabilistic model
+
+We can model this as a Bayesian inference problem using [`Turing.jl`](https://github.com/TuringLang/Turing.jl) and some reasonable priors:
+
+```{julia}
+#| output: false
+using Turing
+
+@model function pmodel(data)
+  h  ~ Normal(20.0, 0.1)
+  r  ~ Uniform(0.0, 250.0)
+  d1 ~ Normal(7.0, 1.0)
+  d2 ~ Uniform(0.0, 20.0)
+  μ = model(h, r, d1, d2)
+  data ~ MvNormal(μ, 0.1)
+end
+
+q = vi(pmodel(data), ADVI(10, 10000))
+
+# extract mean values of parameters h, r, d1 and d2
+μ = mean(rand(q, 10000); dims=2)
+```
+```{julia}
+#| echo: false
+μ
+```
+
+We see that the estimated values of `h`, `r`, `d1` and `d2` are fairly close to the ground truth values. We can also estimate the uncertainty in the estimates:
+
+```{julia}
+# extract standard deviation of distribution over parameters h, r, d1 and d2
+σ = std(rand(q, 10000); dims=2)
+```

@@ -1,4 +1,4 @@
-module UnderwaterAcousticsPlotsExt
+module PlotsExt
 
 using RecipesBase
 using Colors

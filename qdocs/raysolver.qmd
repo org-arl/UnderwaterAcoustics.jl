@@ -1,0 +1,21 @@
+---
+title: "RaySolver"
+engine: julia
+---
+
+{{< include jdoc.snippet >}}
+
+| <span> | <span> |
+|---|---|
+| **Model** | `AcousticRayTracers.RaySolver` |
+| **Description** | 2½D acoustic Gaussian beam tracer |
+| **Language** | Julia |
+| **Advantages** | Differentiable |
+| **Limitations** | Tell us and we will fix them! |
+| **Differentiability** | `ForwardDiff`, `Zygote` |
+
+: {tbl-colwidths="[25,75]"}
+
+::: {.callout-caution title="Note"}
+(work in progress)
+:::

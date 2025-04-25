@@ -26,3 +26,6 @@ Manifest.toml
 .vscode
 TODO
 qdocs/.quarto
+qdocs/_site
+qdocs/red.mat
+qdocs/.gitignore

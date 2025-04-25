@@ -15,7 +15,7 @@ The `AcousticsToolbox.jl` package adds support for popular benchmark Fortran mod
 The `DataDrivenAcoustics.jl` package provides a set of tools ([`RBNN`](rbnn.qmd) and [`MBNN`](mbnn.qmd)) for building and using data-driven propagation models that can be used with partial or no environmental information.
 -->
 
-The `VirtualAcousticOcean.jl` package enables [real-time acoustic simulation](vao.qmd) of underwater communication networks and sonar systems. Acoustic data is streamed using a real-time acoustic streaming protocol ([UASP2](uasp2.qmd)).
+The [`VirtualAcousticOcean.jl`](https://github.com/org-arl/VirtualAcousticOcean.jl) package enables real-time acoustic simulation of underwater communication networks and sonar systems.
 
 ## Highlights
 
@@ -44,9 +44,9 @@ Pkg.add("UnderwaterAcoustics")
 
 ## Tutorials
 
-- [Tracking a drifting transmitter](tut1.qmd)
-- [Geo-acoustic inversion with an acoustic profiler](tut2.qmd)
-- [Estimating channel geometry from impulse response](tut3.qmd)
+- [Tracking a drifting transmitter](tut1.qmd) – differentiable propagation modeling and gradient descent
+- [Geoacoustic inversion with an acoustic profiler](tut2.qmd) – probabilistic modeling and Bayesian inference
+- [Estimating channel geometry from impulse response](tut3.qmd) – probabilistic modeling and Bayesian inference
 
 ## Contributing
 

@@ -1,4 +1,4 @@
-module UnderwaterAcousticsChainRulesExt
+module ChainRulesExt
 
 using ChainRulesCore
 import UnderwaterAcoustics: _arr2ir

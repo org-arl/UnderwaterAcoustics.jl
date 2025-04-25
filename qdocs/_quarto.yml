@@ -21,6 +21,8 @@ website:
       - porting.qmd
       - text: <b>Tutorials</b>
       - tut1.qmd
+      - tut2.qmd
+      - tut3.qmd
       - text: <b>API reference</b>
       - basic.qmd
       - api.qmd
@@ -36,10 +38,10 @@ website:
       - text: <b>AcousticRayTracers.jl</b>
       - raysolver.qmd
     - text: "---"
-    - section: <b>VirtualAcousticOcean.jl</b>
+    - section: <b>Related tools</b>
       contents:
-      - vao.qmd
-      - uasp2.qmd
+      - text: VirtualAcousticOcean.jl
+        href: https://github.com/org-arl/VirtualAcousticOcean.jl
 
 execute:
   echo: true

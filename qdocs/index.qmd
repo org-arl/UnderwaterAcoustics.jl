@@ -54,5 +54,19 @@ Contributions in the form of bug reports, feature requests, ideas/suggestions, b
 
 ## Talks & publications
 
-- Mandar Chitre, "[Differentiable Ocean Acoustic Propagation Modeling](https://arl.nus.edu.sg/wp-content/uploads/2023/04/Chitre_Differentiable-Ocean-Acoustic-Propagation-Modeling.pdf)," in OCEANS 2023 IEEE/MTS – Limerick, 5-8 June 2023.
+- Mandar Chitre, "[Differentiable Ocean Acoustic Propagation Modeling](https://arl.nus.edu.sg/wp-content/uploads/2023/04/Chitre_Differentiable-Ocean-Acoustic-Propagation-Modeling.pdf)," in OCEANS 2023 IEEE/MTS – Limerick, 5-8 June 2023. [[doi]](https://doi.org/10.1109/OCEANSLimerick52467.2023.10244307)
 - Mandar Chitre, "[Underwater Acoustics in the age of differentiable and probabilistic programming](https://www.facebook.com/watch/live/?v=2473971036238315)", UComms 2020 webinar, 3 December 2020.
+
+## Citing
+
+If you use `UnderwaterAcoustics.jl` in your work or are influenced by its ideas, please cite:
+```
+@inproceedings{chitre2023ua,
+  author={Chitre, Mandar},
+  booktitle={OCEANS 2023 - Limerick},
+  title={Differentiable Ocean Acoustic Propagation Modeling},
+  year={2023},
+  pages={1-8},
+  doi={10.1109/OCEANSLimerick52467.2023.10244307}
+}
+```

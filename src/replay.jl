@@ -111,6 +111,7 @@ If `start` is specified, it specifies the starting time index in the replay chan
 If not specified, a random start time is chosen.
 """
 function transmit(ch::BasebandReplayChannel, x; txs=:, rxs=:, abstime=false, noisy=true, fs=nothing, start=nothing)
+  # TODO: add test cases for BasebandReplayChannel
   fs = something(fs, x isa SampledSignal ? framerate(x) : ch.fs)
   L, M, T = size(ch.h)
   maxtime = (T - 1) / ch.fs * ch.step

@@ -42,6 +42,33 @@ end
   end
 end
 
+@testitem "channel" begin
+  using Statistics
+  env = UnderwaterEnvironment(seabed=FluidBoundary(water_density(), 1500.0, 0.0), soundspeed=1500.0)
+  pm = @inferred PekerisRayTracer(env)
+  tx = @inferred AcousticSource((x=0u"m", z=-5u"m"), 10u"kHz"; spl=170)
+  rx = @inferred AcousticReceiver(100u"m", -10u"m")
+  ch = @inferred channel(pm, tx, rx, 192000)
+  @test ch isa UnderwaterAcoustics.SampledPassbandChannel
+  @test ch.fs == 192000
+  @test ch.noise === nothing
+  x = vcat(1.0, 0.5, zeros(98))
+  y1 = @inferred transmit(ch, x)
+  @test length(y1) ≥ length(x)
+  @test all(y1[1:3] .> 1)
+  @test all(y1[129:131] .< -1)
+  y1[1:3] .= 0
+  y1[129:131] .= 0
+  @test all(abs.(y1) .< 1)
+  ch = @inferred channel(pm, tx, rx, 192000; noise=RedGaussianNoise(0.5e6))
+  @test ch isa UnderwaterAcoustics.SampledPassbandChannel
+  @test ch.fs == 192000
+  @test ch.noise isa RedGaussianNoise
+  y2 = @inferred transmit(ch, x)
+  @test length(y2) ≥ length(x)
+  @test std(y1) < std(y2)
+end
+
 @testitem "src" begin
   import UnderwaterAcoustics: distance
   src = @inferred AcousticSource(-5.0, 1000.0; spl=180.0)

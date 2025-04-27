@@ -214,6 +214,7 @@ function channel(pm, txs, rxs, fs; abstime=false, noise=nothing)
     for tx in vec(txs), rx in vec(rxs)
   ]
   t0 = minimum(findfirst(x -> abs(x) > 0, ch1) for ch1 ∈ ch)
+  t0 === nothing && error("No arrivals found")
   ch = map(ch1 -> @view(ch1[t0:end]), ch)
   len = maximum(length.(ch))
   ch = map(ch1 -> vcat(ch1, zeros(eltype(ch1), len - length(ch1))), ch)
@@ -243,8 +244,8 @@ associated with it, the received signal is corrupted by additive noise.
 function transmit(ch::SampledPassbandChannel, x; txs=:, rxs=:, abstime=false, noisy=true, fs=nothing)
   # defaults
   N, M = size(ch.irs)
-  txs === (:) && (txs = 1:N)
-  rxs === (:) && (rxs = 1:M)
+  txs = txs === (:) ? (1:N) : txs
+  rxs = rxs === (:) ? (1:M) : rxs
   # validate inputs
   fs = something(fs, x isa SampledSignal ? framerate(x) : ch.fs)
   fs != ch.fs && error("Mismatched sampling rate (expected $(ch.fs) Hz, actual $(fs) Hz)")
@@ -253,13 +254,15 @@ function transmit(ch::SampledPassbandChannel, x; txs=:, rxs=:, abstime=false, no
   nchannels(x) == length(txs) || error("Mismatched number of sources (expected $(length(txs)), actual $(nchannels(x)))")
   # simulate transmission
   t0 = abstime ? ch.t0 : 1
-  flen = size(ch.irs[1],1)
+  flen = size(ch.irs[1], 1)
   x̄ = analytic(x)
   x̄ = vcat(x̄, zeros(eltype(x̄), flen - 1, size(x̄,2)))
   ȳ = zeros(Base.promote_eltype(x̄, ch.irs[1]), size(x̄,1) + t0 - 1, length(rxs))
-  Threads.@threads for i ∈ eachindex(rxs)
-    for j ∈ eachindex(txs)
-      ȳ[t0:end,i] .+= filt(ch.irs[txs[j],rxs[i]], x̄[:,j])
+  let x̄ = x̄     # avoids boxing of x̄ and resulting type instability
+    Threads.@threads for i ∈ eachindex(rxs)
+      for j ∈ eachindex(txs)
+        ȳ[t0:end, i] .+= filt(ch.irs[txs[j], rxs[i]], x̄[:,j])
+      end
     end
   end
   # add noise

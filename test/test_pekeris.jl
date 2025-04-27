@@ -8,6 +8,12 @@ using TestItems
   arr = @inferred arrivals(pm, tx, rx)
   @test arr isa AbstractArray{<:UnderwaterAcoustics.RayArrival}
   @test length(arr) == 7
+  @test arr[1].t == arr[1].time
+  @test arr[1].ϕ == arr[1].phasor
+  @test arr[1].ns == arr[1].surface_bounces
+  @test arr[1].nb == arr[1].bottom_bounces
+  @test arr[1].θₛ == arr[1].launch_angle
+  @test arr[1].θᵣ == arr[1].arrival_angle
   @test arr[1].t ≈ 0.0650 atol=0.0001
   @test arr[2].t ≈ 0.0657 atol=0.0001
   @test arr[3].t ≈ 0.0670 atol=0.0001
@@ -139,6 +145,10 @@ end
   m = @inferred arrivals(pm, tx, rx)
   @test m isa Vector{<:UnderwaterAcoustics.ModeArrival}
   @test length(m) == 44
+  @test m[1].m == m[1].mode
+  @test m[1].kᵣ == m[1].hwavenumber
+  @test m[1].v == m[1].group_velocity
+  @test m[1].ψ == m[1].mode_function
   k = [0.04188332253060325,  0.04186958032482773,  0.04184666447436872,  0.041814556737327056,
        0.041773231610265325, 0.041722656355626477, 0.041662791026605805, 0.041593588482909706,
        0.041514994390511865, 0.04142694719862171,  0.04132937808752444,  0.04122221088162445,

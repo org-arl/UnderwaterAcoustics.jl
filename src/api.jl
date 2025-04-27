@@ -47,14 +47,17 @@ abstract type AbstractAcousticArrival end
 """
 Type representing a single acoustic ray arrival.
 
-Fields:
-- `t`: arrival time (s)
-- `ϕ`: complex amplitude
-- `ns`: number of surface bounces
-- `nb`: number of bottom bounces
-- `θₛ`: launch angle at source (rad)
-- `θᵣ`: arrival angle at receiver (rad)
+Properties:
+- `t` / `time`: arrival time (s)
+- `ϕ` / `phasor`: complex amplitude
+- `ns` / `surface_bounces`: number of surface bounces
+- `nb` / `bottom_bounces`: number of bottom bounces
+- `θₛ` / `launch_angle`: launch angle at source (rad)
+- `θᵣ` / `arrival_angle`: arrival angle at receiver (rad)
 - `path`: ray path (optional, vector of 3-tuples or missing)
+
+The properties are accessible with the short names for brevity, and longer more
+descriptive names where readability is desired or unicode symbols are undesired.
 """
 struct RayArrival{T1,T2,T3,T4,T5} <: AbstractAcousticArrival
   t::T1                 # arrival time
@@ -72,14 +75,31 @@ function Base.show(io::IO, a::RayArrival)
     rad2deg(angle(a.ϕ)), a.path === missing || length(a.path) == 0 ? "" : "↝")
 end
 
+# alternative property names for readability
+Base.propertynames(a::RayArrival) = (:t, :ϕ, :ns, :nb, :θₛ, :θᵣ, :path,
+  :time, :phasor, :surface_bounces, :bottom_bounces, :launch_angle, :arrival_angle)
+
+function Base.getproperty(a::RayArrival, sym::Symbol)
+  sym === :time && return getfield(a, :t)
+  sym === :phasor && return getfield(a, :ϕ)
+  sym === :surface_bounces && return getfield(a, :ns)
+  sym === :bottom_bounces && return getfield(a, :nb)
+  sym === :launch_angle && return getfield(a, :θₛ)
+  sym === :arrival_angle && return getfield(a, :θᵣ)
+  getfield(a, sym)
+end
+
 """
 Type representing a single acoustic mode arrival.
 
-Fields:
-- `m`: mode number
-- `kᵣ`: horizontal wavenumber (rad/m)
-- `ψ(z)`: mode function
-- `v`: group velocity (m/s)
+Properties:
+- `m` / `mode`: mode number
+- `kᵣ` / `hwavenumber`: horizontal wavenumber (rad/m)
+- `ψ(z)` / `mode_function`: mode function
+- `v` / `group_velocity`: group velocity (m/s)
+
+The properties are accessible with the short names for brevity, and longer more
+descriptive names where readability is desired or unicode symbols are undesired.
 """
 struct ModeArrival{T1,T2,T3} <: AbstractAcousticArrival
   m::Int                # mode number
@@ -90,6 +110,18 @@ end
 
 function Base.show(io::IO, a::ModeArrival)
   @printf(io, "%8s: kᵣ = %s rad/m (%0.2f m/s)", "mode $(a.m)", string(round(ComplexF64(a.kᵣ); digits=6)), a.v)
+end
+
+# alternative property names for readability
+Base.propertynames(a::ModeArrival) = (:m, :kᵣ, :ψ, :v,
+  :mode, :hwavenumber, :mode_function, :group_velocity)
+
+function Base.getproperty(a::ModeArrival, sym::Symbol)
+  sym === :mode && return getfield(a, :m)
+  sym === :hwavenumber && return getfield(a, :kᵣ)
+  sym === :mode_function && return getfield(a, :ψ)
+  sym === :group_velocity && return getfield(a, :v)
+  getfield(a, sym)
 end
 
 """

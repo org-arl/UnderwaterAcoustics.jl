@@ -10,7 +10,7 @@ engine: julia
 | **Model** | `UnderwaterAcoustics.PekerisModeSolver` |
 | **Description** | Normal mode model for constant depth iso-velocity environments |
 | **Language** | Julia |
-| **Advantages** | Fast, differentiable, multi-threaded |
+| **Advantages** | Fast, differentiable (forward mode), multi-threaded |
 | **Limitations** | Iso-velocity, range-independent, pressure-release surface, fluid half-space seabed, no seabed absorption (no leaky modes) |
 | **Differentiability** | `ForwardDiff` |
 

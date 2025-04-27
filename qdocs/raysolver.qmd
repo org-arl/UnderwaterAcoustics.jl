@@ -10,12 +10,63 @@ engine: julia
 | **Model** | `AcousticRayTracers.RaySolver` |
 | **Description** | 2½D acoustic Gaussian beam tracer |
 | **Language** | Julia |
-| **Advantages** | Differentiable |
+| **Advantages** | Differentiable (forward mode) |
 | **Limitations** | Tell us and we will fix them! |
-| **Differentiability** | `ForwardDiff`, `Zygote` |
+| **Differentiability** | `ForwardDiff` |
 
 : {tbl-colwidths="[25,75]"}
 
-::: {.callout-caution title="Note"}
-(work in progress)
-:::
+```{julia}
+#| echo: false
+#| output: asis
+import AcousticRayTracers
+jdoc(AcousticRayTracers, :RaySolver)
+```
+
+`RaySolver` is a differentiable 2½D Gaussian beam tracer similar to [Bellhop](http://oalib.hlsresearch.com/AcousticsToolbox/), but fully written in Julia to be compatible with automatic differentiation (AD)
+tools such as `ForwardDiff`. Its implementation is largely based on the description in:
+
+- Jensen, Kuperman, Porter & Schmidt, "Computational Ocean Acoustics," Springer New York, NY, 2011.
+
+## Example
+
+```{julia}
+#| echo: false
+#| output: false
+using Plots
+default(size=(600, 400))
+```
+
+```{julia}
+using UnderwaterAcoustics
+using AcousticRayTracers
+using Plots
+
+env = UnderwaterEnvironment(
+  bathymetry = SampledField([200, 150]; x=[0, 1000], interp=:linear),
+  soundspeed = SampledField([1500, 1480, 1495, 1510, 1520]; z=0:-50:-200, interp=:cubic),
+  seabed = SandyClay
+)
+pm = RaySolver(env)
+
+tx = AcousticSource(0, -50, 300)
+rx = AcousticReceiver(1000, -100)
+rays = arrivals(pm, tx, rx)
+
+plot(env; xlims=(-10, 1010))
+plot!(tx)
+plot!(rx)
+plot!(rays)
+```
+
+```{julia}
+rxs = AcousticReceiverGrid2D(1:1000, -200:0)
+x = transmission_loss(pm, tx, rxs; mode=:coherent)
+
+plot(rxs, x; crange=70)
+plot!(env; xlims=(0,1000), linewidth=3)
+```
+
+## Notes
+
+The `RaySolver` propagation model requires that the transmitter is located at $(x=0, y=0)$ and all receivers are located in the right half-plane (i.e., $x>0$ and $y=0$). While this limitation can be worked around in the wrapper by a coordinate transformation, automatic transformation is not yet implemented.

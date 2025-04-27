@@ -1,0 +1,22 @@
+/* css styles */
+
+.cell {
+  background-color: white;
+  margin-bottom: 10px;
+}
+
+div.sourceCode {
+  background-color: #f8f8f8;
+  border-radius: 5px;
+  border: 1px solid #888;
+  padding: 0px;
+  margin-bottom: 1px;
+}
+
+div.cell-output {
+  background-color: white;
+  border-radius: 5px;
+  border: 1px solid #eee;
+  padding: 5px;
+  margin-top: 0px;
+}

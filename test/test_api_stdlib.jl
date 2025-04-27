@@ -38,13 +38,17 @@ end
     @test e.density ≈ 1022.7 atol=0.1
     @test e.surface == PressureReleaseBoundary
     @test e.seabed == RigidBoundary
+    @test UnderwaterAcoustics.env_type(env) == Float64
   end
 end
 
 @testitem "src" begin
+  import UnderwaterAcoustics: distance
   src = @inferred AcousticSource(-5.0, 1000.0; spl=180.0)
   @test src isa UnderwaterAcoustics.AbstractAcousticSource
   @test @inferred(location(src)) == (x=0.0, y=0.0, z=-5.0)
+  @test @inferred(distance(location(src), (x=0.0, y=0.0, z=-5.0))) == 0.0
+  @test @inferred(distance(location(src), (x=1.0, y=1.0, z=-4.0))) == sqrt(3)
   @test @inferred(frequency(src)) == 1000.0
   @test @inferred(spl(src)) == 180.0
   src = @inferred AcousticSource((10.0, -5.0), 1000.0)

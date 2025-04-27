@@ -88,4 +88,5 @@ end
 #| output: asis
 jdoc(UnderwaterAcoustics, :xyz)
 jdoc(UnderwaterAcoustics, :in_units)
+jdoc(UnderwaterAcoustics, :distance)
 ```

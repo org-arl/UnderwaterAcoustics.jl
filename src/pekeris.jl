@@ -45,16 +45,6 @@ function Base.show(io::IO, pm::PekerisRayTracer)
   print(io, "PekerisRayTracer(h=$(pm.h), max_bounces=$(pm.max_bounces))")
 end
 
-"""
-    arrivals(pm::PekerisRayTracer, tx, rx; paths=true)
-
-Compute the arrivals between a transmitter `tx` and a receiver `rx` in the
-Pekeris waveguide described by propagation model `pm`.
-
-If `paths=true`, the eigenray paths are computed and stored in the returned
-arrivals. Setting `paths=false` avoids eigenray computation and is slightly
-faster.
-"""
 function arrivals(pm::PekerisRayTracer, tx::AbstractAcousticSource, rx::AbstractAcousticReceiver; paths=true)
   # based on Chitre (2007)
   f = frequency(tx)
@@ -65,9 +55,9 @@ function arrivals(pm::PekerisRayTracer, tx::AbstractAcousticSource, rx::Abstract
   d1 = -p1.z
   d2 = -p2.z
   if paths
-    [_arrival(j, pm, R, R², d1, d2, f, p1, p2) for j ∈ 1:1+2*pm.max_bounces]
+    [_arrival(j, pm, R, R², d1, d2, f, typeof(p1), p1, p2) for j ∈ 1:1+2*pm.max_bounces]
   else
-    [_arrival(j, pm, R, R², d1, d2, f) for j ∈ 1:1+2*pm.max_bounces]
+    [_arrival(j, pm, R, R², d1, d2, f, typeof(p1)) for j ∈ 1:1+2*pm.max_bounces]
   end
 end
 
@@ -87,7 +77,7 @@ function acoustic_field(pm::PekerisRayTracer, tx::AbstractAcousticSource, rx::Ab
     f = frequency(tx)
     sum(a -> a.ϕ * cispi(2f * a.t), arr) * db2amp(spl(tx))
   else
-    error("Unknown mode: $mode")
+    error("Unknown mode :$mode")
   end
 end
 
@@ -123,7 +113,7 @@ function _arr2ir(ts, ϕs; T, t0, fs, n)
   x
 end
 
-function _arrival(j, pm, R, R², d1, d2, f, p1=missing, p2=missing)
+function _arrival(j, pm, R, R², d1, d2, f, T, p1=missing, p2=missing)
   upward = iseven(j)
   s1 = 2 * upward - 1
   n = div(j, 2)
@@ -134,12 +124,12 @@ function _arrival(j, pm, R, R², d1, d2, f, p1=missing, p2=missing)
   D = √(R² + abs2(dz))
   θ = atan(R, dz)
   t = D / pm.c
-  A = Complex(1.0, 0.0) / D * absorption(f, D, pm.S)
+  A = Complex(1.0, 0.0) / D * absorption(f, D, pm.S, pm.T, pm.h / 2)      # nominal absorption
   s > 0 && (A *= _ipow(reflection_coef(pm.surface, f, θ, pm.ρ, pm.c), s))
   b > 0 && (A *= _ipow(reflection_coef(pm.seabed, f, θ, pm.ρ, pm.c), b))
   λ = π/2 - θ
   if p1 !== missing
-    path = Array{typeof(p1)}(undef, 2 + s + b)
+    path = Array{T}(undef, 2 + s + b)
     path[1] = p1
     if s + b > 0
       dx = p2[1] - p1[1]
@@ -156,7 +146,7 @@ function _arrival(j, pm, R, R², d1, d2, f, p1=missing, p2=missing)
     path[end] = p2
     RayArrival(t, A, s, b, s1 * λ, -s1 * s2 * λ, path)
   else
-    RayArrival(t, A, s, b, s1*λ, -s1*s2*λ, missing)
+    RayArrival(t, A, s, b, s1 * λ, -s1 * s2 * λ, T[])
   end
 end
 
@@ -258,7 +248,7 @@ function acoustic_field(pm::PekerisModeSolver, tx::AbstractAcousticSource, rxs::
   kᵣ = [m.kᵣ for m ∈ modes]
   k² = (2π * frequency(tx) / pm.c)^2
   γ = sqrt.(k² .- kᵣ.^2)
-  a = absorption(frequency(tx), 1.0, pm.S, pm.T, pm.h / 2)
+  a = absorption(frequency(tx), 1.0, pm.S, pm.T, pm.h / 2)  # nominal absorption
   tmap(rxs) do rx
     p2 = location(rx)
     R = sqrt(abs2(p1.x - p2.x) + abs2(p1.y - p2.y))

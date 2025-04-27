@@ -1,5 +1,5 @@
 ---
-title: "Estimating channel geometry from impulse response"
+title: "Channel geometry from impulse response"
 engine: julia
 ---
 

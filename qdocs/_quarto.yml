@@ -23,6 +23,7 @@ website:
       - tut1.qmd
       - tut2.qmd
       - tut3.qmd
+      - tut4.qmd
       - text: <b>API reference</b>
       - basic.qmd
       - api.qmd

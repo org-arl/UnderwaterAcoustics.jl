@@ -1,0 +1,170 @@
+---
+title: "Sound speed profile from impulse response"
+engine: julia
+---
+
+::: {.callout-note title="Reference"}
+This tutorial is adapted from `Example D` presented in:<br>
+
+- Mandar Chitre, "[Differentiable Ocean Acoustic Propagation Modeling](https://arl.nus.edu.sg/wp-content/uploads/2023/04/Chitre_Differentiable-Ocean-Acoustic-Propagation-Modeling.pdf)," in OCEANS 2023 IEEE/MTS – Limerick, 5-8 June 2023.
+:::
+
+## Problem statement
+
+Consider a setup with a 1 kHz acoustic source at 1 km depth that sends a broadband pulse once every week. A receiver 10 km away at a depth of 800 m measures the impulse response from the received broadband pulse. We assume that we have an initial sound speed profile measurement with a CTD at the start of the experiment. The sound speed profile changes over the weeks of the experiment, and we wish to track the changes using the measured impulse response every week.
+
+## Key idea
+
+Since the sound speed profile is an unknown function of depth, we model it using a small 3-layer neural network. We initialize the parameters by training the neural network on the known/estimated sound speed profile from the previous week. We use the neural network to provide sound speed estimates to `RaySolver`, thus effectively creating a model that combines a numerical physics-based differential equation solver with a data-driven neural network. The hybrid model returns a vector of predicted delays of the first few multipath arrivals in the impulse response. We minimize a loss function that measures the difference between the predictions and measurements using gradient descent and automatic differentiation. This essentially trains the neural network to approximate the sound speed profile via a loss function that utilizes the propagation model. At the end of each week’s training, we get a revised estimate of the sound speed profile.
+
+## Dataset
+
+To illustrate this idea, let us generate a synthetic dataset:
+
+```{julia}
+using UnderwaterAcoustics
+using AcousticRayTracers
+
+# define Munk sound speed profile
+struct MunkSSP <: UnderwaterAcoustics.DepthDependent end
+
+function (ssp::MunkSSP)(pos)
+  ϵ = 0.00737
+  z̃ = 2.0 * (-pos.z - 1300.0) / 1300.0
+  1500.0 * (1.0 + ϵ * (z̃ - 1 + exp(-z̃)))
+end
+
+# simulate acoustic propagation using RaySolver to generate impulse response
+function model(h, r, d1, d2, c, n)
+  env = UnderwaterEnvironment(bathymetry=h, seabed=Rock, soundspeed=c)
+  pm = RaySolver(env)
+  tx = AcousticSource(0.0, -d1, 1000.0)
+  rx = AcousticReceiver(r, -d2)
+  arr = arrivals(pm, tx, rx)
+  t = getfield.(arr, :t)        # get a.t for each arrival a in arr
+  (t[2:n] .- t[1]) .* 1000      # relative time in milliseconds
+end
+
+# estimated sound speed profile from previous week
+prev_depths = [0, 500.0, 1000.0, 2000.0, 3000.0, 4000.0, 5000.0]
+prev_soundspeeds = [1518.6, 1494.5, 1490.6, 1505.8, 1530.3, 1556.7, 1583.6]
+
+# generate data with first 6 multipath delays
+data = model(5000.0, 10000.0, 1000.0, 1800.0, MunkSSP(), 7)
+```
+```{julia}
+#| echo: false
+using Plots
+using Plots.Measures
+
+default(size=(600, 400))
+
+let
+  env = UnderwaterEnvironment(bathymetry=5000.0, seabed=Rock, soundspeed=MunkSSP())
+  pm = RaySolver(env)
+  tx = AcousticSource(0.0, -1000.0, 1000.0)
+  rx = AcousticReceiver(10000.0, -1800.0)
+  arr = arrivals(pm, tx, rx)
+  p1 = plot(env; xlims=(-500, 10500), ylims=(-5100, 100))
+  plot!(arr[1:length(data)+1]; alpha=0.8)
+  scatter!([(0, -1000)]; markersize=4, marker=:star, color=:red)
+  scatter!([(10000, -1800)]; markersize=4, color=:blue)
+  annotate!(300, -1100, text("TX (1 kHz)", 10, :red, :left))
+  annotate!(9700, -1900, text("RX", 10, :blue, :right))
+  p2 = plot(MunkSSP(), -5000, 0; xlabel="Sound speed (m/s)", ylabel="", ylims=(-5100, 100))
+  scatter!(prev_soundspeeds, -prev_depths)
+  plot(p1, p2; layout=@layout([a{0.7w} b{0.3w}]), size=(900,450), bottom_margin=5mm, left_margin=5mm)
+end
+```
+
+The previous week’s sound speed profile is shown in the plot above as solid circles, whereas the true sound speed profile is shown as a blue line.
+
+## Neural network based propagation model
+
+We don't know the sound speed profile, so we will use a small 3-layer neural network to model it:
+
+```{julia}
+#| output: false
+using SimpleChains
+using StaticArrays
+using Random: MersenneTwister
+
+# neural network based sound speed profile data type
+struct NeuralSSP{T1,T2} <: UnderwaterAcoustics.DepthDependent
+  model::T1                 # neural network structure
+  ps::T2                    # neural network parameters
+  max_depth::Float64        # used for scaling the input
+  min_soundspeed::Float64   # used for scaling the output
+  max_soundspeed::Float64   # used for scaling the output
+end
+
+# scale input, pass through the neural network, and scale output
+function (ssp::NeuralSSP)(pos)
+  z̄ = -pos.z / ssp.max_depth
+  c̄ = only(ssp.model(SA[z̄], ssp.ps))
+  (c̄ + 1) / 2 * (ssp.max_soundspeed - ssp.min_soundspeed) + ssp.min_soundspeed
+end
+
+# define the neural network
+ssp = let mlp = SimpleChain(
+    static(1),
+    TurboDense(tanh, 3),
+    TurboDense(tanh, 3),
+    TurboDense(tanh, 1)
+  )
+  ps = SimpleChains.init_params(mlp; rng=MersenneTwister(0))
+  NeuralSSP(mlp, ps, 5000.0, 1450.0, 1600.0)
+end
+```
+
+We initialize the neural network parameters by training the neural network on the known/estimated sound speed profile from the previous week:
+
+```{julia}
+#| output: false
+c̄ = @. (prev_soundspeeds - ssp.min_soundspeed) / (ssp.max_soundspeed - ssp.min_soundspeed) * 2 - 1
+z̄ = @. prev_depths / ssp.max_depth
+G = SimpleChains.alloc_threaded_grad(ssp.model)
+L = SimpleChains.add_loss(ssp.model, SquaredLoss(transpose(c̄)))
+SimpleChains.train!(G, ssp.ps, L, transpose(collect(z̄)), SimpleChains.ADAM(0.1), 10000)
+```
+
+We plot the model output against the training data to check that it fits well:
+```{julia}
+plot(ssp, -5000, 0; xlabel="Sound speed (m/s)", size=(350, 400))
+scatter!(prev_soundspeeds, -prev_depths)
+```
+
+Now we define a loss function that computes the difference between the predictions of `RaySolver` using the sound speed given by the `NeuralSSP`, and the measured impulse response:
+```{julia}
+#| output: false
+# compute loss using predictions of RaySolver using the NeuralSSP
+function loss(ps)
+  ssp1 = NeuralSSP(ssp.model, ps, 5000.0, 1450.0, 1600.0)
+  pred = model(5000.0, 10000.0, 1000.0, 1800.0, ssp1, length(data)+1)
+  sum(abs2, pred - data)
+end
+```
+and perform gradient descent to minimize the loss function:
+```{julia}
+#| output: false
+import ForwardDiff
+
+η = 1e-6            # learning rate
+ps = copy(ssp.ps)   # start with the previous week’s parameters
+
+# this will take a few minutes to run...
+for i ∈ 1:20
+  g = ForwardDiff.gradient(loss, ps)
+  ps .-= η .* g     # gradient descent
+end
+```
+
+We plot the trained neural sound speed profile against the ground truth:
+```{julia}
+let ssp = NeuralSSP(ssp.model, ps, 5000.0, 1450.0, 1600.0)
+  plot(MunkSSP(), -5000, 0; xlabel="Sound speed (m/s)", size=(350, 400))
+  scatter!(prev_soundspeeds, -prev_depths)
+  plot!(ssp, -5000, 0)
+end
+```
+and see that it indeed fits quite well!

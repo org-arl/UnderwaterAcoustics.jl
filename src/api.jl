@@ -381,6 +381,23 @@ Return `true` if the sound speed in the environment `env` is a constant.
 is_isovelocity(env::UnderwaterEnvironment) = is_constant(env.soundspeed)
 
 """
+    env_type(env)
+
+Return the base number type for the environment. Typically, this is a `Float64`,
+but could differ if the environment was constructed using other number types.
+"""
+function env_type(env::UnderwaterEnvironment)
+  a = value(env.altimetry, (0,0,0))
+  b = value(env.bathymetry, (0,0,0))
+  c = value(env.soundspeed, (0,0,0))
+  s = value(env.salinity, (0,0,0))
+  d = value(env.density, (0,0,0))
+  r1 = real(reflection_coef(env.surface, 1000.0, 0.0, d, c))
+  r2 = real(reflection_coef(env.seabed, 1000.0, 0.0, d, c))
+  promote_type(typeof(a), typeof(b), typeof(c), typeof(s), typeof(d), typeof(r1), typeof(r2))
+end
+
+"""
     models(env::UnderwaterEnvironment)
 
 Return only models that are compatible with the environment `env`.

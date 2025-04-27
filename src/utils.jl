@@ -67,6 +67,13 @@ xyz(z::Number) = xyz(promote(0, 0, in_units(u"m", z)))
 xyz(::Nothing) = nothing
 xyz(::Missing) = missing
 
+"""
+    distance(p1, p2)
+
+Compute distance between two positions.
+"""
+distance(p1::XYZ, p2::XYZ) = hypot(p1.x - p2.x, p1.y - p2.y, p1.z - p2.z)
+
 ################################################################################
 # fields - types and utilities for quantities that may depend on position
 #

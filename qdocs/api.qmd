@@ -21,6 +21,7 @@ import UnderwaterAcoustics
 jdoc(UnderwaterAcoustics, :UnderwaterEnvironment)
 jdoc(UnderwaterAcoustics, :is_range_dependent, 2)
 jdoc(UnderwaterAcoustics, :is_isovelocity)
+jdoc(UnderwaterAcoustics, :env_type)
 ```
 
 ## Propagation models

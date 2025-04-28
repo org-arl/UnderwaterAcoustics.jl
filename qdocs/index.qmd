@@ -46,7 +46,8 @@ Pkg.add("UnderwaterAcoustics")
 
 - [Tracking a drifting transmitter](tut1.qmd) – differentiable propagation modeling and gradient descent
 - [Geoacoustic inversion with an acoustic profiler](tut2.qmd) – probabilistic modeling and Bayesian inference
-- [Estimating channel geometry from impulse response](tut3.qmd) – probabilistic modeling and Bayesian inference
+- [Channel geometry from impulse response](tut3.qmd) – probabilistic modeling and Bayesian inference
+- [Sound speed profile from impulse response](tut4.qmd) – combining neural networks with physics-based models
 
 ## Contributing
 

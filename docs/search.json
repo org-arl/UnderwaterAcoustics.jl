@@ -554,7 +554,7 @@
     "href": "index.html#tutorials",
     "title": "Introduction",
     "section": "Tutorials",
-    "text": "Tutorials\n\nTracking a drifting transmitter – differentiable propagation modeling and gradient descent\nGeoacoustic inversion with an acoustic profiler – probabilistic modeling and Bayesian inference\nEstimating channel geometry from impulse response – probabilistic modeling and Bayesian inference",
+    "text": "Tutorials\n\nTracking a drifting transmitter – differentiable propagation modeling and gradient descent\nGeoacoustic inversion with an acoustic profiler – probabilistic modeling and Bayesian inference\nChannel geometry from impulse response – probabilistic modeling and Bayesian inference\nSound speed profile from impulse response – combining neural networks with physics-based models",
     "crumbs": [
       "<b>UnderwaterAcoustics.jl</b>",
       "Introduction"

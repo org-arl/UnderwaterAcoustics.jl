@@ -1,7 +1,7 @@
 module ChainRulesExt
 
 using ChainRulesCore
-import UnderwaterAcoustics: _arr2ir
+import UnderwaterAcoustics: _arr2ir, tmap
 
 function ChainRulesCore.rrule(::typeof(_arr2ir), ts, ϕs; T, t0, fs, n)
   ir = _arr2ir(ts, ϕs; T, t0, fs, n)
@@ -27,6 +27,23 @@ function ChainRulesCore.rrule(::typeof(_arr2ir), ts, ϕs; T, t0, fs, n)
     return NoTangent(), dt, dϕ
   end
   return ir, _arr2ir_pullback
+end
+
+function ChainRulesCore.rrule(config::RuleConfig{>:HasReverseMode}, ::typeof(tmap), f, X::AbstractArray)
+  hobbits = tmap(X) do x
+    y, back = rrule_via_ad(config, f, x)
+  end
+  Y = map(first, hobbits)
+  function map_pullback(dY_raw)
+    dY = unthunk(dY_raw)
+    backevals = map(hobbits, dY) do (y, back), dy
+      dx, dx = back(dy)
+    end
+    df = ProjectTo(f)(sum(first, backevals))
+    dX = map(last, backevals)
+    return (NoTangent(), df, dX)
+  end
+  return Y, map_pullback
 end
 
 end # module

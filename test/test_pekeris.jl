@@ -261,7 +261,7 @@ end
 
 @testitem "pekeris-modes-∂" begin
   using DifferentiationInterface
-  import ForwardDiff, FiniteDifferences
+  import ForwardDiff, FiniteDifferences, Zygote
   fd = AutoFiniteDifferences(fdm=FiniteDifferences.central_fdm(5, 1))
   function ℳ₁((D, R, d1, d2, f, c))
     env = UnderwaterEnvironment(bathymetry = D, soundspeed = c, seabed = RigidBoundary)
@@ -282,8 +282,16 @@ end
   @test gradient(ℳ₁, AutoForwardDiff(), x) ≈ gradient(ℳ₁, fd, x)
   @test gradient(ℳ₂, AutoForwardDiff(), x) ≈ gradient(ℳ₂, fd, x)
   @test gradient(ℳ₃, AutoForwardDiff(), x) ≈ gradient(ℳ₃, fd, x)
+  @test gradient(ℳ₁, AutoZygote(), x) ≈ gradient(ℳ₁, fd, x)
+  @test gradient(ℳ₂, AutoZygote(), x) ≈ gradient(ℳ₂, fd, x)
+  # broken due to https://github.com/SciML/NonlinearSolve.jl/issues/581
+  # @test gradient(ℳ₃, AutoZygote(), x) ≈ gradient(ℳ₃, fd, x)
   x = [25.0, 200.0, 10.0, 8.0, 1000.0, 1540.0]
   @test gradient(ℳ₁, AutoForwardDiff(), x) ≈ gradient(ℳ₁, fd, x)
   @test gradient(ℳ₂, AutoForwardDiff(), x) ≈ gradient(ℳ₂, fd, x)
   @test gradient(ℳ₃, AutoForwardDiff(), x) ≈ gradient(ℳ₃, fd, x)
+  @test gradient(ℳ₁, AutoZygote(), x) ≈ gradient(ℳ₁, fd, x)
+  @test gradient(ℳ₂, AutoZygote(), x) ≈ gradient(ℳ₂, fd, x)
+  # broken due to https://github.com/SciML/NonlinearSolve.jl/issues/581
+  # @test gradient(ℳ₃, AutoZygote(), x) ≈ gradient(ℳ₃, fd, x)
 end

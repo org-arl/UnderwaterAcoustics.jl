@@ -149,6 +149,7 @@ Base.maximum
 # general utilities
 
 # fast threaded map, assuming all entries have the same result type
+# infers better than Base.map(), and so is preferred for type stability too
 function tmap(f, x)
   x1 = first(x)
   y1 = f(x1)

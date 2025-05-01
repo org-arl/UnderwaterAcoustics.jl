@@ -134,7 +134,7 @@ end
 
 @testitem "rcv-grid" begin
   rcv = @inferred AcousticReceiverGrid2D(0.0:10.0:1000.0, -20.0:0.0)
-  @test rcv isa AbstractMatrix{AcousticReceiver}
+  @test rcv isa AbstractMatrix{<:AcousticReceiver}
   @test size(rcv) == (101, 21)
   @test @inferred(location(rcv[1, 1])) == (x=0.0, y=0.0, z=-20.0)
   @test @inferred(location(rcv[101, 21])) == (x=1000.0, y=0.0, z=0.0)
@@ -143,7 +143,7 @@ end
   @test @inferred(location(rcv[1, 1])) == (x=0.0, y=0.0, z=-20.0)
   @test @inferred(location(rcv[101, 21])) == (x=1000.0, y=0.0, z=0.0)
   rcv = @inferred AcousticReceiverGrid3D(0.0:10.0:1000.0, -100:100, -20.0:0.0)
-  @test rcv isa AbstractArray{AcousticReceiver,3}
+  @test rcv isa AbstractArray{<:AcousticReceiver,3}
   @test size(rcv) == (101, 201, 21)
   @test @inferred(location(rcv[1, 1, 1])) == (x=0.0, y=-100.0, z=-20.0)
   @test @inferred(location(rcv[101, 201, 21])) == (x=1000.0, y=100.0, z=0.0)

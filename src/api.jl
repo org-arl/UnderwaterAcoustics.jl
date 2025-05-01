@@ -496,7 +496,7 @@ AcousticReceiver(x, y, z) = AcousticReceiver(xyz(x, y, z))
 
 A 2D grid of receivers with the specified location ranges.
 """
-struct AcousticReceiverGrid2D{T1,T2} <: AbstractArray{AcousticReceiver,2}
+struct AcousticReceiverGrid2D{T1,T2,T3} <: AbstractArray{AcousticReceiver{T3},2}
   xrange::T1
   zrange::T2
   function AcousticReceiverGrid2D(xrange, zrange)
@@ -504,7 +504,8 @@ struct AcousticReceiverGrid2D{T1,T2} <: AbstractArray{AcousticReceiver,2}
     zrange isa Number && (zrange = StepRangeLen(zrange, 0, 1))
     xrange = StepRangeLen(xrange)
     zrange = StepRangeLen(zrange)
-    new{typeof(xrange),typeof(zrange)}(xrange, zrange)
+    T3 = typeof(xyz(xrange[1], zrange[1]))
+    new{typeof(xrange),typeof(zrange),T3}(xrange, zrange)
   end
 end
 
@@ -517,7 +518,7 @@ Base.setindex!(g::AcousticReceiverGrid2D, v, I::Vararg{Int,2}) = error("Acoustic
 
 A 3D grid of receivers with the specified location ranges.
 """
-struct AcousticReceiverGrid3D{T1,T2,T3} <: AbstractArray{AcousticReceiver,3}
+struct AcousticReceiverGrid3D{T1,T2,T3,T4} <: AbstractArray{AcousticReceiver{T4},3}
   xrange::T1
   yrange::T2
   zrange::T3
@@ -528,7 +529,8 @@ struct AcousticReceiverGrid3D{T1,T2,T3} <: AbstractArray{AcousticReceiver,3}
     xrange = StepRangeLen(xrange)
     yrange = StepRangeLen(yrange)
     zrange = StepRangeLen(zrange)
-    new{typeof(xrange),typeof(yrange),typeof(zrange)}(xrange, yrange, zrange)
+    T4 = typeof(xyz(xrange[1], yrange[1], zrange[1]))
+    new{typeof(xrange),typeof(yrange),typeof(zrange),T4}(xrange, yrange, zrange)
   end
 end
 

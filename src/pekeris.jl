@@ -55,11 +55,10 @@ function arrivals(pm::PekerisRayTracer, tx::AbstractAcousticSource, rx::Abstract
   d1 = -p1.z
   d2 = -p2.z
   if paths
-    erays = [_arrival(j, pm, R, R², d1, d2, f, typeof(p1), p1, p2) for j ∈ 1:1+2*pm.max_bounces]
+    [_arrival(j, pm, R, R², d1, d2, f, typeof(p1), p1, p2) for j ∈ 1:1+2*pm.max_bounces]
   else
-    erays = [_arrival(j, pm, R, R², d1, d2, f, typeof(p1)) for j ∈ 1:1+2*pm.max_bounces]
+    [_arrival(j, pm, R, R², d1, d2, f, typeof(p1)) for j ∈ 1:1+2*pm.max_bounces]
   end
-  sort(erays; by=Base.Fix2(getfield, :t))
 end
 
 """

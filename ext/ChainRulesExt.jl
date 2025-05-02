@@ -30,13 +30,30 @@ function ChainRulesCore.rrule(::typeof(_arr2ir), ts, ϕs; T, t0, fs, n)
 end
 
 function ChainRulesCore.rrule(config::RuleConfig{>:HasReverseMode}, ::typeof(tmap), f, X::AbstractArray)
-  hobbits = tmap(X) do x
+  cache = tmap(X) do x
     y, back = rrule_via_ad(config, f, x)
   end
-  Y = map(first, hobbits)
+  Y = map(first, cache)
   function map_pullback(dY_raw)
     dY = unthunk(dY_raw)
-    backevals = map(hobbits, dY) do (y, back), dy
+    backevals = map(cache, dY) do (y, back), dy
+      dx, dx = back(dy)
+    end
+    df = ProjectTo(f)(sum(first, backevals))
+    dX = map(last, backevals)
+    return (NoTangent(), df, dX)
+  end
+  return Y, map_pullback
+end
+
+function ChainRulesCore.rrule(config::RuleConfig{>:HasReverseMode}, ::typeof(tmap), f, T::Type, X::AbstractArray)
+  cache = tmap(T, X) do x
+    y, back = rrule_via_ad(config, f, x)
+  end
+  Y = map(first, cache)
+  function map_pullback(dY_raw)
+    dY = unthunk(dY_raw)
+    backevals = map(cache, dY) do (y, back), dy
       dx, dx = back(dy)
     end
     df = ProjectTo(f)(sum(first, backevals))

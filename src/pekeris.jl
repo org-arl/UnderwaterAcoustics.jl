@@ -250,7 +250,7 @@ function acoustic_field(pm::PekerisModeSolver, tx::AbstractAcousticSource, rxs::
   k² = (2π * frequency(tx) / pm.c)^2
   γ = sqrt.(k² .- kᵣ.^2)
   a = absorption(frequency(tx), 1.0, pm.S, pm.T, pm.h / 2)  # nominal absorption
-  tmap(rxs) do rx
+  map(rxs) do rx
     p2 = location(rx)
     R = sqrt(abs2(p1.x - p2.x) + abs2(p1.y - p2.y))
     modal_terms = @. sin(γ * -p1.z) * sin(γ * -p2.z) * cis(kᵣ * R) / sqrt(kᵣ)
@@ -277,10 +277,10 @@ function impulse_response(pm::AbstractModePropagationModel, tx::AbstractAcoustic
   N -= M
   N = nextfastfft(2N)                       # heuristic to ensure no aliasing
   Δf = fs / N
-  X = map(0:N-1) do i
-    i == 0 && return complex(0.0)
+  X = zeros(ComplexF64, N)
+  Threads.@threads for i ∈ 1:N-1
     tx1 = AcousticSource(location(tx), i * Δf)
-    acoustic_field(pm, tx1, rx) |> conj
+    X[i+1] = conj(acoustic_field(pm, tx1, rx))
   end
   x = ifft(X)
   if abstime

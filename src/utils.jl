@@ -1,5 +1,4 @@
 import Unitful: ustrip, Quantity, Units, @u_str
-import StaticArrays: SVector
 export @u_str, °, XYZ, is_constant, is_range_dependent, value
 
 ################################################################################
@@ -150,26 +149,31 @@ Base.maximum
 # general utilities
 
 """
-    map_eltype(f, x)
-
-Return the element type of the result of applying function `f` to an array `x`.
-"""
-map_eltype(f, x::AbstractArray) = eltype(f.(SVector{0,eltype(x)}()))
-
-"""
     tmap(f, x)
+    tmap(f, T, x)
 
-Multithreaded map for arrays, where `f` is a type-stable function that takes a
-single argument and `x` is an array. The result is an array of the same size as
-`x`.
+Multithreaded map for arrays, where `f` is a function that takes a single
+argument and `x` is an array. The result is an array of the same size as
+`x`. If type `T` is specified, the result is an array of element type `T`,
+otherwise the type of the result is inferred from the first element of `x`.
 
 The functionality is similar to `Base.map`, but offers multithreading and
-better type inference. It also offers a reverse mode chain rule for
+a more rigid type inference. It also offers a reverse mode chain rule for
 differentiability.
 """
 function tmap(f, x::AbstractArray)
-  T = map_eltype(f, x)
-  y = Array{T}(undef, size(x))
+  isempty(x) && return f.(x)
+  y1 = f(first(x))
+  y = similar(Array{typeof(y1)}, axes(x))
+  Threads.@threads for i ∈ eachindex(x)
+    y[i] = i == firstindex(x) ? y1 : f(x[i])
+  end
+  y
+end
+
+function tmap(f, T::Type, x::AbstractArray)
+  y = similar(Array{T}, axes(x))
+  isempty(x) && return y
   Threads.@threads for i ∈ eachindex(x)
     y[i] = f(x[i])
   end

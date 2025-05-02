@@ -31,36 +31,36 @@ end
 
 function ChainRulesCore.rrule(config::RuleConfig{>:HasReverseMode}, ::typeof(tmap), f, X::AbstractArray)
   cache = tmap(X) do x
-    y, back = rrule_via_ad(config, f, x)
+    rrule_via_ad(config, f, x)
   end
   Y = map(first, cache)
-  function map_pullback(dY_raw)
+  function tmap_pullback(dY_raw)
     dY = unthunk(dY_raw)
     backevals = map(cache, dY) do (y, back), dy
-      dx, dx = back(dy)
+      back(dy)
     end
     df = ProjectTo(f)(sum(first, backevals))
     dX = map(last, backevals)
     return (NoTangent(), df, dX)
   end
-  return Y, map_pullback
+  return Y, tmap_pullback
 end
 
 function ChainRulesCore.rrule(config::RuleConfig{>:HasReverseMode}, ::typeof(tmap), f, T::Type, X::AbstractArray)
-  cache = tmap(T, X) do x
-    y, back = rrule_via_ad(config, f, T, x)
+  cache = tmap(X) do x
+    rrule_via_ad(config, f, x)
   end
-  Y = map(first, cache)
-  function map_pullback(dY_raw)
+  Y = map(T∘first, cache)
+  function tmap_pullback(dY_raw)
     dY = unthunk(dY_raw)
     backevals = map(cache, dY) do (y, back), dy
-      dx, dx = back(dy)
+      back(dy)
     end
     df = ProjectTo(f)(sum(first, backevals))
     dX = map(last, backevals)
     return (NoTangent(), df, NoTangent(), dX)
   end
-  return Y, map_pullback
+  return Y, tmap_pullback
 end
 
 end # module

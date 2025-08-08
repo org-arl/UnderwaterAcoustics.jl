@@ -8,7 +8,7 @@ export SandyGravel, CoarseSand, MediumSand, FineSand, VeryFineSand, ClayeySand
 export CoarseSilt, SandySilt, Silt, FineSilt, SandyClay, SiltyClay, Clay
 export SeaState0, SeaState1, SeaState2, SeaState3, SeaState4, SeaState5
 export SeaState6, SeaState7, SeaState8, SeaState9, WhiteGaussianNoise
-export RedGaussianNoise, WindySurface, SampledField
+export RedGaussianNoise, WindySurface, SampledField, ElasticBoundary
 
 ################################################################################
 # boundary conditions
@@ -80,6 +80,42 @@ const FineSilt = FluidBoundary(1.148 * 1023, 0.9861 * 1528, 0.00306)
 const SandyClay = FluidBoundary(1.147 * 1023, 0.9849 * 1528, 0.00242)
 const SiltyClay = FluidBoundary(1.146 * 1023, 0.9824 * 1528, 0.00163)
 const Clay = FluidBoundary(1.145 * 1023, 0.98 * 1528, 0.00148)
+
+"""
+    ElasticBoundary(ρ, c, δ)
+
+Create a fluid half-space boundary with density `ρ`, sound speed `c`, and
+dimensionless absorption coefficient `δ`.
+"""
+struct ElasticBoundary{T} <: AbstractAcousticBoundary
+  ρ::T
+  cₚ::T
+  cₛ::T
+  δₚ::T
+  δₛ::T
+  function ElasticBoundary(ρ, cₚ, cₛ, δₚ, δₛ)
+    ρ = in_units(u"kg/m^3", ρ)
+    cₚ = in_units(u"m/s", cₚ)
+    cₛ = in_units(u"m/s", cₛ)
+    new{typeof(ρ)}(promote(ρ, cₚ, cₛ, δₚ, δₛ)...)
+  end
+end
+
+ElasticBoundary(ρ, cₚ, cₛ) = ElasticBoundary(ρ, cₚ, cₛ, 0, 0)
+
+function Base.show(io::IO, b::ElasticBoundary)
+  print(io, "ElasticBoundary(ρ=$(b.ρ), cₚ=$(b.cₚ), cₛ=$(b.cₛ), δₚ=$(b.δₚ), δₛ=$(b.δₛ))")
+end
+
+# TODO: fix according to COA p43
+function reflection_coef(bc::ElasticBoundary, frequency, θ, ρ, c)
+  isinf(bc.cₚ) && return 1.0 + 0im
+  bc.cₚ == 0 && return -1.0 + 0im
+  θ = in_units(u"rad", θ)
+  ρ = in_units(u"kg/m^3", ρ)
+  c = in_units(u"m/s", c)
+  reflection_coef(θ, bc.ρ / ρ, bc.cₚ / c, bc.δₚ)
+end
 
 """
     WindySurface(windspeed)

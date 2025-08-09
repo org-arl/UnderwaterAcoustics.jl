@@ -17,8 +17,8 @@ returned as is.
 If `u` is `u"dB"`, the `x` may be specified as a number of a `u"dB"` quantity.
 In both cases, the numerical value of `x` in dB is returned.
 
-### Examples:
-```julia
+# Examples
+```julia-repl
 julia> in_units(u"Hz", 10u"kHz")
 10000
 
@@ -119,7 +119,7 @@ Get the value of the varying quantity `q` at the given position `pos`. `pos`
 may be specified as a `(x, y, z)` tuple, a `(x, z)` tuple, or a `z` value.
 
 # Examples
-```julia
+```julia-repl
 value(q)             # get value of a constant quantity
 value(q, -10)        # get value of a depth-dependent quantity at z=-10
 value(q, (1000,-10)) # get value of a position-dependent quantity at x=1000, z=-10

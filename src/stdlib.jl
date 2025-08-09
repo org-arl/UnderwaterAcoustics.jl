@@ -15,34 +15,67 @@ export MultilayerElasticBoundary
 # boundary conditions
 
 """
-    FluidBoundary(ρ, c, δ)
+    FluidBoundary(ρ, c, δ=0, σ=0)
 
-Create a fluid half-space boundary with density `ρ`, sound speed `c`, and
-dimensionless absorption coefficient `δ`.
+Create a fluid half-space boundary with density `ρ`, sound speed `c`,
+dimensionless absorption coefficient `δ`, and interfacial roughness `σ`.
+
+# Examples
+```julia-repl
+julia> FluidBoundary(1200, 1500)
+FluidBoundary(ρ=1200.0, c=1500.0)
+
+julia> FluidBoundary(1200, 1500, 0.1)
+FluidBoundary(ρ=1200.0, c=1500.0, δ=0.1)
+
+julia> FluidBoundary(1200, 1500, 0.1, 0.1)
+FluidBoundary(ρ=1200.0, c=1500.0, δ=0.1, σ=0.1)
+
+julia> FluidBoundary(ρ=1200, c=1500)
+FluidBoundary(ρ=1200.0, c=1500.0)
+
+julia> FluidBoundary(ρ=1200, c=1500, δ=0.1, σ=0.1)
+FluidBoundary(ρ=1200.0, c=1500.0, δ=0.1, σ=0.1)
+
+julia> FluidBoundary(ρ=1200.0, c=0.0)
+PressureReleaseBoundary
+
+julia> FluidBoundary(ρ=1200.0, c=Inf)
+RigidBoundary
+
+julia> FluidBoundary(1.2u"g/cm^3", 1500u"m/s")
+FluidBoundary(ρ=1200.0, c=1500.0)
+```
 """
 struct FluidBoundary{T} <: AbstractAcousticBoundary
   ρ::T
   c::T
   δ::T
-  function FluidBoundary(ρ, c, δ)
+  σ::T
+  function FluidBoundary(ρ, c, δ, σ)
     ρ = in_units(u"kg/m^3", ρ)
     c = in_units(u"m/s", c)
-    isinf(c) && return new{typeof(c)}(zero(c), c, zero(c))
-    new{typeof(ρ)}(promote(ρ, c, δ)...)
+    σ = in_units(u"m", σ)
+    isinf(c) && return new{typeof(c)}(zero(c), c, zero(c), zero(c))
+    ρ, c, δ, σ = float.(promote(ρ, c, δ, σ))
+    new{typeof(ρ)}(ρ, c, δ, σ)
   end
 end
 
-FluidBoundary(ρ, c) = FluidBoundary(ρ, c, 0)
+FluidBoundary(ρ, c) = FluidBoundary(ρ, c, 0, 0)
+FluidBoundary(ρ, c, δ) = FluidBoundary(ρ, c, δ, 0)
+FluidBoundary(; ρ, c, δ=0, σ=0) = FluidBoundary(ρ, c, δ, σ)
 
 function Base.show(io::IO, b::FluidBoundary)
   if isinf(b.c)
     print(io, "RigidBoundary")
   elseif b.c == 0
     print(io, "PressureReleaseBoundary")
-  elseif b.δ == 0
-    print(io, "FluidBoundary(ρ=$(b.ρ), c=$(b.c))")
   else
-    print(io, "FluidBoundary(ρ=$(b.ρ), c=$(b.c), δ=$(b.δ))")
+    print(io, "FluidBoundary(ρ=$(b.ρ), c=$(b.c)")
+    b.δ == 0 || print(io, ", δ=$(b.δ)")
+    b.σ == 0 || print(io, ", σ=$(b.σ)")
+    print(io, ")")
   end
 end
 
@@ -52,6 +85,7 @@ function reflection_coef(bc::FluidBoundary, frequency, θ, ρ, c)
   θ = in_units(u"rad", θ)
   ρ = in_units(u"kg/m^3", ρ)
   c = in_units(u"m/s", c)
+  bc.σ == 0 || @warn "Roughness is currently ignored in computing reflection coefficient" maxlog=1
   reflection_coef(θ, bc.ρ / ρ, bc.c / c, bc.δ)
 end
 
@@ -83,11 +117,39 @@ const SiltyClay = FluidBoundary(1.146 * 1023, 0.9824 * 1528, 0.00163)
 const Clay = FluidBoundary(1.145 * 1023, 0.98 * 1528, 0.00148)
 
 """
+    ElasticBoundary(ρ, cₚ, cₛ)
     ElasticBoundary(ρ, cₚ, cₛ, δₚ, δₛ)
+    ElasticBoundary(ρ, cₚ, cₛ, δₚ, δₛ, σ)
 
 Create a solid half-space boundary with density `ρ`, compressional sound
 speed `cₚ`, shear sound speed `cₛ`, dimensionless compressional absorption
-coefficient `δₚ`, and dimensionless shear absorption coefficient `δₛ`.
+coefficient `δₚ`, dimensionless shear absorption coefficient `δₛ`, and
+interfacial roughness `σ`. If the absorption coefficients or interfacial
+roughness are unspecified, they are assumed to be 0.
+
+# Examples
+```julia-repl
+julia> ElasticBoundary(1200, 1500, 500)
+ElasticBoundary(ρ=1200.0, cₚ=1500.0, cₛ=500.0)
+
+julia> ElasticBoundary(1200, 1500, 500, 0.1, 0.2)
+ElasticBoundary(ρ=1200.0, cₚ=1500.0, cₛ=500.0, δₚ=0.1, δₛ=0.2)
+
+julia> ElasticBoundary(1200, 1500, 500, 0.1, 0.2, 0.1)
+ElasticBoundary(ρ=1200.0, cₚ=1500.0, cₛ=500.0, δₚ=0.1, δₛ=0.2, σ=0.1)
+
+julia> ElasticBoundary(ρ=1200, cₚ=1500, cₛ=500)
+ElasticBoundary(ρ=1200.0, cₚ=1500.0, cₛ=500.0)
+
+julia> ElasticBoundary(ρ=1200, cₚ=1500, cₛ=500, δₚ=0.1, δₛ=0.2)
+ElasticBoundary(ρ=1200.0, cₚ=1500.0, cₛ=500.0, δₚ=0.1, δₛ=0.2)
+
+julia> ElasticBoundary(ρ=1200, cₚ=1500, cₛ=500, δₚ=0.1, δₛ=0.2, σ=0.1)
+ElasticBoundary(ρ=1200.0, cₚ=1500.0, cₛ=500.0, δₚ=0.1, δₛ=0.2, σ=0.1)
+
+julia> ElasticBoundary(1.2u"g/cm^3", 1500u"m/s", 500u"m/s")
+ElasticBoundary(ρ=1200.0, cₚ=1500.0, cₛ=500.0)
+```
 """
 struct ElasticBoundary{T} <: AbstractAcousticBoundary
   ρ::T
@@ -95,23 +157,33 @@ struct ElasticBoundary{T} <: AbstractAcousticBoundary
   cₛ::T
   δₚ::T
   δₛ::T
-  function ElasticBoundary(ρ, cₚ, cₛ, δₚ, δₛ)
+  σ::T
+  function ElasticBoundary(ρ, cₚ, cₛ, δₚ, δₛ, σ)
     ρ = in_units(u"kg/m^3", ρ)
     cₚ = in_units(u"m/s", cₚ)
     cₛ = in_units(u"m/s", cₛ)
-    new{typeof(ρ)}(promote(ρ, cₚ, cₛ, δₚ, δₛ)...)
+    σ = in_units(u"m", σ)
+    ρ, cₚ, cₛ, δₚ, δₛ, σ = float.(promote(ρ, cₚ, cₛ, δₚ, δₛ, σ))
+    new{typeof(ρ)}(ρ, cₚ, cₛ, δₚ, δₛ, σ)
   end
 end
 
-ElasticBoundary(ρ, cₚ, cₛ) = ElasticBoundary(ρ, cₚ, cₛ, 0, 0)
+ElasticBoundary(ρ, cₚ, cₛ) = ElasticBoundary(ρ, cₚ, cₛ, 0, 0, 0)
+ElasticBoundary(ρ, cₚ, cₛ, δₚ, δₛ) = ElasticBoundary(ρ, cₚ, cₛ, δₚ, δₛ, 0)
+ElasticBoundary(; ρ, cₚ, cₛ, δₚ=0, δₛ=0, σ=0) = ElasticBoundary(ρ, cₚ, cₛ, δₚ, δₛ, σ)
 
 function Base.show(io::IO, b::ElasticBoundary)
-  print(io, "ElasticBoundary(ρ=$(b.ρ), cₚ=$(b.cₚ), cₛ=$(b.cₛ), δₚ=$(b.δₚ), δₛ=$(b.δₛ))")
+  print(io, "ElasticBoundary(ρ=$(b.ρ), cₚ=$(b.cₚ), cₛ=$(b.cₛ)")
+  b.δₚ == 0 || print(io, ", δₚ=$(b.δₚ)")
+  b.δₛ == 0 || print(io, ", δₛ=$(b.δₛ)")
+  b.σ == 0 || print(io, ", σ=$(b.σ)")
+  print(io, ")")
 end
 
 function reflection_coef(bc::ElasticBoundary, frequency, θ, ρ, c)
   isinf(bc.cₚ) && return 1.0 + 0im
   isinf(bc.cₛ) && return 1.0 + 0im
+  bc.σ == 0 || @warn "Roughness is currently ignored in computing reflection coefficient" maxlog=1
   θ = in_units(u"rad", θ)
   ρ = in_units(u"kg/m^3", ρ)
   c = in_units(u"m/s", c)
@@ -119,46 +191,73 @@ function reflection_coef(bc::ElasticBoundary, frequency, θ, ρ, c)
 end
 
 """
+    MultilayerElasticBoundary([(h, ρ, cₚ, cₛ), ...])
     MultilayerElasticBoundary([(h, ρ, cₚ, cₛ, δₚ, δₛ), ...])
+    MultilayerElasticBoundary([(h, ρ, cₚ, cₛ, δₚ, δₛ, σ), ...])
 
 Create a multilayer solid boundary with layers defined by a vector of tuples
 specifying the layer thickness `h`, density `ρ`, compressional sound speed `cₚ`,
 shear sound speed `cₛ`, dimensionless compressional absorption coefficient `δₚ`,
-and dimensionless shear absorption coefficient `δₛ`, for each layer. The last
-entry in the vector is considered the bottom half-space and has an infinite
-thickness. By convention, we specify a value of `Inf` for `h` for that layer.
+dimensionless shear absorption coefficient `δₛ`, and interfacial roughness `σ`
+for each layer. If the absorption coefficients or interfacial roughness is
+unspecified, they are assumed to be 0. The last entry in the vector is
+considered the bottom half-space and has an infinite thickness. By convention,
+we specify a value of `Inf` for `h` for that layer.
 
 # Examples
 ```julia-repl
-julia> bc = MultilayerElasticBoundary([
-         (5.2, 1300, 1700, 100, 0, 0),
-         (Inf, 2000, 2500, 500, 0, 0)
+julia> MultilayerElasticBoundary([
+         (5.2, 1300, 1700, 100),
+         (Inf, 2000, 2500, 500, 0.1, 0.2)
        ])
-MultilayerElasticBoundary(2 layers)
+MultilayerElasticBoundary(2 layers):
+  (h = 5.2, ρ = 1300.0, cₚ = 1700.0, cₛ = 100.0, δₚ = 0.0, δₛ = 0.0, σ = 0.0)
+  (h = Inf, ρ = 2000.0, cₚ = 2500.0, cₛ = 500.0, δₚ = 0.1, δₛ = 0.2, σ = 0.0)
 
-julia> bc = MultilayerElasticBoundary([
-         (h = 5.2, ρ = 1300, cₚ = 1700, cₛ = 100, δₚ = 0, δₛ = 0),
-         (h = Inf, ρ = 2000, cₚ = 2500, cₛ = 500, δₚ = 0, δₛ = 0)
+julia> MultilayerElasticBoundary([
+         (5.2, 1300, 1700, 100, 0, 0, 0.1),
+         (Inf, 2000, 2500, 500, 0.1, 0.2, 0.1)
        ])
-MultilayerElasticBoundary(2 layers)
+MultilayerElasticBoundary(2 layers):
+  (h = 5.2, ρ = 1300.0, cₚ = 1700.0, cₛ = 100.0, δₚ = 0.0, δₛ = 0.0, σ = 0.1)
+  (h = Inf, ρ = 2000.0, cₚ = 2500.0, cₛ = 500.0, δₚ = 0.1, δₛ = 0.2, σ = 0.1)
 
-julia> bc = MultilayerElasticBoundary([
-         (5.2u"m", 1.3u"g/cm^3", 1700u"m/s", 100u"m/s", 0, 0),
-         (Inf, 2u"g/cm^3", 2500u"m/s", 500u"m/s", 0, 0)
+julia> MultilayerElasticBoundary([
+         (h = 5.2, ρ = 1300, cₚ = 1700, cₛ = 100, δₚ = 0.1, δₛ = 0.2, σ=0.1),
+         (h = Inf, ρ = 2000, cₚ = 2500, cₛ = 500)
        ])
-MultilayerElasticBoundary(2 layers)
+MultilayerElasticBoundary(2 layers):
+  (h = 5.2, ρ = 1300.0, cₚ = 1700.0, cₛ = 100.0, δₚ = 0.1, δₛ = 0.2, σ = 0.1)
+  (h = Inf, ρ = 2000.0, cₚ = 2500.0, cₛ = 500.0, δₚ = 0.0, δₛ = 0.0, σ = 0.0)
+
+julia> MultilayerElasticBoundary([
+         (5.2u"m", 1.3u"g/cm^3", 1700u"m/s", 100u"m/s", 0.1, 0.2),
+         (Inf, 2u"g/cm^3", 2500u"m/s", 500u"m/s")
+       ])
+MultilayerElasticBoundary(2 layers):
+  (h = 5.2, ρ = 1300.0, cₚ = 1700.0, cₛ = 100.0, δₚ = 0.1, δₛ = 0.2, σ = 0.0)
+  (h = Inf, ρ = 2000.0, cₚ = 2500.0, cₛ = 500.0, δₚ = 0.0, δₛ = 0.0, σ = 0.0)
 ```
 """
 struct MultilayerElasticBoundary{T} <: AbstractAcousticBoundary
-  layers::Vector{@NamedTuple{h::T, ρ::T, cₚ::T, cₛ::T, δₚ::T, δₛ::T}}
+  layers::Vector{@NamedTuple{h::T, ρ::T, cₚ::T, cₛ::T, δₚ::T, δₛ::T, σ::T}}
   function MultilayerElasticBoundary(layers::AbstractVector)
     isempty(layers) && error("No layers specified")
     layers = map(layers) do l
-      length(l) == 6 || error("Each layer should be defined by a 6-tuple")
-      l isa NamedTuple && keys(l) != (:h, :ρ, :cₚ, :cₛ, :δₚ, :δₛ) && error("Invalid named tuple definition")
-      l = promote(in_units(u"m", l[1]), in_units(u"kg/m^3", l[2]), in_units(u"m/s", l[3]), in_units(u"m/s", l[4]), l[5], l[6])
+      4 ≤ length(l) ≤ 7 || error("Each layer should be defined by a tuple with 4-7 numbers")
+      if l isa NamedTuple
+        length(l) == 4 && keys(l) != (:h, :ρ, :cₚ, :cₛ) && error("Invalid named tuple definition")
+        length(l) == 5 && keys(l) != (:h, :ρ, :cₚ, :cₛ, :δₚ) && error("Invalid named tuple definition")
+        length(l) == 6 && keys(l) != (:h, :ρ, :cₚ, :cₛ, :δₚ, :δₛ) && error("Invalid named tuple definition")
+        length(l) == 7 && keys(l) != (:h, :ρ, :cₚ, :cₛ, :δₚ, :δₛ, :σ) && error("Invalid named tuple definition")
+      end
+      l = promote(in_units(u"m", l[1]), in_units(u"kg/m^3", l[2]),
+                  in_units(u"m/s", l[3]), in_units(u"m/s", l[4]),
+                  length(l) > 4 ? l[5] : 0,
+                  length(l) > 5 ? l[6] : 0,
+                  length(l) > 6 ? l[7] : 0)
       l = float.(l)
-      (h=l[1], ρ=l[2], cₚ=l[3], cₛ=l[4], δₚ=l[5], δₛ=l[6])
+      (h=l[1], ρ=l[2], cₚ=l[3], cₛ=l[4], δₚ=l[5], δₛ=l[6], σ=l[7])
     end
     isinf(layers[end][1]) || error("Last layer must have an infinite thickness")
     new{typeof(layers[1][1])}(layers)
@@ -171,13 +270,22 @@ function Base.show(io::IO, b::MultilayerElasticBoundary)
   print(io, ")")
 end
 
+function Base.show(io::IO, mime::MIME"text/plain", b::MultilayerElasticBoundary)
+  print(io, "MultilayerElasticBoundary($(length(b.layers)) layer")
+  length(b.layers) > 1 && print(io, "s")
+  println(io, "):")
+  for l ∈ b.layers
+    println(io, "  ", l)
+  end
+end
+
 function reflection_coef(bc::MultilayerElasticBoundary, frequency, θ, ρ, c)
   if length(bc.layers) > 1
     # TODO: implement multilayer reflection coefficient
     @warn "Multilayer boundary reflection not implemented, using top layer only..." maxlog=1
   end
   l1 = bc.layers[1]
-  bc1 = ElasticBoundary(l1.ρ, l1.cₚ, l1.cₛ, l1.δₚ, l1.δₛ)
+  bc1 = ElasticBoundary(l1.ρ, l1.cₚ, l1.cₛ, l1.δₚ, l1.δₛ, l1.σ)
   reflection_coef(bc1, frequency, θ, ρ, c)
 end
 

@@ -123,6 +123,27 @@ function reflection_coef(θ, ρᵣ, cᵣ, δ=0.0)
 end
 
 """
+    reflection_coef(θ, ρᵣ, cᵣ, cᵣₛ, δ, δₛ)
+
+Compute complex reflection coefficient at a fluid-solid boundary, given:
+- angle of incidence `θ` (angle to the surface normal)
+- relative density of the reflecting medium to incidence medium `ρᵣ`
+- relative compressional sound speed of the reflecting medium to incidence medium `cᵣ`
+- relative shear sound speed of the reflecting medium to incidence medium `cᵣₛ`
+- dimensionless compressional absorption coefficient `δ`
+- dimensionless shear absorption coefficient `δₛ`
+
+WARNING: Fluid-solid reflection not implemented. Currently ignores shear.
+"""
+function reflection_coef(θ, ρᵣ, cᵣ, cᵣₛ, δ, δₛ)
+  if cᵣₛ != 0
+    # TODO: implement (current implementation ignores shear)
+    @warn "Fluid-solid reflection not implemented, ignoring shear..." maxlog=1
+  end
+  reflection_coef(θ, ρᵣ, cᵣ, δ)
+end
+
+"""
     dBperλ(x)
 
 Compute dimensionless absorption coefficient `δ` from dB/λ.

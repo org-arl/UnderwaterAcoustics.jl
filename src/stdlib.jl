@@ -9,6 +9,7 @@ export CoarseSilt, SandySilt, Silt, FineSilt, SandyClay, SiltyClay, Clay
 export SeaState0, SeaState1, SeaState2, SeaState3, SeaState4, SeaState5
 export SeaState6, SeaState7, SeaState8, SeaState9, WhiteGaussianNoise
 export RedGaussianNoise, WindySurface, SampledField, ElasticBoundary
+export MultilayerElasticBoundary
 
 ################################################################################
 # boundary conditions
@@ -82,10 +83,11 @@ const SiltyClay = FluidBoundary(1.146 * 1023, 0.9824 * 1528, 0.00163)
 const Clay = FluidBoundary(1.145 * 1023, 0.98 * 1528, 0.00148)
 
 """
-    ElasticBoundary(ρ, c, δ)
+    ElasticBoundary(ρ, cₚ, cₛ, δₚ, δₛ)
 
-Create a fluid half-space boundary with density `ρ`, sound speed `c`, and
-dimensionless absorption coefficient `δ`.
+Create a solid half-space boundary with density `ρ`, compressional sound
+speed `cₚ`, shear sound speed `cₛ`, dimensionless compressional absorption
+coefficient `δₚ`, and dimensionless shear absorption coefficient `δₛ`.
 """
 struct ElasticBoundary{T} <: AbstractAcousticBoundary
   ρ::T
@@ -107,14 +109,76 @@ function Base.show(io::IO, b::ElasticBoundary)
   print(io, "ElasticBoundary(ρ=$(b.ρ), cₚ=$(b.cₚ), cₛ=$(b.cₛ), δₚ=$(b.δₚ), δₛ=$(b.δₛ))")
 end
 
-# TODO: fix according to COA p43
 function reflection_coef(bc::ElasticBoundary, frequency, θ, ρ, c)
   isinf(bc.cₚ) && return 1.0 + 0im
-  bc.cₚ == 0 && return -1.0 + 0im
+  isinf(bc.cₛ) && return 1.0 + 0im
   θ = in_units(u"rad", θ)
   ρ = in_units(u"kg/m^3", ρ)
   c = in_units(u"m/s", c)
-  reflection_coef(θ, bc.ρ / ρ, bc.cₚ / c, bc.δₚ)
+  reflection_coef(θ, bc.ρ / ρ, bc.cₚ / c, bc.cₛ / c, bc.δₚ, bc.δₛ)
+end
+
+"""
+    MultilayerElasticBoundary([(h, ρ, cₚ, cₛ, δₚ, δₛ), ...])
+
+Create a multilayer solid boundary with layers defined by a vector of tuples
+specifying the layer thickness `h`, density `ρ`, compressional sound speed `cₚ`,
+shear sound speed `cₛ`, dimensionless compressional absorption coefficient `δₚ`,
+and dimensionless shear absorption coefficient `δₛ`, for each layer. The last
+entry in the vector is considered the bottom half-space and has an infinite
+thickness. By convention, we specify a value of `Inf` for `h` for that layer.
+
+# Examples
+```julia-repl
+julia> bc = MultilayerElasticBoundary([
+         (5.2, 1300, 1700, 100, 0, 0),
+         (Inf, 2000, 2500, 500, 0, 0)
+       ])
+MultilayerElasticBoundary(2 layers)
+
+julia> bc = MultilayerElasticBoundary([
+         (h = 5.2, ρ = 1300, cₚ = 1700, cₛ = 100, δₚ = 0, δₛ = 0),
+         (h = Inf, ρ = 2000, cₚ = 2500, cₛ = 500, δₚ = 0, δₛ = 0)
+       ])
+MultilayerElasticBoundary(2 layers)
+
+julia> bc = MultilayerElasticBoundary([
+         (5.2u"m", 1.3u"g/cm^3", 1700u"m/s", 100u"m/s", 0, 0),
+         (Inf, 2u"g/cm^3", 2500u"m/s", 500u"m/s", 0, 0)
+       ])
+MultilayerElasticBoundary(2 layers)
+```
+"""
+struct MultilayerElasticBoundary{T} <: AbstractAcousticBoundary
+  layers::Vector{@NamedTuple{h::T, ρ::T, cₚ::T, cₛ::T, δₚ::T, δₛ::T}}
+  function MultilayerElasticBoundary(layers::AbstractVector)
+    isempty(layers) && error("No layers specified")
+    layers = map(layers) do l
+      length(l) == 6 || error("Each layer should be defined by a 6-tuple")
+      l isa NamedTuple && keys(l) != (:h, :ρ, :cₚ, :cₛ, :δₚ, :δₛ) && error("Invalid named tuple definition")
+      l = promote(in_units(u"m", l[1]), in_units(u"kg/m^3", l[2]), in_units(u"m/s", l[3]), in_units(u"m/s", l[4]), l[5], l[6])
+      l = float.(l)
+      (h=l[1], ρ=l[2], cₚ=l[3], cₛ=l[4], δₚ=l[5], δₛ=l[6])
+    end
+    isinf(layers[end][1]) || error("Last layer must have an infinite thickness")
+    new{typeof(layers[1][1])}(layers)
+  end
+end
+
+function Base.show(io::IO, b::MultilayerElasticBoundary)
+  print(io, "MultilayerElasticBoundary($(length(b.layers)) layer")
+  length(b.layers) > 1 && print(io, "s")
+  print(io, ")")
+end
+
+function reflection_coef(bc::MultilayerElasticBoundary, frequency, θ, ρ, c)
+  if length(bc.layers) > 1
+    # TODO: implement multilayer reflection coefficient
+    @warn "Multilayer boundary reflection not implemented, using top layer only..." maxlog=1
+  end
+  l1 = bc.layers[1]
+  bc1 = ElasticBoundary(l1.ρ, l1.cₚ, l1.cₛ, l1.δₚ, l1.δₛ)
+  reflection_coef(bc1, frequency, θ, ρ, c)
 end
 
 """

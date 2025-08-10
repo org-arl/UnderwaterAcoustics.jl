@@ -223,7 +223,7 @@ MultilayerElasticBoundary(2 layers):
   (h = Inf, ρ = 2000.0, cₚ = 2500.0, cₛ = 500.0, δₚ = 0.1, δₛ = 0.2, σ = 0.1)
 
 julia> MultilayerElasticBoundary([
-         (h = 5.2, ρ = 1300, cₚ = 1700, cₛ = 100, δₚ = 0.1, δₛ = 0.2, σ=0.1),
+         (h = 5.2, ρ = 1300, cₚ = 1700, cₛ = 100, δₚ = 0.1, δₛ = 0.2, σ = 0.1),
          (h = Inf, ρ = 2000, cₚ = 2500, cₛ = 500)
        ])
 MultilayerElasticBoundary(2 layers):

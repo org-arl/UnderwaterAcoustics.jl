@@ -28,6 +28,7 @@ end
 @testitem "env" setup=[PekerisSetup] begin
   for e ∈ (env, UnderwaterEnvironment(bathymetry=20.0u"m"))
     @test e isa UnderwaterEnvironment
+    @test startswith(sprint(show, e), "UnderwaterEnvironment")
     @test ! @inferred is_range_dependent(e)
     @test @inferred is_isovelocity(e)
     @test e.bathymetry == 20.0
@@ -50,6 +51,7 @@ end
   rx = @inferred AcousticReceiver(100u"m", -10u"m")
   ch = @inferred channel(pm, tx, rx, 192000)
   @test ch isa UnderwaterAcoustics.SampledPassbandChannel
+  @test startswith(sprint(show, ch), "SampledPassbandChannel")
   @test ch.fs == 192000
   @test ch.noise === nothing
   x = vcat(1.0, 0.5, zeros(98))
@@ -73,6 +75,7 @@ end
   import UnderwaterAcoustics: distance
   src = @inferred AcousticSource(-5.0, 1000.0; spl=180.0)
   @test src isa UnderwaterAcoustics.AbstractAcousticSource
+  @test startswith(sprint(show, src), "TX")
   @test @inferred(location(src)) == (x=0.0, y=0.0, z=-5.0)
   @test @inferred(distance(location(src), (x=0.0, y=0.0, z=-5.0))) == 0.0
   @test @inferred(distance(location(src), (x=1.0, y=1.0, z=-4.0))) == sqrt(3)
@@ -111,6 +114,7 @@ end
 @testitem "rcv" begin
   rcv = @inferred AcousticReceiver(10.0, 20.0, 0.0)
   @test rcv isa UnderwaterAcoustics.AbstractAcousticReceiver
+  @test startswith(sprint(show, rcv), "RX")
   @test @inferred(location(rcv)) == (x=10.0, y=20.0, z=0.0)
   rcv = @inferred AcousticReceiver((10.0, 20.0, 0.0))
   @test @inferred(location(rcv)) == (x=10.0, y=20.0, z=0.0)
@@ -156,6 +160,7 @@ end
 @testitem "boundary" begin
   @test FluidBoundary <: UnderwaterAcoustics.AbstractAcousticBoundary
   bc = FluidBoundary(1200, 1500)
+  @test startswith(sprint(show, bc), "FluidBoundary")
   @test bc isa FluidBoundary
   @test bc == FluidBoundary(ρ=1200, c=1500)
   @test bc == FluidBoundary(1.2u"g/cm^3", 1500u"m/s")
@@ -163,6 +168,8 @@ end
   @test FluidBoundary(1200, 1500, 0.1, 0.2) == FluidBoundary(ρ=1200, c=1500, δ=0.1, σ=0.2)
   @test PressureReleaseBoundary isa FluidBoundary
   @test RigidBoundary isa FluidBoundary
+  @test sprint(show, PressureReleaseBoundary) == "PressureReleaseBoundary"
+  @test sprint(show, RigidBoundary) == "RigidBoundary"
   for sb ∈ (Rock, Pebbles, SandyGravel, CoarseSand, MediumSand, FineSand, VeryFineSand, ClayeySand, CoarseSilt, SandySilt, Silt, FineSilt, SandyClay, SiltyClay, Clay)
     @test sb isa FluidBoundary
     rc1 = @inferred reflection_coef(sb, 1000.0, 0.1, 1023.0, 1540.0)
@@ -171,6 +178,7 @@ end
   end
   @test ElasticBoundary <: UnderwaterAcoustics.AbstractAcousticBoundary
   bc = ElasticBoundary(1200, 1500, 500)
+  @test startswith(sprint(show, bc), "ElasticBoundary")
   @test bc isa ElasticBoundary
   @test bc == ElasticBoundary(ρ=1200, cₚ=1500, cₛ=500)
   @test bc == ElasticBoundary(1.2u"g/cm^3", 1500u"m/s", 500u"m/s")
@@ -186,6 +194,7 @@ end
     (5.2, 1300, 1700, 100, 0.1),
     (Inf, 2000, 2500, 500)
   ])
+  @test startswith(sprint(show, bc), "MultilayerElasticBoundary")
   @test length(bc.layers) == 4
   @test bc.layers == MultilayerElasticBoundary([
     (h = 5.2, ρ = 1300, cₚ = 1700, cₛ = 100, δₚ = 0.1, δₛ = 0.2, σ = 0.3),
@@ -213,6 +222,8 @@ end
 
 @testitem "field" begin
   fld = @inferred SampledField([0.0, 10.0, 0.0]; x=[0.0, 10.0, 20.0])
+  @test fld isa UnderwaterAcoustics.SampledFieldX
+  @test startswith(sprint(show, fld), "SampledField")
   @test @inferred is_range_dependent(fld)
   @test @inferred(fld(0.0)) == 0.0
   @test @inferred(fld(5.0)) == 5.0
@@ -227,6 +238,8 @@ end
   @test @inferred(fld((x=10.0, y=0.0, z=5.0))) == 10.0
   @test @inferred(fld((x=10.0, y=5.0, z=0.0))) == 10.0
   fld = @inferred SampledField([0.0, 10.0, 0.0]; z=[0.0, 10.0, 20.0])
+  @test fld isa UnderwaterAcoustics.SampledFieldZ
+  @test startswith(sprint(show, fld), "SampledField")
   @test @inferred !is_range_dependent(fld)
   @test @inferred(fld(0.0)) == 0.0
   @test @inferred(fld(5.0)) == 5.0
@@ -241,6 +254,8 @@ end
   @test @inferred(fld((x=5.0, y=0.0, z=10.0))) == 10.0
   @test @inferred(fld((x=0.0, y=5.0, z=10.0))) == 10.0
   fld = @inferred SampledField([0.0 1.0; 1.0 2.0]; x=[0.0, 1.0], y=[0.0, 1.0])
+  @test fld isa UnderwaterAcoustics.SampledFieldXY
+  @test startswith(sprint(show, fld), "SampledField")
   @test @inferred is_range_dependent(fld)
   @test @inferred(fld(0.0, 0.0)) == 0.0
   @test @inferred(fld(0.5, 0.5)) == 1.0
@@ -248,9 +263,21 @@ end
   @test @inferred(fld((x=0.0, y=0.0, z=0.0))) == 0.0
   @test @inferred(fld((x=0.5, y=0.5, z=0.0))) == 1.0
   @test @inferred(fld((x=1.0, y=1.0, z=0.0))) == 2.0
-  @test @inferred(fld((x=0.0, y=0.0, z=0.0))) == 0.0
   @test @inferred(fld((x=1.0, y=0.0, z=1.0))) == 1.0
+  fld = @inferred SampledField([0.0 1.0; 1.0 2.0]; x=[0.0, 1.0], z=[0.0, 1.0])
+  @test fld isa UnderwaterAcoustics.SampledFieldXZ
+  @test startswith(sprint(show, fld), "SampledField")
+  @test @inferred is_range_dependent(fld)
+  @test @inferred(fld(0.0, 0.0)) == 0.0
+  @test @inferred(fld(0.5, 0.5)) == 1.0
+  @test @inferred(fld(1.0, 1.0)) == 2.0
+  @test @inferred(fld((x=0.0, y=0.0, z=0.0))) == 0.0
+  @test @inferred(fld((x=0.5, y=0.0, z=0.5))) == 1.0
+  @test @inferred(fld((x=1.0, y=0.0, z=1.0))) == 2.0
+  @test @inferred(fld((x=1.0, y=1.0, z=0.0))) == 1.0
   fld = SampledField([0.0; 1.0;; 1.0; 2.0;;; 0.0; 1.0;; 1.0; 2.0]; x=[0.0, 1.0], y=[0.0, 1.0], z=[0.0, 1.0])
+  @test fld isa UnderwaterAcoustics.SampledFieldXYZ
+  @test startswith(sprint(show, fld), "SampledField")
   @test @inferred is_range_dependent(fld)
   @test @inferred(fld(0.0, 0.0, 0.0)) == 0.0
   @test @inferred(fld(0.5, 0.5, 0.5)) == 1.0

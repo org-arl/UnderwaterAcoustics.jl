@@ -3,10 +3,12 @@ using TestItems
 @testitem "pekeris-rays-arrivals+ir" begin
   env = @inferred UnderwaterEnvironment(bathymetry = 20.0u"m", temperature = 27.0u"°C", salinity = 35.0u"ppt", seabed = SandySilt)
   pm = @inferred PekerisRayTracer(env)
+  @test startswith(sprint(show, pm), "PekerisRayTracer")
   tx = @inferred AcousticSource((x=0.0, z=-5.0), 1000.0)
   rx = @inferred AcousticReceiver((x=100.0, z=-10.0))
   arr = @inferred arrivals(pm, tx, rx)
   @test arr isa AbstractArray{<:UnderwaterAcoustics.RayArrival}
+  @test startswith(sprint(show, arr[1]), "∠")
   @test length(arr) == 7
   @test arr[1].t == arr[1].time
   @test arr[1].ϕ == arr[1].phasor
@@ -140,10 +142,12 @@ end
     seabed = FluidBoundary(2000, 2000)
   )
   pm = @inferred PekerisModeSolver(env)
+  @test startswith(sprint(show, pm), "PekerisModeSolver")
   tx = @inferred AcousticSource(0, -500, 10)
   rx = @inferred AcousticReceiver(200000, -2500)
   m = @inferred arrivals(pm, tx, rx)
   @test m isa Vector{<:UnderwaterAcoustics.ModeArrival}
+  @test contains(sprint(show, m[1]), "mode")
   @test length(m) == 44
   @test m[1].m == m[1].mode
   @test m[1].kᵣ == m[1].hwavenumber

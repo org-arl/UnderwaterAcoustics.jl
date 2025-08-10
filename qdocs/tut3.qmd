@@ -34,7 +34,7 @@ using UnderwaterAcoustics
 
 function model(h, r, d1, d2)
   env = UnderwaterEnvironment(bathymetry=h)
-  pm = PekerisRayTracer(env)
+  pm = PekerisRayTracer(env; max_bounces=4)
   tx = AcousticSource(r, -d2, 1000.0)
   rx = AcousticReceiver(0.0, -d1)
   arr = arrivals(pm, tx, rx)
@@ -52,6 +52,7 @@ We can model this as a Bayesian inference problem using [`Turing.jl`](https://gi
 ```{julia}
 #| output: false
 using Turing
+using Random
 
 @model function pmodel(data)
   h  ~ Normal(20.0, 0.1)
@@ -62,7 +63,8 @@ using Turing
   data ~ MvNormal(μ, 0.1)
 end
 
-q = vi(pmodel(data), ADVI(10, 10000))
+m = pmodel(data)
+q,_ = vi(MersenneTwister(1), m, q_meanfield_gaussian(m), 10000)
 
 # extract mean values of parameters h, r, d1 and d2
 μ = mean(rand(q, 10000); dims=2)

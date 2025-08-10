@@ -155,6 +155,12 @@ end
 
 @testitem "boundary" begin
   @test FluidBoundary <: UnderwaterAcoustics.AbstractAcousticBoundary
+  bc = FluidBoundary(1200, 1500)
+  @test bc isa FluidBoundary
+  @test bc == FluidBoundary(ρ=1200, c=1500)
+  @test bc == FluidBoundary(1.2u"g/cm^3", 1500u"m/s")
+  @test FluidBoundary(1200, 1500, 0.1) == FluidBoundary(ρ=1200, c=1500, δ=0.1)
+  @test FluidBoundary(1200, 1500, 0.1, 0.2) == FluidBoundary(ρ=1200, c=1500, δ=0.1, σ=0.2)
   @test PressureReleaseBoundary isa FluidBoundary
   @test RigidBoundary isa FluidBoundary
   for sb ∈ (Rock, Pebbles, SandyGravel, CoarseSand, MediumSand, FineSand, VeryFineSand, ClayeySand, CoarseSilt, SandySilt, Silt, FineSilt, SandyClay, SiltyClay, Clay)
@@ -163,6 +169,39 @@ end
     rc2 = @inferred reflection_coef(0.1, sb.ρ/1023.0, sb.c/1540.0, sb.δ)
     @test rc1 == rc2
   end
+  @test ElasticBoundary <: UnderwaterAcoustics.AbstractAcousticBoundary
+  bc = ElasticBoundary(1200, 1500, 500)
+  @test bc isa ElasticBoundary
+  @test bc == ElasticBoundary(ρ=1200, cₚ=1500, cₛ=500)
+  @test bc == ElasticBoundary(1.2u"g/cm^3", 1500u"m/s", 500u"m/s")
+  @test ElasticBoundary(1200, 1500, 500, 0.1, 0.11) == ElasticBoundary(ρ=1200, cₚ=1500, cₛ=500, δₚ=0.1, δₛ=0.11)
+  @test ElasticBoundary(1200, 1500, 500, 0.1, 0, 0.2) == ElasticBoundary(ρ=1200, cₚ=1500, cₛ=500, δₚ=0.1, σ=0.2)
+  rc1a = @inferred reflection_coef(bc, 1000.0, 0.1, 1023.0, 1540.0)
+  rc2a = @inferred reflection_coef(0.1, bc.ρ/1023.0, bc.cₚ/1540.0, bc.δₚ)
+  @test rc1a == rc2a
+  @test MultilayerElasticBoundary <: UnderwaterAcoustics.AbstractAcousticBoundary
+  bc = MultilayerElasticBoundary([
+    (5.2, 1300, 1700, 100, 0.1, 0.2, 0.3),
+    (5.2, 1300, 1700, 100, 0.1, 0.2),
+    (5.2, 1300, 1700, 100, 0.1),
+    (Inf, 2000, 2500, 500)
+  ])
+  @test length(bc.layers) == 4
+  @test bc.layers == MultilayerElasticBoundary([
+    (h = 5.2, ρ = 1300, cₚ = 1700, cₛ = 100, δₚ = 0.1, δₛ = 0.2, σ = 0.3),
+    (h = 5.2, ρ = 1300, cₚ = 1700, cₛ = 100, δₚ = 0.1, δₛ = 0.2),
+    (h = 5.2, ρ = 1300, cₚ = 1700, cₛ = 100, δₚ = 0.1),
+    (h = Inf, ρ = 2000, cₚ = 2500, cₛ = 500)
+  ]).layers
+  @test bc.layers == MultilayerElasticBoundary([
+    (5.2u"m", 1.3u"g/cm^3", 1700u"m/s", 100u"m/s", 0.1, 0.2, 0.3),
+    (5.2u"m", 1.3u"g/cm^3", 1700u"m/s", 100u"m/s", 0.1, 0.2),
+    (5.2u"m", 1.3u"g/cm^3", 1700u"m/s", 100u"m/s", 0.1),
+    (Inf, 2u"g/cm^3", 2500u"m/s", 500u"m/s")
+  ]).layers
+  rc1a = @inferred reflection_coef(bc, 1000.0, 0.1, 1023.0, 1540.0)
+  rc2a = @inferred reflection_coef(0.1, bc.layers[1].ρ/1023.0, bc.layers[1].cₚ/1540.0, bc.layers[1].δₚ)
+  @test rc1a == rc2a
   @test WindySurface <: UnderwaterAcoustics.AbstractAcousticBoundary
   for ss ∈ (SeaState0, SeaState1, SeaState2, SeaState3, SeaState4, SeaState5, SeaState6, SeaState7, SeaState8, SeaState9)
     @test ss isa WindySurface

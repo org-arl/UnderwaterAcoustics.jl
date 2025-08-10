@@ -4,10 +4,12 @@ struct AdiabaticExt{T1,T2,T3} <: AbstractModePropagationModel
   env::T1
   kwargs::T2
   nmesh_per_λ::Int
+  max_modes::Int
+  reciprocal::Bool
   zs::Vector{Float64}
   cache::Vector{Vector{ModeArrival}}
-  function AdiabaticExt(model, env; nmesh_per_λ=10, kwargs...)
-    new{typeof(env),typeof(kwargs),model}(env, kwargs, nmesh_per_λ, Float64[], Vector{ModeArrival}[])
+  function AdiabaticExt(model, env; nmesh_per_λ=10, max_modes=0, reciprocal=false, kwargs...)
+    new{typeof(env),typeof(kwargs),model}(env, kwargs, nmesh_per_λ, max_modes, reciprocal, Float64[], Vector{ModeArrival}[])
   end
 end
 
@@ -23,7 +25,7 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rx::Abstra
   only(acoustic_field(pm, tx, [rx]; mode))
 end
 
-function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::AbstractArray{<:AbstractAcousticReceiver}; mode=:coherent, nmodes=9999)
+function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::AbstractArray{<:AbstractAcousticReceiver}; mode=:coherent)
   min_depth = minimum(pm.env.bathymetry)
   max_depth = maximum(pm.env.bathymetry)
   if min_depth == max_depth
@@ -75,29 +77,30 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
   i0 = something(findfirst(≥(x0), xs), length(xs)+1)
   fld = zeros(ComplexF64, size(rxs))
   tx_modes = _cached(pm, z0, dz)
-  for m ∈ 1:min(nmodes, length(tx_modes))
-    # compute kr-integral for all receivers on the right of the source
+  nmodes = length(tx_modes)
+  pm.max_modes > 0 && nmodes < pm.max_modes && (nmodes = pm.max_modes)
+  a = absorption(frequency(tx), 1.0, pm.env.salinity, pm.env.temperature, min_depth / 2)  # nominal absorption
+  for m ∈ 1:nmodes
     kri = zeros(ComplexF64, size(xs))
+    # compute kr-integral for all receivers on the right of the source
     x = x0
     for i ∈ i0:length(xs)
       i > i0 && (kri[i] = kri[i-1])
       m1 = _cached(pm, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz)
-      m1 === nothing && @show x
       while x < xs[i] - dx
         x += dx
         m2 = _cached(pm, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz)
-        m2 === nothing && @show x
-        if length(m1) ≥ m && length(m2) ≥ m
-          kri[i] += 0.5 * (m1[m].kᵣ + m2[m].kᵣ) * dx
-        end
+        min(length(m1), length(m2)) < m && break
+        kri[i] += 0.5 * (m1[m].kᵣ + m2[m].kᵣ) * dx
         m1 = m2
       end
       if x < xs[i]
         m2 = _cached(pm, -value(pm.env.bathymetry, (x=xs[i], y=0.0, z=0.0)), dz)
-        m2 === nothing && @show xs[i]
-        if length(m1) ≥ m && length(m2) ≥ m
-          kri[i] += 0.5 * (m1[m].kᵣ + m2[m].kᵣ) * (xs[i] - x)
+        if x < xs[i] - dx || min(length(m1), length(m2)) < m
+          kri[i] = 0
+          break
         end
+        kri[i] += 0.5 * (m1[m].kᵣ + m2[m].kᵣ) * (xs[i] - x)
         x = xs[i]
       end
     end
@@ -107,21 +110,27 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
     end
     # compute field contribution
     for (x1, kri1, ndx1) ∈ zip(xs, kri, ndx)
+      kri1 == 0 && break
       z = -value(pm.env.bathymetry, (x=x1, y=0.0, z=0.0))
       rx_modes = _cached(pm, z, dz)
       if m ≤ length(rx_modes)
-        a = tx_modes[m].ψ(location(tx).z) * cis(kri1) / sqrt(kri1)
+        A = tx_modes[m].ψ(location(tx).z) * cis(kri1)
+        R = x1 - x0
+        A /= sqrt(pm.reciprocal ? kri1 : rx_modes[m].kᵣ * R)
+        A *= a ^ R
         for j ∈ ndx1
           zᵣ = location(rxs[j]).z
           if zᵣ ≥ z
-            fld[j] += a * rx_modes[m].ψ(zᵣ)
+            fld[j] += mode === :coherent ? A * rx_modes[m].ψ(zᵣ) : abs2(A * rx_modes[m].ψ(zᵣ))
           end
         end
       end
     end
   end
-  ρ = 1 #value(pm.env.density, location(tx))
-  fld .*= cispi(0.25) / (ρ * √(8π))
+  #ρ = value(pm.env.density, location(tx))
+  #fld .*= cispi(0.25) / (ρ * √(8π)) * db2amp(spl(tx))
+  mode === :coherent || (fld .= sqrt.(fld))
+  fld .*= sqrt(2π) * cispi(0.25) * db2amp(spl(tx))
   fld
 end
 

@@ -195,6 +195,7 @@ end
     (Inf, 2000, 2500, 500)
   ])
   @test startswith(sprint(show, bc), "MultilayerElasticBoundary")
+  @test startswith(sprint(show, MIME"text/plain"(), bc), "MultilayerElasticBoundary")
   @test length(bc.layers) == 4
   @test bc.layers == MultilayerElasticBoundary([
     (h = 5.2, ρ = 1300, cₚ = 1700, cₛ = 100, δₚ = 0.1, δₛ = 0.2, σ = 0.3),

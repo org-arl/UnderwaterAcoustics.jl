@@ -75,8 +75,6 @@ Additionally, this wrapper does not yet support all the features of the original
 - Range-dependent environments (adiabatic or coupled mode approximations)
 - N2-linear, analytic or quadratic interpolation for sound speed
 - Arbitrary reflection coefficients
-- Layered seabed
 - Twersky scattering
-- Interfacial roughness
 
 Receivers on an irregular grid are supported, but not currently optimized for speed (by using the irregular grid option in the Fortran model).

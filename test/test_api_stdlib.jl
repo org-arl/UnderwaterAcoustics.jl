@@ -231,13 +231,13 @@ end
   @test @inferred(fld(10.0)) == 10.0
   @test @inferred(fld(15.0)) == 5.0
   @test @inferred(fld(20.0)) == 0.0
-  @test @inferred(fld((x=0.0, y=0.0, z=0.0))) == 0.0
-  @test @inferred(fld((x=5.0, y=0.0, z=0.0))) == 5.0
-  @test @inferred(fld((x=10.0, y=0.0, z=0.0))) == 10.0
-  @test @inferred(fld((x=15.0, y=0.0, z=0.0))) == 5.0
-  @test @inferred(fld((x=20.0, y=0.0, z=0.0))) == 0.0
-  @test @inferred(fld((x=10.0, y=0.0, z=5.0))) == 10.0
-  @test @inferred(fld((x=10.0, y=5.0, z=0.0))) == 10.0
+  @test @inferred(value(fld, (x=0.0, y=0.0, z=0.0))) == 0.0
+  @test @inferred(value(fld, (x=5.0, y=0.0, z=0.0))) == 5.0
+  @test @inferred(value(fld, (x=10.0, y=0.0, z=0.0))) == 10.0
+  @test @inferred(value(fld, (x=15.0, y=0.0, z=0.0))) == 5.0
+  @test @inferred(value(fld, (x=20.0, y=0.0, z=0.0))) == 0.0
+  @test @inferred(value(fld, (x=10.0, y=0.0, z=5.0))) == 10.0
+  @test @inferred(value(fld, (x=10.0, y=5.0, z=0.0))) == 10.0
   fld = @inferred SampledField([0.0, 10.0, 0.0]; z=[0.0, 10.0, 20.0])
   @test fld isa UnderwaterAcoustics.SampledFieldZ
   @test startswith(sprint(show, fld), "SampledField")
@@ -247,13 +247,13 @@ end
   @test @inferred(fld(10.0)) == 10.0
   @test @inferred(fld(15.0)) == 5.0
   @test @inferred(fld(20.0)) == 0.0
-  @test @inferred(fld((x=0.0, y=0.0, z=0.0))) == 0.0
-  @test @inferred(fld((x=0.0, y=0.0, z=5.0))) == 5.0
-  @test @inferred(fld((x=0.0, y=0.0, z=10.0))) == 10.0
-  @test @inferred(fld((x=0.0, y=0.0, z=15.0))) == 5.0
-  @test @inferred(fld((x=0.0, y=0.0, z=20.0))) == 0.0
-  @test @inferred(fld((x=5.0, y=0.0, z=10.0))) == 10.0
-  @test @inferred(fld((x=0.0, y=5.0, z=10.0))) == 10.0
+  @test @inferred(value(fld, (x=0.0, y=0.0, z=0.0))) == 0.0
+  @test @inferred(value(fld, (x=0.0, y=0.0, z=5.0))) == 5.0
+  @test @inferred(value(fld, (x=0.0, y=0.0, z=10.0))) == 10.0
+  @test @inferred(value(fld, (x=0.0, y=0.0, z=15.0))) == 5.0
+  @test @inferred(value(fld, (x=0.0, y=0.0, z=20.0))) == 0.0
+  @test @inferred(value(fld, (x=5.0, y=0.0, z=10.0))) == 10.0
+  @test @inferred(value(fld, (x=0.0, y=5.0, z=10.0))) == 10.0
   fld = @inferred SampledField([0.0 1.0; 1.0 2.0]; x=[0.0, 1.0], y=[0.0, 1.0])
   @test fld isa UnderwaterAcoustics.SampledFieldXY
   @test startswith(sprint(show, fld), "SampledField")
@@ -261,10 +261,10 @@ end
   @test @inferred(fld(0.0, 0.0)) == 0.0
   @test @inferred(fld(0.5, 0.5)) == 1.0
   @test @inferred(fld(1.0, 1.0)) == 2.0
-  @test @inferred(fld((x=0.0, y=0.0, z=0.0))) == 0.0
-  @test @inferred(fld((x=0.5, y=0.5, z=0.0))) == 1.0
-  @test @inferred(fld((x=1.0, y=1.0, z=0.0))) == 2.0
-  @test @inferred(fld((x=1.0, y=0.0, z=1.0))) == 1.0
+  @test @inferred(value(fld, (x=0.0, y=0.0, z=0.0))) == 0.0
+  @test @inferred(value(fld, (x=0.5, y=0.5, z=0.0))) == 1.0
+  @test @inferred(value(fld, (x=1.0, y=1.0, z=0.0))) == 2.0
+  @test @inferred(value(fld, (x=1.0, y=0.0, z=1.0))) == 1.0
   fld = @inferred SampledField([0.0 1.0; 1.0 2.0]; x=[0.0, 1.0], z=[0.0, 1.0])
   @test fld isa UnderwaterAcoustics.SampledFieldXZ
   @test startswith(sprint(show, fld), "SampledField")
@@ -272,10 +272,10 @@ end
   @test @inferred(fld(0.0, 0.0)) == 0.0
   @test @inferred(fld(0.5, 0.5)) == 1.0
   @test @inferred(fld(1.0, 1.0)) == 2.0
-  @test @inferred(fld((x=0.0, y=0.0, z=0.0))) == 0.0
-  @test @inferred(fld((x=0.5, y=0.0, z=0.5))) == 1.0
-  @test @inferred(fld((x=1.0, y=0.0, z=1.0))) == 2.0
-  @test @inferred(fld((x=1.0, y=1.0, z=0.0))) == 1.0
+  @test @inferred(value(fld, (x=0.0, y=0.0, z=0.0))) == 0.0
+  @test @inferred(value(fld, (x=0.5, y=0.0, z=0.5))) == 1.0
+  @test @inferred(value(fld, (x=1.0, y=0.0, z=1.0))) == 2.0
+  @test @inferred(value(fld, (x=1.0, y=1.0, z=0.0))) == 1.0
   fld = SampledField([0.0; 1.0;; 1.0; 2.0;;; 0.0; 1.0;; 1.0; 2.0]; x=[0.0, 1.0], y=[0.0, 1.0], z=[0.0, 1.0])
   @test fld isa UnderwaterAcoustics.SampledFieldXYZ
   @test startswith(sprint(show, fld), "SampledField")
@@ -283,9 +283,9 @@ end
   @test @inferred(fld(0.0, 0.0, 0.0)) == 0.0
   @test @inferred(fld(0.5, 0.5, 0.5)) == 1.0
   @test @inferred(fld(1.0, 1.0, 1.0)) == 2.0
-  @test @inferred(fld((x=0.0, y=0.0, z=0.0))) == 0.0
-  @test @inferred(fld((x=0.5, y=0.5, z=0.5))) == 1.0
-  @test @inferred(fld((x=1.0, y=1.0, z=1.0))) == 2.0
+  @test @inferred(value(fld, (x=0.0, y=0.0, z=0.0))) == 0.0
+  @test @inferred(value(fld, (x=0.5, y=0.5, z=0.5))) == 1.0
+  @test @inferred(value(fld, (x=1.0, y=1.0, z=1.0))) == 2.0
 end
 
 @testitem "noise" begin

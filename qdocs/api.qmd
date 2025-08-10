@@ -59,6 +59,8 @@ jdoc(UnderwaterAcoustics, :reflection_coef, 2)
 jdoc(UnderwaterAcoustics, :PressureReleaseBoundary)
 jdoc(UnderwaterAcoustics, :RigidBoundary)
 jdoc(UnderwaterAcoustics, :FluidBoundary)
+jdoc(UnderwaterAcoustics, :ElasticBoundary)
+jdoc(UnderwaterAcoustics, :MultilayerElasticBoundary)
 jdoc(UnderwaterAcoustics, :WindySurface)
 ```
 

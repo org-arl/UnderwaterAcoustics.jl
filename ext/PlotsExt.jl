@@ -212,7 +212,8 @@ end
   end
 end
 
-@recipe function plot(m::ModeArrival, D; npts=1000)
+@recipe function plot(m::ModeArrival, D=nothing; npts=1000)
+  D = something(D, -minimum(m.ψ.zrange))
   zr = range(0, -D; length=npts)
   ticks --> :native
   legend --> false
@@ -239,8 +240,9 @@ end
   end
 end
 
-@recipe function plot(m::AbstractVector{<:ModeArrival}, D; npts=1000)
+@recipe function plot(m::AbstractVector{<:ModeArrival}, D=nothing; npts=1000)
   n = length(m)
+  D === nothing && (D = mapreduce(m1 -> -minimum(m1.ψ.zrange), min, m))
   zr = range(0, -D; length=npts)
   ticks --> :native
   legend --> false

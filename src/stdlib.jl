@@ -204,6 +204,10 @@ unspecified, they are assumed to be 0. The last entry in the vector is
 considered the bottom half-space and has an infinite thickness. By convention,
 we specify a value of `Inf` for `h` for that layer.
 
+`ρ`, `cₚ`, and `cₛ` may also be specified with linear variation within a layer
+by specifying the value as a 2-tuple, with the first entry being the value at
+the top of the layer and the second entry being the value at the bottom.
+
 # Examples
 ```julia-repl
 julia> MultilayerElasticBoundary([
@@ -212,6 +216,14 @@ julia> MultilayerElasticBoundary([
        ])
 MultilayerElasticBoundary(2 layers):
   (h = 5.2, ρ = 1300.0, cₚ = 1700.0, cₛ = 100.0, δₚ = 0.0, δₛ = 0.0, σ = 0.0)
+  (h = Inf, ρ = 2000.0, cₚ = 2500.0, cₛ = 500.0, δₚ = 0.1, δₛ = 0.2, σ = 0.0)
+
+MultilayerElasticBoundary([
+                (5.2, 1300, (1700,2000), 100),
+                (Inf, 2000, 2500, 500, 0.1, 0.2)
+              ])
+MultilayerElasticBoundary(2 layers):
+  (h = 5.2, ρ = 1300.0, cₚ = (1700.0, 2000.0), cₛ = 100.0, δₚ = 0.0, δₛ = 0.0, σ = 0.0)
   (h = Inf, ρ = 2000.0, cₚ = 2500.0, cₛ = 500.0, δₚ = 0.1, δₛ = 0.2, σ = 0.0)
 
 julia> MultilayerElasticBoundary([
@@ -240,7 +252,7 @@ MultilayerElasticBoundary(2 layers):
 ```
 """
 struct MultilayerElasticBoundary{T} <: AbstractAcousticBoundary
-  layers::Vector{@NamedTuple{h::T, ρ::T, cₚ::T, cₛ::T, δₚ::T, δₛ::T, σ::T}}
+  layers::Vector{@NamedTuple{h::T, ρ::Union{T,Tuple{T,T}}, cₚ::Union{T,Tuple{T,T}}, cₛ::Union{T,Tuple{T,T}}, δₚ::T, δₛ::T, σ::T}}
   function MultilayerElasticBoundary(layers::AbstractVector)
     isempty(layers) && error("No layers specified")
     layers = map(layers) do l
@@ -251,12 +263,12 @@ struct MultilayerElasticBoundary{T} <: AbstractAcousticBoundary
         length(l) == 6 && keys(l) != (:h, :ρ, :cₚ, :cₛ, :δₚ, :δₛ) && error("Invalid named tuple definition")
         length(l) == 7 && keys(l) != (:h, :ρ, :cₚ, :cₛ, :δₚ, :δₛ, :σ) && error("Invalid named tuple definition")
       end
-      l = promote(in_units(u"m", l[1]), in_units(u"kg/m^3", l[2]),
-                  in_units(u"m/s", l[3]), in_units(u"m/s", l[4]),
-                  length(l) > 4 ? l[5] : 0,
-                  length(l) > 5 ? l[6] : 0,
-                  length(l) > 6 ? l[7] : 0)
-      l = float.(l)
+      l = (float(in_units(u"m", l[1])), in_units.(u"kg/m^3", l[2]),
+           in_units.(u"m/s", l[3]), in_units.(u"m/s", l[4]),
+           length(l) > 4 ? l[5] : 0, length(l) > 5 ? l[6] : 0,
+           length(l) > 6 ? l[7] : 0)
+      T = promote_type(map(typeof, Iterators.flatten(l))...)
+      l = map(l1 -> T.(l1), l)
       (h=l[1], ρ=l[2], cₚ=l[3], cₛ=l[4], δₚ=l[5], δₛ=l[6], σ=l[7])
     end
     isinf(layers[end][1]) || error("Last layer must have an infinite thickness")
@@ -275,7 +287,7 @@ function Base.show(io::IO, mime::MIME"text/plain", b::MultilayerElasticBoundary)
   length(b.layers) > 1 && print(io, "s")
   println(io, "):")
   for l ∈ b.layers
-    println(io, "  ", l)
+    println(io, "  (", join(map(k -> "$k = $(repr(l[k]))", keys(l)), ", "), ")")
   end
 end
 

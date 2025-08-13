@@ -322,6 +322,7 @@ end
 struct Mode{T}
   γ::T
   C::T
+  zrange::Tuple{T,T}
 end
 
 (m::Mode)(z) = m.C * sin(m.γ * -z)
@@ -329,7 +330,7 @@ end
 function _mode(m, ω, γ, k, c, ρ, cb, ρb, D)
   kᵣ = complex(sqrt(k^2 - γ^2))
   v = m > 0 ? _group_velocity(ω, γ, kᵣ, c, ρ, cb, ρb, D) : 0.0
-  ModeArrival(m, kᵣ, Mode(γ, sqrt(2/D)), v)
+  ModeArrival(m, kᵣ, Mode(γ, sqrt(2/D), (zero(D), -D)), v)
 end
 
 _arrivals_cost(γ, (pm, dk²)) = pm.seabed.ρ * γ * cos(γ * pm.h) + pm.ρ * sqrt(dk² - γ^2) * sin(γ * pm.h)

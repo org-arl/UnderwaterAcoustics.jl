@@ -8,10 +8,8 @@ struct AdiabaticExt{T1,T2,T3} <: AbstractModePropagationModel
   nmesh_per_λ::Int
   max_modes::Int
   reciprocal::Bool
-  zs::Vector{Float64}
-  cache::Vector{Vector{ModeArrival}}
   function AdiabaticExt(model, env; nmesh_per_λ=10, max_modes=0, reciprocal=false, kwargs...)
-    new{typeof(env),typeof(kwargs),model}(env, kwargs, nmesh_per_λ, max_modes, reciprocal, Float64[], Vector{ModeArrival}[])
+    new{typeof(env),typeof(kwargs),model}(env, kwargs, nmesh_per_λ, max_modes, reciprocal)
   end
 end
 
@@ -36,11 +34,11 @@ function arrivals(pm::AdiabaticExt, tx::AbstractAcousticSource, rx::AbstractAcou
   dz = minimum(pm.env.soundspeed) / (frequency(tx) * pm.nmesh_per_λ)
   dx = dz
   # precompute modes and cache them
-  _precompute(pm, tx, min_depth, max_depth, dz)
+  cache = _precompute(pm, tx, min_depth, max_depth, dz)
   # compute all modes
   xs = range(location(tx).x, location(rx).x; step = location(tx).x ≤ location(rx).x ? dx : -dx)
-  modes = map(x -> _cached(pm, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz), xs)
-  rx_modes = _cached(pm, -value(pm.env.bathymetry, (x=location(rx).x, y=0.0, z=0.0)), dz)
+  modes = map(x -> _cached(cache, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz), xs)
+  rx_modes = _cached(cache, -value(pm.env.bathymetry, (x=location(rx).x, y=0.0, z=0.0)), dz)
   nmodes = min(mapreduce(length, min, modes), length(rx_modes))
   0 < pm.max_modes < nmodes && (nmodes = pm.max_modes)
   map(1:nmodes) do m
@@ -70,7 +68,7 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
   dz = minimum(pm.env.soundspeed) / (frequency(tx) * pm.nmesh_per_λ)
   dx = dz
   # precompute modes and cache them
-  _precompute(pm, tx, min_depth, max_depth, dz)
+  cache = _precompute(pm, tx, min_depth, max_depth, dz)
   # get x positions of interest
   xs = unique!(sort!(map(rx -> location(rx).x, vec(rxs))))
   ndx = map(x -> findall(rx -> location(rx).x == x, rxs), xs)
@@ -78,7 +76,7 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
   z0 = -value(pm.env.bathymetry, (x=x0, y=0.0, z=0.0))
   i0 = something(findfirst(≥(x0), xs), length(xs)+1)
   fld = zeros(ComplexF64, size(rxs))
-  tx_modes = _cached(pm, z0, dz)
+  tx_modes = _cached(cache, z0, dz)
   nmodes = length(tx_modes)
   pm.max_modes > 0 && nmodes < pm.max_modes && (nmodes = pm.max_modes)
   a = absorption(frequency(tx), 1.0, pm.env.salinity, pm.env.temperature, min_depth / 2)  # nominal absorption
@@ -88,16 +86,16 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
     x = x0
     for i ∈ i0:length(xs)
       i > i0 && (kri[i] = kri[i-1])
-      m1 = _cached(pm, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz)
+      m1 = _cached(cache, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz)
       while x < xs[i] - dx
         x += dx
-        m2 = _cached(pm, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz)
+        m2 = _cached(cache, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz)
         min(length(m1), length(m2)) < m && break
         kri[i] += 0.5 * (m1[m].kᵣ + m2[m].kᵣ) * dx
         m1 = m2
       end
       if x < xs[i]
-        m2 = _cached(pm, -value(pm.env.bathymetry, (x=xs[i], y=0.0, z=0.0)), dz)
+        m2 = _cached(cache, -value(pm.env.bathymetry, (x=xs[i], y=0.0, z=0.0)), dz)
         if x < xs[i] - dx || min(length(m1), length(m2)) < m
           kri[i] = 0
           break
@@ -110,16 +108,16 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
     x = x0
     for i ∈ i0-1:-1:1
       i < i0-1 && (kri[i] = kri[i+1])
-      m1 = _cached(pm, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz)
+      m1 = _cached(cache, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz)
       while x > xs[i] + dx
         x -= dx
-        m2 = _cached(pm, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz)
+        m2 = _cached(cache, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz)
         min(length(m1), length(m2)) < m && break
         kri[i] += 0.5 * (m1[m].kᵣ + m2[m].kᵣ) * dx
         m1 = m2
       end
       if x > xs[i]
-        m2 = _cached(pm, -value(pm.env.bathymetry, (x=xs[i], y=0.0, z=0.0)), dz)
+        m2 = _cached(cache, -value(pm.env.bathymetry, (x=xs[i], y=0.0, z=0.0)), dz)
         if x > xs[i] + dx || min(length(m1), length(m2)) < m
           kri[i] = 0
           break
@@ -136,7 +134,7 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
       end
       kri1 == 0 && break
       z = -value(pm.env.bathymetry, (x=x1, y=0.0, z=0.0))
-      rx_modes = _cached(pm, z, dz)
+      rx_modes = _cached(cache, z, dz)
       if m ≤ length(rx_modes)
         R = abs(x1 - x0)
         A = tx_modes[m].ψ(location(tx).z) * cis(kri1) /
@@ -155,40 +153,45 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
   fld
 end
 
-## TODO make impulse_response() work with this
-
 _model(pm::AdiabaticExt{T1,T2,T3}) where {T1,T2,T3} = T3
 
-function _cached(pm, z, dz)
-  i = searchsortedfirst(pm.zs, z)
-  i ≤ length(pm.zs) && pm.zs[i] == z && return pm.cache[i]
-  dz1 = i > 1 ? z - pm.zs[i-1] : Inf
-  dz2 = i ≤ length(pm.zs) ? pm.zs[i] - z : Inf
+struct ModeCache
+  zs::Vector{Float64}
+  modes::Vector{Vector{ModeArrival}}
+  ModeCache() = new(Float64[], Vector{ModeArrival}[])
+end
+
+function _cached(cache, z, dz)
+  i = searchsortedfirst(cache.zs, z)
+  i ≤ length(cache.zs) && cache.zs[i] == z && return cache.modes[i]
+  dz1 = i > 1 ? z - cache.zs[i-1] : Inf
+  dz2 = i ≤ length(cache.zs) ? cache.zs[i] - z : Inf
   if dz1 < dz2
-    dz1 ≤ dz ? pm.cache[i-1] : nothing
+    dz1 ≤ dz ? cache.modes[i-1] : nothing
   else
-    dz2 ≤ dz ? pm.cache[i] : nothing
+    dz2 ≤ dz ? cache.modes[i] : nothing
   end
 end
 
-function _cache(pm, z, v)
-  i = searchsortedfirst(pm.zs, z)
-  if i > length(pm.zs)
-    push!(pm.zs, z)
-    push!(pm.cache, v)
-  elseif pm.zs[i] == z
-    pm.cache[i] = v
+function _cache(cache, z, v)
+  i = searchsortedfirst(cache.zs, z)
+  if i > length(cache.zs)
+    push!(cache.zs, z)
+    push!(cache.modes, v)
+  elseif cache.zs[i] == z
+    cache.modes[i] = v
   else
-    insert!(pm.zs, i, z)
-    insert!(pm.cache, i, v)
+    insert!(cache.zs, i, z)
+    insert!(cache.modes, i, v)
   end
   nothing
 end
 
 function _precompute(pm, tx, min_depth, max_depth, dz)
+  cache = ModeCache()
   n = ceil(Int, (max_depth - min_depth) / 2dz) + 1
   for z ∈ range(-max_depth, -min_depth; length=n)
-    v = _cached(pm, z, dz)
+    v = _cached(cache, z, dz)
     if v === nothing
       env = let env = pm.env
         @set env.bathymetry = -z
@@ -196,7 +199,8 @@ function _precompute(pm, tx, min_depth, max_depth, dz)
       pm1 = _model(pm)(env; pm.kwargs...)
       rx1 = AcousticReceiver(location(tx))
       arr = arrivals(pm1, tx, rx1)
-      _cache(pm, z, arr)
+      _cache(cache, z, arr)
     end
   end
+  cache
 end

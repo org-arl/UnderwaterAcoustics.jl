@@ -400,24 +400,6 @@ function env_type(env::UnderwaterEnvironment)
   promote_type(typeof(a), typeof(b), typeof(c), typeof(s), typeof(d), typeof(r1), typeof(r2))
 end
 
-"""
-    models(env::UnderwaterEnvironment)
-
-Return only models that are compatible with the environment `env`.
-"""
-function models(env::UnderwaterEnvironment)
-  with_logger(NullLogger()) do
-    filter(models()) do model
-      try
-        model(env)
-        true
-      catch e
-        false
-      end
-    end
-  end
-end
-
 ###############################################################################
 ### sources and receivers API
 

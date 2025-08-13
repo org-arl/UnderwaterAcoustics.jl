@@ -1,3 +1,5 @@
+import Accessors: @set
+
 export AdiabaticExt
 
 struct AdiabaticExt{T1,T2,T3} <: AbstractModePropagationModel
@@ -17,9 +19,35 @@ function Base.show(io::IO, pm::AdiabaticExt)
   print(io, "AdiabaticExt($(_model(pm)))")
 end
 
-# TODO
-# function arrivals(pm::AdiabaticExt, tx::AbstractAcousticSource, rx::AbstractAcousticReceiver)
-# end
+function arrivals(pm::AdiabaticExt, tx::AbstractAcousticSource, rx::AbstractAcousticReceiver)
+  min_depth = minimum(pm.env.bathymetry)
+  max_depth = maximum(pm.env.bathymetry)
+  if min_depth == max_depth
+    env = let env = pm.env
+      @set env.bathymetry = min_depth
+    end
+    pm1 = _model(pm)(env; pm.kwargs...)
+    return arrivals(pm1, tx, rx)
+  end
+  # only 2D models in the x-z plane supported at present
+  location(tx).y == 0 || error("Source must be in the x-z plane")
+  location(rx).y == 0 || error("All receivers must be in the x-z plane")
+  # dz is allowable error in z for cached mode, dx is step size in x for integration
+  dz = minimum(pm.env.soundspeed) / (frequency(tx) * pm.nmesh_per_λ)
+  dx = dz
+  # precompute modes and cache them
+  _precompute(pm, tx, min_depth, max_depth, dz)
+  # compute all modes
+  xs = range(location(tx).x, location(rx).x; step = location(tx).x ≤ location(rx).x ? dx : -dx)
+  modes = map(x -> _cached(pm, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz), xs)
+  rx_modes = _cached(pm, -value(pm.env.bathymetry, (x=location(rx).x, y=0.0, z=0.0)), dz)
+  nmodes = min(mapreduce(length, min, modes), length(rx_modes))
+  0 < pm.max_modes < nmodes && (nmodes = pm.max_modes)
+  map(1:nmodes) do m
+    v = length(modes) / sum(mode -> 1 / mode[m].v, modes)
+    ModeArrival(m, rx_modes[m].kᵣ, rx_modes[m].ψ, v)
+  end
+end
 
 function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rx::AbstractAcousticReceiver; mode=:coherent)
   only(acoustic_field(pm, tx, [rx]; mode))
@@ -29,16 +57,9 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
   min_depth = minimum(pm.env.bathymetry)
   max_depth = maximum(pm.env.bathymetry)
   if min_depth == max_depth
-    env = UnderwaterEnvironment(
-      bathymetry = min_depth,
-      altimetry = pm.env.altimetry,
-      temperature = pm.env.temperature,
-      salinity = pm.env.salinity,
-      soundspeed = pm.env.soundspeed,
-      density = pm.env.density,
-      seabed = pm.env.seabed,
-      surface = pm.env.surface
-    )
+    env = let env = pm.env
+      @set env.bathymetry = min_depth
+    end
     pm1 = _model(pm)(env; pm.kwargs...)
     return acoustic_field(pm1, tx, rxs; mode)
   end
@@ -49,26 +70,7 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
   dz = minimum(pm.env.soundspeed) / (frequency(tx) * pm.nmesh_per_λ)
   dx = dz
   # precompute modes and cache them
-  n = ceil(Int, (max_depth - min_depth) / 2dz) + 1
-  for z ∈ range(-max_depth, -min_depth; length=n)
-    v = _cached(pm, z, dz)
-    if v === nothing
-      env = UnderwaterEnvironment(
-        bathymetry = -z,
-        altimetry = pm.env.altimetry,
-        temperature = pm.env.temperature,
-        salinity = pm.env.salinity,
-        soundspeed = pm.env.soundspeed,
-        density = pm.env.density,
-        seabed = pm.env.seabed,
-        surface = pm.env.surface
-      )
-      pm1 = _model(pm)(env; pm.kwargs...)
-      rx1 = AcousticReceiver(location(tx))
-      arr = arrivals(pm1, tx, rx1)
-      _cache(pm, z, arr)
-    end
-  end
+  _precompute(pm, tx, min_depth, max_depth, dz)
   # get x positions of interest
   xs = unique!(sort!(map(rx -> location(rx).x, vec(rxs))))
   ndx = map(x -> findall(rx -> location(rx).x == x, rxs), xs)
@@ -148,8 +150,6 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
       end
     end
   end
-  #ρ = value(pm.env.density, location(tx))
-  #fld .*= cispi(0.25) / (ρ * √(8π)) * db2amp(spl(tx))
   mode === :coherent || (fld .= sqrt.(fld))
   fld .*= sqrt(2π) * cispi(0.25) * db2amp(spl(tx))
   fld
@@ -183,4 +183,20 @@ function _cache(pm, z, v)
     insert!(pm.cache, i, v)
   end
   nothing
+end
+
+function _precompute(pm, tx, min_depth, max_depth, dz)
+  n = ceil(Int, (max_depth - min_depth) / 2dz) + 1
+  for z ∈ range(-max_depth, -min_depth; length=n)
+    v = _cached(pm, z, dz)
+    if v === nothing
+      env = let env = pm.env
+        @set env.bathymetry = -z
+      end
+      pm1 = _model(pm)(env; pm.kwargs...)
+      rx1 = AcousticReceiver(location(tx))
+      arr = arrivals(pm1, tx, rx1)
+      _cache(pm, z, arr)
+    end
+  end
 end

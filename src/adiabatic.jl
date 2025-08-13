@@ -105,19 +105,40 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
       end
     end
     # compute kr-integral for all receivers on the left of the source
+    x = x0
     for i ∈ i0-1:-1:1
-      # TODO
+      i < i0-1 && (kri[i] = kri[i+1])
+      m1 = _cached(pm, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz)
+      while x > xs[i] + dx
+        x -= dx
+        m2 = _cached(pm, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz)
+        min(length(m1), length(m2)) < m && break
+        kri[i] += 0.5 * (m1[m].kᵣ + m2[m].kᵣ) * dx
+        m1 = m2
+      end
+      if x > xs[i]
+        m2 = _cached(pm, -value(pm.env.bathymetry, (x=xs[i], y=0.0, z=0.0)), dz)
+        if x > xs[i] + dx || min(length(m1), length(m2)) < m
+          kri[i] = 0
+          break
+        end
+        kri[i] += 0.5 * (m1[m].kᵣ + m2[m].kᵣ) * (x - xs[i])
+        x = xs[i]
+      end
     end
     # compute field contribution
     for (x1, kri1, ndx1) ∈ zip(xs, kri, ndx)
+      if x1 == x0
+        fld[ndx1] .= NaN
+        continue
+      end
       kri1 == 0 && break
       z = -value(pm.env.bathymetry, (x=x1, y=0.0, z=0.0))
       rx_modes = _cached(pm, z, dz)
       if m ≤ length(rx_modes)
-        A = tx_modes[m].ψ(location(tx).z) * cis(kri1)
-        R = x1 - x0
-        A /= sqrt(pm.reciprocal ? kri1 : rx_modes[m].kᵣ * R)
-        A *= a ^ R
+        R = abs(x1 - x0)
+        A = tx_modes[m].ψ(location(tx).z) * cis(kri1) /
+            sqrt(pm.reciprocal ? kri1 : rx_modes[m].kᵣ * R) * a ^ R
         for j ∈ ndx1
           zᵣ = location(rxs[j]).z
           if zᵣ ≥ z

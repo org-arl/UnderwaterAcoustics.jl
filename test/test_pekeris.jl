@@ -288,7 +288,7 @@ end
   @test gradient(ℳ₃, AutoForwardDiff(), x) ≈ gradient(ℳ₃, fd, x)
   @test gradient(ℳ₁, AutoZygote(), x) ≈ gradient(ℳ₁, fd, x)
   @test gradient(ℳ₂, AutoZygote(), x) ≈ gradient(ℳ₂, fd, x)
-  # broken due to https://github.com/SciML/NonlinearSolve.jl/issues/581
+  # FIXME broken (originally due to https://github.com/SciML/NonlinearSolve.jl/issues/581)
   # @test gradient(ℳ₃, AutoZygote(), x) ≈ gradient(ℳ₃, fd, x)
   x = [25.0, 200.0, 10.0, 8.0, 1000.0, 1540.0]
   @test gradient(ℳ₁, AutoForwardDiff(), x) ≈ gradient(ℳ₁, fd, x)
@@ -296,6 +296,6 @@ end
   @test gradient(ℳ₃, AutoForwardDiff(), x) ≈ gradient(ℳ₃, fd, x)
   @test gradient(ℳ₁, AutoZygote(), x) ≈ gradient(ℳ₁, fd, x)
   @test gradient(ℳ₂, AutoZygote(), x) ≈ gradient(ℳ₂, fd, x)
-  # broken due to https://github.com/SciML/NonlinearSolve.jl/issues/581
+  # FIXME broken (originally due to https://github.com/SciML/NonlinearSolve.jl/issues/581)
   # @test gradient(ℳ₃, AutoZygote(), x) ≈ gradient(ℳ₃, fd, x)
 end

@@ -27,7 +27,7 @@ ChainRulesExt = "ChainRulesCore"
 PlotsExt = "RecipesBase"
 
 [compat]
-Accessors = "0.1.42"
+Accessors = "0.1"
 ChainRulesCore = "1.25"
 Colors = "0.12,0.13"
 DSP = "0.6,0.7,0.8.2"

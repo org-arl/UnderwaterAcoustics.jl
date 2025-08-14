@@ -8,7 +8,7 @@ struct AdiabaticExt{T1,T2,T3} <: AbstractModePropagationModel
   nmesh_per_λ::Int
   max_modes::Int
   reciprocal::Bool
-  function AdiabaticExt(model, env; nmesh_per_λ=10, max_modes=0, reciprocal=false, kwargs...)
+  function AdiabaticExt(model::Type{<:AbstractModePropagationModel}, env; nmesh_per_λ=10, max_modes=0, reciprocal=false, kwargs...)
     new{typeof(env),typeof(kwargs),model}(env, kwargs, nmesh_per_λ, max_modes, reciprocal)
   end
 end

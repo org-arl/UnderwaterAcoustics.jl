@@ -323,6 +323,10 @@ struct Mode{T}
   γ::T
   C::T
   zrange::Tuple{T,T}
+  function Mode(γ, C, zrange)
+    γ, C, z1, z2 = promote(γ, C, zrange...)
+    new{typeof(γ)}(γ, C, (z1, z2))
+  end
 end
 
 (m::Mode)(z) = m.C * sin(m.γ * -z)

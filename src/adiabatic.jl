@@ -1,21 +1,38 @@
 import Accessors: @set
-
 export AdiabaticExt
 
+"""
+    AdiabaticExt(model, env; dx=0.0, dz=0.0, reciprocal=false, kwargs...)
+
+A 2D adiabatic mode propagation model based on a range-independent modal
+propagation `model`. The adiabatic mode model supports range-dependent
+bathymetry. Any `kwargs` passed in are transferred to the underlying `model`.
+
+`dx` is the step size in the range direction for integration. `dz` is the mesh
+size in the depth direction to compute modes. If `dx` and/or `dz` is set to
+zero, it is automatically determined (~10 points per wavelength).
+
+Adiabatic mode models are usually not reciprocal, i.e., exchanging a source and
+receiver changes the answer. This is because the bathymetry is assumed to have
+azimuthal symmetry around the source. In `reciprocal` mode, the adiabatic
+computation is modified to ensure reciprocity, but azimuthal symmetry is lost.
+"""
 struct AdiabaticExt{T1,T2,T3} <: AbstractModePropagationModel
   env::T1
   kwargs::T2
-  nmesh_per_λ::Int
-  max_modes::Int
+  dx::Float64
+  dz::Float64
   reciprocal::Bool
-  function AdiabaticExt(model::Type{<:AbstractModePropagationModel}, env; nmesh_per_λ=10, max_modes=0, reciprocal=false, kwargs...)
-    new{typeof(env),typeof(kwargs),model}(env, kwargs, nmesh_per_λ, max_modes, reciprocal)
+  function AdiabaticExt(model::Type{<:AbstractModePropagationModel}, env; dx=0.0, dz=0.0, reciprocal=false, kwargs...)
+    new{typeof(env),typeof(kwargs),model}(env, kwargs, dx, dz, reciprocal)
   end
 end
 
 function Base.show(io::IO, pm::AdiabaticExt)
   print(io, "AdiabaticExt($(_model(pm)))")
 end
+
+## interface methods
 
 function arrivals(pm::AdiabaticExt, tx::AbstractAcousticSource, rx::AbstractAcousticReceiver)
   min_depth = minimum(pm.env.bathymetry)
@@ -31,8 +48,8 @@ function arrivals(pm::AdiabaticExt, tx::AbstractAcousticSource, rx::AbstractAcou
   location(tx).y == 0 || error("Source must be in the x-z plane")
   location(rx).y == 0 || error("All receivers must be in the x-z plane")
   # dz is allowable error in z for cached mode, dx is step size in x for integration
-  dz = minimum(pm.env.soundspeed) / (frequency(tx) * pm.nmesh_per_λ)
-  dx = dz
+  dz = pm.dz > 0 ? pm.dz : minimum(pm.env.soundspeed) / (frequency(tx) * 10)
+  dx = pm.dx > 0 ? pm.dx : minimum(pm.env.soundspeed) / (frequency(tx) * 10)
   # precompute modes and cache them
   cache = _precompute(pm, tx, min_depth, max_depth, dz)
   # compute all modes
@@ -65,8 +82,8 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
   location(tx).y == 0 || error("Source must be in the x-z plane")
   all(map(rx -> location(rx).y == 0, rxs)) || error("All receivers must be in the x-z plane")
   # dz is allowable error in z for cached mode, dx is step size in x for integration
-  dz = minimum(pm.env.soundspeed) / (frequency(tx) * pm.nmesh_per_λ)
-  dx = dz
+  dz = pm.dz > 0 ? pm.dz : minimum(pm.env.soundspeed) / (frequency(tx) * 10)
+  dx = pm.dx > 0 ? pm.dx : minimum(pm.env.soundspeed) / (frequency(tx) * 10)
   # precompute modes and cache them
   cache = _precompute(pm, tx, min_depth, max_depth, dz)
   # get x positions of interest
@@ -150,6 +167,8 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
   fld
 end
 
+## private methods
+
 _model(pm::AdiabaticExt{T1,T2,T3}) where {T1,T2,T3} = T3
 
 struct ModeCache
@@ -196,7 +215,6 @@ function _precompute(pm, tx, min_depth, max_depth, dz)
       pm1 = _model(pm)(env; pm.kwargs...)
       rx1 = AcousticReceiver(location(tx))
       arr = arrivals(pm1, tx, rx1)
-      0 < pm.max_modes < length(arr)  && resize!(arr, pm.max_modes)
       _cache(cache, z, arr)
     end
   end

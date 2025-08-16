@@ -38,7 +38,8 @@ struct PekerisRayTracer{T1,T2,T3,T4,T5,T6,T7,T8} <: AbstractRayPropagationModel
     ρ = value(env.density)
     T = value(env.temperature)
     S = value(env.salinity)
-    ps = (h, c, ρ, T, S, env.seabed, env.surface)
+    pH = value(env.pH)
+    ps = (h, c, ρ, T, S, pH, env.seabed, env.surface)
     new{typeof.(ps)...}(ps..., max_bounces)
   end
 end

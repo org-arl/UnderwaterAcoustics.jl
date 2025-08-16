@@ -54,7 +54,7 @@ pm = PekerisRayTracer(env)
 ```
 
 ::: {.callout-tip}
-We can get a list of all available propagation models by calling `models()`, and a shortlist of all models compatible with a given environment by calling `models(env)`.
+We can get a list of all available propagation models by calling `models()`.
 :::
 
 ### Setting up transmitters and receivers

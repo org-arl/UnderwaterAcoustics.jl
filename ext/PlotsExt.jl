@@ -79,13 +79,14 @@ end
   xguide --> "x (m)"
   yguide --> "z (m)"
   colorbar_title --> "Transmission loss (dB)"
-  cmin = minimum(x)
+  cmin = minimum(filter(x -> !isnan(x) && !isinf(x), x))
   clims --> (cmin, cmin + crange)
   colorbar --> true
   color --> :YlGnBu
   cguide --> "dB"
   X = copy(x')
-  X[isinf.(X)] .= prevfloat(typemax(eltype(X)))
+  X[isinf.(X) .&& (X .> 0)] .= prevfloat(typemax(eltype(X))) / 2
+  X[isinf.(X)] .= nextfloat(typemin(eltype(X))) / 2
   @series begin
     seriestype := :heatmap
     rx.xrange, rx.zrange, X
@@ -212,7 +213,8 @@ end
   end
 end
 
-@recipe function plot(m::ModeArrival, D; npts=1000)
+@recipe function plot(m::ModeArrival, D=nothing; npts=1000)
+  D = something(D, -minimum(m.ψ.zrange))
   zr = range(0, -D; length=npts)
   ticks --> :native
   legend --> false
@@ -239,8 +241,9 @@ end
   end
 end
 
-@recipe function plot(m::AbstractVector{<:ModeArrival}, D; npts=1000)
+@recipe function plot(m::AbstractVector{<:ModeArrival}, D=nothing; npts=1000)
   n = length(m)
+  D === nothing && (D = mapreduce(m1 -> -minimum(m1.ψ.zrange), min, m))
   zr = range(0, -D; length=npts)
   ticks --> :native
   legend --> false

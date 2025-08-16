@@ -11,18 +11,15 @@ end
 @testitem "models" setup=[PekerisSetup] begin
   m = @inferred models()
   @test m isa Vector{Type{<:UnderwaterAcoustics.AbstractPropagationModel}}
-  @test length(m) == 2
+  @test length(m) == 3
   @test PekerisRayTracer ∈ m
   @test PekerisModeSolver ∈ m
-  m = @inferred models(env)
+  @test AdiabaticExt ∈ m
+  m = @inferred models(UnderwaterAcoustics.AbstractModePropagationModel)
   @test m isa Vector{Type{<:UnderwaterAcoustics.AbstractPropagationModel}}
   @test length(m) == 2
-  @test PekerisRayTracer ∈ m
   @test PekerisModeSolver ∈ m
-  env = UnderwaterEnvironment(soundspeed = SampledField([1500, 1490, 1520]; z=0:-10:-20, interp=:cubic))
-  m = @inferred models(env)
-  @test m isa Vector{Type{<:UnderwaterAcoustics.AbstractPropagationModel}}
-  @test length(m) == 0
+  @test AdiabaticExt ∈ m
 end
 
 @testitem "env" setup=[PekerisSetup] begin

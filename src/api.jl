@@ -97,30 +97,35 @@ Properties:
 - `kᵣ` / `hwavenumber`: horizontal wavenumber (rad/m)
 - `ψ(z)` / `mode_function`: mode function
 - `v` / `group_velocity`: group velocity (m/s)
+- `vₚ` / `phase_velocity`: phase velocity (m/s)
 
 The properties are accessible with the short names for brevity, and longer more
 descriptive names where readability is desired or unicode symbols are undesired.
 """
-struct ModeArrival{T1,T2,T3} <: AbstractAcousticArrival
+struct ModeArrival{T1,T2,T3,T4} <: AbstractAcousticArrival
   m::Int                # mode number
   kᵣ::T1                # horizontal wavenumber
   ψ::T2                 # mode function
   v::T3                 # group velocity
+  vₚ::T4                # phase velocity
 end
 
 function Base.show(io::IO, a::ModeArrival)
-  @printf(io, "%8s: kᵣ = %s rad/m (%0.2f m/s)", "mode $(a.m)", string(round(ComplexF64(a.kᵣ); digits=6)), a.v)
+  @printf(io, "%8s: kᵣ = %s rad/m", "mode $(a.m)", string(round(ComplexF64(a.kᵣ); digits=6)))
+  a.v isa Real && @printf(io, ", v = %0.2f m/s", a.v)
+  a.vₚ isa Real && @printf(io, ", vₚ = %0.2f m/s", a.vₚ)
 end
 
 # alternative property names for readability
-Base.propertynames(a::ModeArrival) = (:m, :kᵣ, :ψ, :v,
-  :mode, :hwavenumber, :mode_function, :group_velocity)
+Base.propertynames(a::ModeArrival) = (:m, :kᵣ, :ψ, :v, :vₚ,
+  :mode, :hwavenumber, :mode_function, :group_velocity, :phase_velocity)
 
 function Base.getproperty(a::ModeArrival, sym::Symbol)
   sym === :mode && return getfield(a, :m)
   sym === :hwavenumber && return getfield(a, :kᵣ)
   sym === :mode_function && return getfield(a, :ψ)
   sym === :group_velocity && return getfield(a, :v)
+  sym === :phase_velocity && return getfield(a, :vₚ)
   getfield(a, sym)
 end
 
@@ -309,45 +314,48 @@ parameters are supported:
 - `altimetry` = altimetry model
 - `temperature` = temperature model
 - `salinity` = salinity model
+- `pH` = pH model
 - `soundspeed` = sound speed profile model
 - `density` = density model
 - `seabed` = seabed sediment model
 - `surface` = surface model
 
-All parameters are optional and have default values. Parameters may be modified
-after construction by setting the corresponding property in the environment.
+All parameters are optional and have default values.
 """
-struct UnderwaterEnvironment{T1,T2,T3,T4,T5,T6,T7,T8}
+struct UnderwaterEnvironment{T1,T2,T3,T4,T5,T6,T7,T8,T9}
   bathymetry::T1
   altimetry::T2
   temperature::T3
   salinity::T4
-  soundspeed::T5
-  density::T6
-  seabed::T7
-  surface::T8
-  function UnderwaterEnvironment(;
-    bathymetry = 100.0,
-    altimetry = 0.0,
-    temperature = 27.0,
-    salinity = 35.0,
-    soundspeed = nothing,
-    density = nothing,
-    seabed = RigidBoundary,
-    surface = PressureReleaseBoundary,
+  pH::T5
+  soundspeed::T6
+  density::T7
+  seabed::T8
+  surface::T9
+end
+
+function UnderwaterEnvironment(;
+  bathymetry = 100.0,
+  altimetry = 0.0,
+  temperature = 27.0,
+  salinity = 35.0,
+  pH = 8.1,
+  soundspeed = nothing,
+  density = nothing,
+  seabed = RigidBoundary,
+  surface = PressureReleaseBoundary,
+)
+  bathymetry isa Number && (bathymetry = in_units(u"m", bathymetry))
+  altimetry isa Number && (altimetry = in_units(u"m", altimetry))
+  temperature isa Number && (temperature = in_units(u"°C", temperature))
+  salinity isa Number && (salinity = in_units(u"ppt", salinity))
+  density isa Number && (density = in_units(u"kg/m^3", density))
+  density = something(density, water_density(temperature, salinity))
+  soundspeed isa Number && (soundspeed = in_units(u"m/s", soundspeed))
+  soundspeed = something(soundspeed, UnderwaterAcoustics.soundspeed(temperature, salinity))
+  UnderwaterEnvironment(
+    bathymetry, altimetry, temperature, salinity, pH, soundspeed, density, seabed, surface
   )
-    bathymetry isa Number && (bathymetry = in_units(u"m", bathymetry))
-    altimetry isa Number && (altimetry = in_units(u"m", altimetry))
-    temperature isa Number && (temperature = in_units(u"°C", temperature))
-    salinity isa Number && (salinity = in_units(u"ppt", salinity))
-    density isa Number && (density = in_units(u"kg/m^3", density))
-    density = something(density, water_density(temperature, salinity))
-    soundspeed isa Number && (soundspeed = in_units(u"m/s", soundspeed))
-    soundspeed = something(soundspeed, UnderwaterAcoustics.soundspeed(temperature, salinity))
-    new{typeof(bathymetry),typeof(altimetry),typeof(temperature),typeof(salinity),typeof(soundspeed),typeof(density),typeof(seabed),typeof(surface)}(
-      bathymetry, altimetry, temperature, salinity, soundspeed, density, seabed, surface
-    )
-  end
 end
 
 function Base.show(io::IO, env::UnderwaterEnvironment)
@@ -356,6 +364,7 @@ function Base.show(io::IO, env::UnderwaterEnvironment)
   println(io, "  altimetry = $(env.altimetry), ")
   println(io, "  temperature = $(env.temperature), ")
   println(io, "  salinity = $(env.salinity), ")
+  println(io, "  pH = $(env.pH), ")
   println(io, "  soundspeed = $(env.soundspeed), ")
   println(io, "  density = $(env.density), ")
   println(io, "  seabed = $(env.seabed), ")
@@ -370,7 +379,7 @@ Return `true` if any quantity (e.g. sound speed, bathymetry, etc) in the
 environment `env` depends on the horizontal location, and `false` otherwise.
 """
 function is_range_dependent(env::UnderwaterEnvironment)
-  for p ∈ (:bathymetry, :altimetry, :temperature, :salinity, :soundspeed, :density, :seabed, :surface)
+  for p ∈ (:bathymetry, :altimetry, :temperature, :salinity, :pH, :soundspeed, :density, :seabed, :surface)
     is_range_dependent(getproperty(env, p)) && return true
   end
   false
@@ -394,28 +403,11 @@ function env_type(env::UnderwaterEnvironment)
   b = value(env.bathymetry, (0,0,0))
   c = value(env.soundspeed, (0,0,0))
   s = value(env.salinity, (0,0,0))
+  pH = value(env.pH, (0,0,0))
   d = value(env.density, (0,0,0))
   r1 = real(reflection_coef(env.surface, 1000.0, 0.0, d, c))
   r2 = real(reflection_coef(env.seabed, 1000.0, 0.0, d, c))
-  promote_type(typeof(a), typeof(b), typeof(c), typeof(s), typeof(d), typeof(r1), typeof(r2))
-end
-
-"""
-    models(env::UnderwaterEnvironment)
-
-Return only models that are compatible with the environment `env`.
-"""
-function models(env::UnderwaterEnvironment)
-  with_logger(NullLogger()) do
-    filter(models()) do model
-      try
-        model(env)
-        true
-      catch e
-        false
-      end
-    end
-  end
+  promote_type(typeof(a), typeof(b), typeof(c), typeof(s), typeof(pH), typeof(d), typeof(r1), typeof(r2))
 end
 
 ###############################################################################

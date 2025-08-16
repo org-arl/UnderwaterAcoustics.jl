@@ -10,6 +10,7 @@ include("basic.jl")
 include("api.jl")
 include("stdlib.jl")
 include("pekeris.jl")
+include("adiabatic.jl")
 include("replay.jl")
 
 end # module

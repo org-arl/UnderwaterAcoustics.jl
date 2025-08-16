@@ -40,9 +40,10 @@ function arrivals(pm::AdiabaticExt, tx::AbstractAcousticSource, rx::AbstractAcou
   modes = map(x -> _cached(cache, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz), xs)
   rx_modes = _cached(cache, -value(pm.env.bathymetry, (x=location(rx).x, y=0.0, z=0.0)), dz)
   nmodes = min(mapreduce(length, min, modes), length(rx_modes))
+  ω = 2π * frequency(tx)
   map(1:nmodes) do m
     v = length(modes) / sum(mode -> 1 / mode[m].v, modes)
-    ModeArrival(m, rx_modes[m].kᵣ, rx_modes[m].ψ, v)
+    ModeArrival(m, rx_modes[m].kᵣ, rx_modes[m].ψ, v, ω / real(rx_modes[m].kᵣ))
   end
 end
 
@@ -76,7 +77,6 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
   i0 = something(findfirst(≥(x0), xs), length(xs)+1)
   fld = zeros(ComplexF64, size(rxs))
   tx_modes = _cached(cache, z0, dz)
-  a = absorption(frequency(tx), 1.0, pm.env.salinity, pm.env.temperature, min_depth / 2)  # nominal absorption
   for m ∈ eachindex(tx_modes)
     kri = zeros(ComplexF64, size(xs))
     # compute kr-integral for all receivers on the right of the source
@@ -134,8 +134,8 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
       rx_modes = _cached(cache, z, dz)
       if m ≤ length(rx_modes)
         R = abs(x1 - x0)
-        A = tx_modes[m].ψ(location(tx).z) * cis(-kri1) /                # -kri1 needed by KRAKEN
-            sqrt(pm.reciprocal ? kri1 : rx_modes[m].kᵣ * R) * a ^ R
+        A = tx_modes[m].ψ(location(tx).z) * cis(-kri1) /
+            sqrt(pm.reciprocal ? kri1 : rx_modes[m].kᵣ * R)
         for j ∈ ndx1
           zᵣ = location(rxs[j]).z
           if zᵣ ≥ z

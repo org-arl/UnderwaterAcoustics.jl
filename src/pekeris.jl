@@ -206,26 +206,28 @@ function arrivals(pm::PekerisModeSolver, tx::AbstractAcousticSource, rx::Abstrac
   p2 = location(rx)
   R = sqrt(abs2(p1.x - p2.x) + abs2(p1.y - p2.y))
   ω = 2π * frequency(tx)
+  log_a = log(absorption(frequency(tx), 1.0, pm.S, pm.T, pm.h / 2, pm.pH))  # nominal absorption
   k₁ = ω / pm.c
   if pm.seabed.c == 0                            # pressure release boundary
     M = floor(Int, k₁ * pm.h / π)
-    return _mode.(1:M, ω, (1:M) .* (π / pm.h), k₁, pm.c, pm.ρ, pm.seabed.c, pm.seabed.ρ, pm.h)
+    return _mode.(1:M, ω, (1:M) .* (π / pm.h), k₁, pm.c, pm.ρ, pm.seabed.c, pm.seabed.ρ, pm.h, log_a)
   elseif isinf(pm.seabed.c)                      # rigid boundary
     M = floor(Int, k₁ * pm.h / π + 0.5)
-    return _mode.(1:M, ω, ((1:M) .- 0.5) .* (π / pm.h), k₁, pm.c, pm.ρ, pm.seabed.c, pm.seabed.ρ, pm.h)
+    return _mode.(1:M, ω, ((1:M) .- 0.5) .* (π / pm.h), k₁, pm.c, pm.ρ, pm.seabed.c, pm.seabed.ρ, pm.h, log_a)
   else                                           # acousto-elastic boundary
     k₂ = ω / pm.seabed.c
     if k₂ > k₁
       # dummy computation only to get the correct type
-      m = _mode(0, ω, 0.0, k₁, pm.c, pm.ρ, pm.seabed.c, pm.seabed.ρ, pm.h)
+      m = _mode(0, ω, 0.0, k₁, pm.c, pm.ρ, pm.seabed.c, pm.seabed.ρ, pm.h, log_a)
       return Vector{typeof(m)}(undef, 0)
     end
     dk² = k₁^2 - k₂^2
     ngrid = pm.ngrid > 0 ? pm.ngrid : 2 * ceil(Int, pm.h * k₁ / π) + 1
     γgrid = range(0, sqrt(dk²) - sqrt(eps()); length=ngrid)
-    ndx = findall(i -> sign(_arrivals_cost(γgrid[i+1], (pm, dk²))) * sign(_arrivals_cost(γgrid[i], (pm, dk²))) < 0, 1:length(γgrid)-1)
+    cost = map(γ -> _arrivals_cost(γ, (pm, dk²)), γgrid)
+    ndx = findall(i -> sign(cost[i+1]) * sign(cost[i]) < 0, 1:length(γgrid)-1)
     γ = [solve(IntervalNonlinearProblem{false}(_arrivals_cost, (γgrid[i], γgrid[i+1]), (pm, dk²))).u for i ∈ ndx]
-    return _mode.(1:length(γ), ω, γ, k₁, pm.c, pm.ρ, pm.seabed.c, pm.seabed.ρ, pm.h)
+    return _mode.(1:length(γ), ω, γ, k₁, pm.c, pm.ρ, pm.seabed.c, pm.seabed.ρ, pm.h, log_a)
   end
 end
 
@@ -248,12 +250,11 @@ function acoustic_field(pm::PekerisModeSolver, tx::AbstractAcousticSource, rxs::
   kᵣ = [m.kᵣ for m ∈ modes]
   k² = (2π * frequency(tx) / pm.c)^2
   γ = sqrt.(k² .- kᵣ.^2)
-  a = absorption(frequency(tx), 1.0, pm.S, pm.T, pm.h / 2)  # nominal absorption
   map(rxs) do rx
     p2 = location(rx)
     R = sqrt(abs2(p1.x - p2.x) + abs2(p1.y - p2.y))
     modal_terms = @. sin(γ * -p1.z) * sin(γ * -p2.z) * cis(kᵣ * R) / sqrt(kᵣ)
-    multiplier = cis(-π/4 - sqrt(k²)) * 4π * sqrt(2 / (π * R)) * a ^ R
+    multiplier = cis(-π/4 - sqrt(k²)) * 4π * sqrt(2 / (π * R))
     if mode === :coherent
       sum(modal_terms) * im / (2 * pm.h) * db2amp(spl(tx)) * multiplier
     else
@@ -331,10 +332,10 @@ end
 
 (m::Mode)(z) = m.C * sin(m.γ * -z)
 
-function _mode(m, ω, γ, k, c, ρ, cb, ρb, D)
-  kᵣ = complex(sqrt(k^2 - γ^2))
+function _mode(m, ω, γ, k, c, ρ, cb, ρb, D, log_a)
+  kᵣ = complex(sqrt(k^2 - γ^2), log_a)
   v = m > 0 ? _group_velocity(ω, γ, kᵣ, c, ρ, cb, ρb, D) : 0.0
-  ModeArrival(m, kᵣ, Mode(γ, sqrt(2/D), (zero(D), -D)), v)
+  ModeArrival(m, kᵣ, Mode(γ, sqrt(2/D), (zero(D), -D)), v, ω / real(kᵣ))
 end
 
 _arrivals_cost(γ, (pm, dk²)) = pm.seabed.ρ * γ * cos(γ * pm.h) + pm.ρ * sqrt(dk² - γ^2) * sin(γ * pm.h)

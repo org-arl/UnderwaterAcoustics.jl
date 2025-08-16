@@ -97,30 +97,34 @@ Properties:
 - `kᵣ` / `hwavenumber`: horizontal wavenumber (rad/m)
 - `ψ(z)` / `mode_function`: mode function
 - `v` / `group_velocity`: group velocity (m/s)
+- `vₚ` / `phase_velocity`: phase velocity (m/s)
 
 The properties are accessible with the short names for brevity, and longer more
 descriptive names where readability is desired or unicode symbols are undesired.
 """
-struct ModeArrival{T1,T2,T3} <: AbstractAcousticArrival
+struct ModeArrival{T1,T2,T3,T4} <: AbstractAcousticArrival
   m::Int                # mode number
   kᵣ::T1                # horizontal wavenumber
   ψ::T2                 # mode function
   v::T3                 # group velocity
+  vₚ::T4                # phase velocity
 end
 
 function Base.show(io::IO, a::ModeArrival)
-  @printf(io, "%8s: kᵣ = %s rad/m (%0.2f m/s)", "mode $(a.m)", string(round(ComplexF64(a.kᵣ); digits=6)), a.v)
+  @printf(io, "%8s: kᵣ = %s rad/m, v = %0.2f m/s, vₚ = %0.2f m/s", "mode $(a.m)",
+    string(round(ComplexF64(a.kᵣ); digits=6)), a.v, a.vₚ)
 end
 
 # alternative property names for readability
-Base.propertynames(a::ModeArrival) = (:m, :kᵣ, :ψ, :v,
-  :mode, :hwavenumber, :mode_function, :group_velocity)
+Base.propertynames(a::ModeArrival) = (:m, :kᵣ, :ψ, :v, :vₚ,
+  :mode, :hwavenumber, :mode_function, :group_velocity, :phase_velocity)
 
 function Base.getproperty(a::ModeArrival, sym::Symbol)
   sym === :mode && return getfield(a, :m)
   sym === :hwavenumber && return getfield(a, :kᵣ)
   sym === :mode_function && return getfield(a, :ψ)
   sym === :group_velocity && return getfield(a, :v)
+  sym === :phase_velocity && return getfield(a, :vₚ)
   getfield(a, sym)
 end
 

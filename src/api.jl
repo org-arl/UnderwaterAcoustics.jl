@@ -111,8 +111,9 @@ struct ModeArrival{T1,T2,T3,T4} <: AbstractAcousticArrival
 end
 
 function Base.show(io::IO, a::ModeArrival)
-  @printf(io, "%8s: kᵣ = %s rad/m, v = %0.2f m/s, vₚ = %0.2f m/s", "mode $(a.m)",
-    string(round(ComplexF64(a.kᵣ); digits=6)), a.v, a.vₚ)
+  @printf(io, "%8s: kᵣ = %s rad/m", "mode $(a.m)", string(round(ComplexF64(a.kᵣ); digits=6)))
+  a.v isa Real && @printf(io, ", v = %0.2f m/s", a.v)
+  a.vₚ isa Real && @printf(io, ", vₚ = %0.2f m/s", a.vₚ)
 end
 
 # alternative property names for readability

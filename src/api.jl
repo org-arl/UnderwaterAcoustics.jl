@@ -313,6 +313,7 @@ parameters are supported:
 - `altimetry` = altimetry model
 - `temperature` = temperature model
 - `salinity` = salinity model
+- `pH` = pH model
 - `soundspeed` = sound speed profile model
 - `density` = density model
 - `seabed` = seabed sediment model
@@ -320,15 +321,16 @@ parameters are supported:
 
 All parameters are optional and have default values.
 """
-struct UnderwaterEnvironment{T1,T2,T3,T4,T5,T6,T7,T8}
+struct UnderwaterEnvironment{T1,T2,T3,T4,T5,T6,T7,T8,T9}
   bathymetry::T1
   altimetry::T2
   temperature::T3
   salinity::T4
-  soundspeed::T5
-  density::T6
-  seabed::T7
-  surface::T8
+  pH::T5
+  soundspeed::T6
+  density::T7
+  seabed::T8
+  surface::T9
 end
 
 function UnderwaterEnvironment(;
@@ -336,6 +338,7 @@ function UnderwaterEnvironment(;
   altimetry = 0.0,
   temperature = 27.0,
   salinity = 35.0,
+  pH = 8.1,
   soundspeed = nothing,
   density = nothing,
   seabed = RigidBoundary,
@@ -350,7 +353,7 @@ function UnderwaterEnvironment(;
   soundspeed isa Number && (soundspeed = in_units(u"m/s", soundspeed))
   soundspeed = something(soundspeed, UnderwaterAcoustics.soundspeed(temperature, salinity))
   UnderwaterEnvironment(
-    bathymetry, altimetry, temperature, salinity, soundspeed, density, seabed, surface
+    bathymetry, altimetry, temperature, salinity, pH, soundspeed, density, seabed, surface
   )
 end
 
@@ -360,6 +363,7 @@ function Base.show(io::IO, env::UnderwaterEnvironment)
   println(io, "  altimetry = $(env.altimetry), ")
   println(io, "  temperature = $(env.temperature), ")
   println(io, "  salinity = $(env.salinity), ")
+  println(io, "  pH = $(env.pH), ")
   println(io, "  soundspeed = $(env.soundspeed), ")
   println(io, "  density = $(env.density), ")
   println(io, "  seabed = $(env.seabed), ")
@@ -374,7 +378,7 @@ Return `true` if any quantity (e.g. sound speed, bathymetry, etc) in the
 environment `env` depends on the horizontal location, and `false` otherwise.
 """
 function is_range_dependent(env::UnderwaterEnvironment)
-  for p ∈ (:bathymetry, :altimetry, :temperature, :salinity, :soundspeed, :density, :seabed, :surface)
+  for p ∈ (:bathymetry, :altimetry, :temperature, :salinity, :pH, :soundspeed, :density, :seabed, :surface)
     is_range_dependent(getproperty(env, p)) && return true
   end
   false
@@ -398,10 +402,11 @@ function env_type(env::UnderwaterEnvironment)
   b = value(env.bathymetry, (0,0,0))
   c = value(env.soundspeed, (0,0,0))
   s = value(env.salinity, (0,0,0))
+  pH = value(env.pH, (0,0,0))
   d = value(env.density, (0,0,0))
   r1 = real(reflection_coef(env.surface, 1000.0, 0.0, d, c))
   r2 = real(reflection_coef(env.seabed, 1000.0, 0.0, d, c))
-  promote_type(typeof(a), typeof(b), typeof(c), typeof(s), typeof(d), typeof(r1), typeof(r2))
+  promote_type(typeof(a), typeof(b), typeof(c), typeof(s), typeof(pH), typeof(d), typeof(r1), typeof(r2))
 end
 
 ###############################################################################

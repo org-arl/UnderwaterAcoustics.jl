@@ -19,7 +19,7 @@ We consider a geoacoustic inversion problem where we have a static omnidirection
 
 ## Dataset
 
-To illustrate this idea, let us generate a synthetic dataset for a known set of seabed parameters (density `ρ` = 1500 kg/m³, relative soundspeed `c` = 1850 m/s, and attenuation `δ` = 0.001). The environment is assumed to be an iso-velocity and with a constant depth of 20 m. The source is at a depth of 5 m. The receiver is at a range of 100 m from the source, and makes measurements at depths from 1 to 19 m in steps of 1 m.
+To illustrate this idea, let us generate a synthetic dataset for a known set of seabed parameters (density `ρ` = 1500 kg/m³, soundspeed `c` = 1850 m/s, and attenuation `δ` = 0.001). The environment is assumed to be an iso-velocity and with a constant depth of 20 m. The source is at a depth of 5 m. The receiver is at a range of 100 m from the source, and makes measurements at depths from 1 to 19 m in steps of 1 m.
 
 ```{julia}
 #| echo: false
@@ -68,10 +68,11 @@ We define the probabilistic model as a [`Turing.jl`](https://github.com/TuringLa
 ```{julia}
 #| output: false
 using Turing
+using Random
 
 # depths d, frequencies f, transmission loss measurements x
 @model function geoacoustic(d, f, x)
-  ρ ~ Uniform(1000.0, 2000.0)
+  ρ ~ Uniform(1300.0, 1700.0)
   c ~ Uniform(750.0, 2000.0)
   δ ~ Uniform(0.0, 0.003)
   μ = [𝒴([100.0, d[i], f[i], ρ, c, δ]) for i ∈ 1:length(d)]
@@ -86,10 +87,8 @@ Once we have the model defined, we can run Bayesian inference on it. We could ei
 ```{julia}
 #| output: false
 # this may take a minute or two to run...
-q = vi(
-  geoacoustic(data.depth, data.frequency, data.xloss),
-  ADVI(100, 1000)
-)
+m = geoacoustic(data.depth, data.frequency, data.xloss)
+q,_ = vi(MersenneTwister(1), m, q_fullrank_gaussian(m), 1000)
 ```
 
 The returned `q` is a 3-dimensional posterior probability distribution over the parameters `ρ`, `c` and `δ`. We can estimate the mean of the distribution by drawing random variates and taking the sample mean:

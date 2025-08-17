@@ -161,7 +161,7 @@ end
 #   fluid half-space seabed, no layers, no leaky modes
 
 """
-    PekerisModeSolver(env; ngrid=0)
+    PekerisModeSolver(env; ngrid=0, nmodes=0)
 
 A fast differentiable mode propagation model that only supports iso-velocity
 constant depth environments.
@@ -171,6 +171,9 @@ bottom environments. If `ngrid` is too small, the mode solver may miss some
 modes. If `ngrid` is too large, the mode solver may take a long time to
 converge. The default value of `ngrid` of 0 will use a heuristic to automatically
 determine the number of grid points to use.
+
+`nmodes` controls the maximum number of modes computed. Setting `nmodes` to 0
+causes all propagating modes to be computed.
 """
 struct PekerisModeSolver{T1,T2,T3,T4,T5,T6,T7,T8} <: AbstractModePropagationModel
   h::T1             # water depth

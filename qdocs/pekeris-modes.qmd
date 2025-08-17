@@ -11,7 +11,7 @@ engine: julia
 | **Description** | Normal mode model for constant depth iso-velocity environments |
 | **Language** | Julia |
 | **Advantages** | Fast, differentiable (forward mode), multi-threaded |
-| **Limitations** | Iso-velocity, range-independent, pressure-release surface, fluid half-space seabed, no seabed absorption (no leaky modes) |
+| **Limitations** | Iso-velocity, pressure-release surface, fluid half-space seabed, no seabed absorption (no leaky modes) |
 | **Differentiability** | `ForwardDiff` |
 
 : {tbl-colwidths="[25,75]"}
@@ -23,17 +23,13 @@ import UnderwaterAcoustics
 jdoc(UnderwaterAcoustics, :PekerisModeSolver)
 ```
 
-::: {.callout-caution title="Experimental"}
-Work in progress. Not benchmarked. Use at your own risk!
+Implementation largely based on mathematical description in:
 
-**Notes**:
+- M. B. Porter, "The KRAKEN normal mode program", Technical report NRL/MR/5120-92-6920, Naval Research Laboratory, 1992 [(pdf)](https://apps.dtic.mil/sti/tr/pdf/ADA252409.pdf).
 
-- Differentiability currently works only with `ForwardDiff`, and excludes `impulse_response()`.
-:::
+While the `PekerisModeSolver` is range-independent by itself, it can be made range-dependent by using `AdiabaticExt` as shown in the example below.
 
-Implementation based on mathematical description in [Theory](#sec-modal-theory) below.
-
-## Example
+## Examples
 
 ```{julia}
 #| echo: false
@@ -41,6 +37,8 @@ Implementation based on mathematical description in [Theory](#sec-modal-theory) 
 using Plots
 default(size=(600, 400))
 ```
+
+### Range-independent scenario
 
 ```{julia}
 using UnderwaterAcoustics
@@ -59,8 +57,8 @@ rx = AcousticReceiver(200000, -2500)
 modes = arrivals(pm, tx, rx)[1:7]      # first 7 modes
 ```
 ```{julia}
-# plot the modes to a depth of 5 km
-plot(modes[1:7], 5000)
+# plot the modes
+plot(modes)
 ```
 ```{julia}
 rxs = AcousticReceiverGrid2D(200000:10:220000, -2500)
@@ -69,6 +67,44 @@ x = transmission_loss(pm, tx, rxs)
 plot(200:0.01:220, x; ylims=(70,110), yflip=true, legend=false,
   xlabel="Range (km)", ylabel="Transmission loss (dB)")
 ```
+
+### Range-dependent scenario
+
+```{julia}
+using UnderwaterAcoustics
+using Plots
+
+env = UnderwaterEnvironment(
+  bathymetry = SampledField([200, 150, 200]; x=[0, 2000, 5000], interp=:linear),
+  soundspeed = 1500,
+  density = 1000,
+  seabed = FluidBoundary(2000, 2000)
+)
+
+# use an adiabatic extension to the PekerisModeSolver for range-dependence
+pm = AdiabaticExt(PekerisModeSolver, env)
+
+tx = AcousticSource(0, -50, 250)
+rx = AcousticReceiver(7000, -25)
+modes = arrivals(pm, tx, rx)[1:7]      # first 7 modes
+```
+```{julia}
+# plot the modes
+plot(modes)
+```
+```{julia}
+rxs = AcousticReceiverGrid2D(10:10:7000, -200:1)
+x = transmission_loss(pm, tx, rxs)
+
+plot(rxs, x; crange=50)
+plot!(env)
+```
+
+## Notes
+
+- Differentiability currently works only with `ForwardDiff`, and excludes `impulse_response()`.
+
+<!--
 
 ## Theory {#sec-modal-theory}
 
@@ -173,3 +209,54 @@ $$
 \end{align*}
 $$
 where $\zeta = \sqrt{k_0^2 - \gamma_m^2 - k_b^2}$.
+
+### General environments
+
+An acoustic pressure field in a range-independent waveguide can be separated into a sum of modes consisting of depth-dependent components $Z_m(z)$, range-dependent components $R_m(r)$ and a time-dependent complex sinusoid $e^{-i\omega t}$:
+$$
+P(r,z,t) = \left(\sum_{m=1}^\infty R_m(r)Z_m(z)\right)e^{-i\omega t}.
+$$
+The depth dependent component must satisfy:
+$$
+\rho\frac{d}{dz}\left(\frac{1}{\rho}\frac{dZ_m}{dz}\right) + \left(\frac{\omega^2}{c^2} - k_m^2\right)Z_m = 0,
+$$
+where $k_m$ is the horizontal wavenumber, $c(z)$ is the sound speed, and $\rho(z)$ is the water density. If we assume that $\rho$ is independent of depth $z$, we can simplify this to:
+$$
+Z_m^{\prime\prime} + \gamma_m^2Z_m = 0,
+$$
+where $\gamma_m^2 = (\omega/c)^2 - k_m^2$ is the vertical wavenumber.
+
+The top boundary condition is usually a Dirichlet (free surface) condition:
+$$
+Z_m(0) = 0.
+$$
+The bottom boundary condition at depth $D$ may be one of Dirichlet (free surface), Neumann (rigid) or Robin (acoustic half-space):
+$$
+\begin{align*}
+Z_m(D) = 0 \quad &\text{(Dirichlet)},\\
+Z_m^\prime(D) = 0 \quad &\text{(Neumann)},\\
+Z_m(D) + i\frac{\bar\rho}{\bar\gamma_m}Z^\prime(D) = 0\quad &\text{(Robin)},\\
+\end{align*}
+$$
+where $\bar\gamma_m = \sqrt{(\omega/\bar c)^2 - k_m^2}$ and the seabed has density $\bar\rho$ and sound speed $\bar c$.
+
+### Isovelocity environments
+
+In the special case of $c$ being independent of $z$:
+$$
+Z_m(z) = \sqrt{\frac{2\rho}{D}}\sin(\gamma_mz).
+$$
+In case of the Dirichlet boundary condition, we have:
+$$
+\gamma_m = \frac{m\pi}{D},
+$$
+For the Neumann boundary condition, we have:
+$$
+\gamma_m = \left(m - \frac{1}{2}\right)\frac{\pi}{D},
+$$
+The Robin boundary condition requires the following equation to be satisfied:
+$$
+\tan(\gamma_m D) = -i\frac{\bar\rho}{\rho}\frac{\gamma_m}{\bar\gamma_m}.
+$$
+
+-->

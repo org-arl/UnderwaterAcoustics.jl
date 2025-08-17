@@ -171,10 +171,10 @@ end
 
 _model(pm::AdiabaticExt{T1,T2,T3}) where {T1,T2,T3} = T3
 
-struct ModeCache
+struct ModeCache{T}
   zs::Vector{Float64}
-  modes::Vector{Vector{ModeArrival}}
-  ModeCache() = new(Float64[], Vector{ModeArrival}[])
+  modes::Vector{Vector{T}}
+  ModeCache(T) = new{T}(Float64[], Vector{T}[])
 end
 
 function _cached(cache, z, dz)
@@ -183,9 +183,11 @@ function _cached(cache, z, dz)
   dz1 = i > 1 ? z - cache.zs[i-1] : Inf
   dz2 = i ≤ length(cache.zs) ? cache.zs[i] - z : Inf
   if dz1 < dz2
-    dz1 ≤ dz ? cache.modes[i-1] : nothing
+    dz1 > dz && error("Cache miss for required mode")
+    cache.modes[i-1]
   else
-    dz2 ≤ dz ? cache.modes[i] : nothing
+    dz2 > dz && error("Cache miss for required mode")
+    cache.modes[i]
   end
 end
 
@@ -204,19 +206,23 @@ function _cache(cache, z, v)
 end
 
 function _precompute(pm, tx, min_depth, max_depth, dz)
-  cache = ModeCache()
   n = ceil(Int, (max_depth - min_depth) / 2dz) + 1
-  for z ∈ range(-max_depth, -min_depth; length=n)
-    v = _cached(cache, z, dz)
-    if v === nothing
-      env = let env = pm.env
-        @set env.bathymetry = -z
-      end
-      pm1 = _model(pm)(env; pm.kwargs...)
-      rx1 = AcousticReceiver(location(tx))
-      arr = arrivals(pm1, tx, rx1)
-      _cache(cache, z, arr)
-    end
+  zs = range(-max_depth, -min_depth; length=n)
+  arr = _compute_arrivals(pm, tx, zs[1])
+  cache = ModeCache(eltype(arr))
+  _cache(cache, zs[1], arr)
+  for z ∈ zs[2:end]
+    arr = _compute_arrivals(pm, tx, z)
+    _cache(cache, z, arr)
   end
   cache
+end
+
+function _compute_arrivals(pm, tx, z)
+  env = let env = pm.env
+    @set env.bathymetry = -z
+  end
+  pm1 = _model(pm)(env; pm.kwargs...)
+  rx1 = AcousticReceiver(location(tx))
+  arr = arrivals(pm1, tx, rx1)
 end

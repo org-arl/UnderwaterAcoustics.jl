@@ -11,7 +11,7 @@ engine: julia
 | **Description** | [Kraken and KrakenC normal mode models](https://oalib-acoustics.org/models-and-software/normal-modes/) (wrapper) |
 | **Language** | Fortran |
 | **Advantages** | Well-established benchmark models |
-| **Limitations** | Not differentiable, range-independent |
+| **Limitations** | Not differentiable |
 
 : {tbl-colwidths="[25,75]"}
 
@@ -22,11 +22,13 @@ import AcousticsToolbox
 jdoc(AcousticsToolbox, :Kraken, 2)
 ```
 
-A good overview of the Bellhop model can be found at:
+A good overview of the Kraken model can be found at:
 
 - M. B. Porter, "The KRAKEN normal mode program", Technical report NRL/MR/5120-92-6920, Naval Research Laboratory, 1992 [(original report pdf)](https://apps.dtic.mil/sti/tr/pdf/ADA252409.pdf) [(updated draft pdf)](https://oalib-acoustics.org/website_resources/Modes/kraken.pdf).
 
-## Example
+## Examples
+
+### Range-independent scenario
 
 Here's an example showing results for the PEKERIS test problem from the Kraken technical report:
 
@@ -56,7 +58,7 @@ modes = arrivals(pm, tx, rx)[1:7]     # first 7 modes
 ```
 ```{julia}
 # plot the modes
-plot(modes[1:7])
+plot(modes)
 ```
 ```{julia}
 rxs = AcousticReceiverGrid2D(200000:10:220000, -2500)
@@ -64,6 +66,44 @@ x = transmission_loss(pm, tx, rxs)
 
 plot(200:0.01:220, x; ylims=(70,110), yflip=true, legend=false,
   xlabel="Range (km)", ylabel="Transmission loss (dB)")
+```
+
+### Range-dependent scenario with multilayered seabed
+
+While the Kraken model is range-independent by itself, it can be made range-dependent by using `AdiabaticExt` as shown below:
+
+```{julia}
+using UnderwaterAcoustics
+using Plots
+
+env = UnderwaterEnvironment(
+  bathymetry = SampledField([200, 150, 200]; x=[0, 2000, 5000], interp=:linear),
+  soundspeed = 1500,
+  density = 1000,
+  seabed = MultilayerElasticBoundary([
+    (40, 1374, 1520, 0, dBperλ(0.1124), 0),           # 40m thick fluid sediment
+    (Inf, 2200, 1730, 800, dBperλ(0.5), dBperλ(0.5))  # hard half-space substrate
+  ])
+)
+
+# use an adiabatic extension to the Kraken for range-dependence
+pm = AdiabaticExt(Kraken, env)
+
+tx = AcousticSource(0, -50, 250)
+rx = AcousticReceiver(7000, -25)
+modes = arrivals(pm, tx, rx)[1:7]      # first 7 modes
+```
+```{julia}
+# plot the modes at 7 km range
+plot(modes)
+hline!([-200])    # seabed location
+```
+```{julia}
+rxs = AcousticReceiverGrid2D(10:10:7000, -200:1)
+x = transmission_loss(pm, tx, rxs)
+
+plot(rxs, x; crange=50)
+plot!(env)
 ```
 
 ## Notes
@@ -77,3 +117,5 @@ Additionally, this wrapper does not yet support all the features of the original
 - Twersky scattering
 
 Receivers on an irregular grid are supported, but not currently optimized for speed (by using the irregular grid option in the Fortran model).
+
+Kraken currently does not compute modal group velocities. While KrakenC does compute group velocities, the values are incorrect for multilayer seabeds with elastic sediment layers. In both cases, when group velocities are unavailable, the returned modes will not include group velocity information (will be reported as `missing`).

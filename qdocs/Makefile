@@ -4,7 +4,7 @@ docs: red.mat
 	quarto render --output-dir ../docs
 
 preview: red.mat
-	quarto preview
+	quarto preview --output-dir ../docs
 
 red.mat:
 	cp ~/Data/ChannelModeling/UACR_Public/red/red.mat .

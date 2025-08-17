@@ -299,3 +299,26 @@ end
   # FIXME broken (originally due to https://github.com/SciML/NonlinearSolve.jl/issues/581)
   # @test gradient(ℳ₃, AutoZygote(), x) ≈ gradient(ℳ₃, fd, x)
 end
+
+@testitem "pekeris-modes-adiabatic" begin
+  env = @inferred UnderwaterEnvironment(
+    bathymetry = SampledField([200, 150, 200]; x=[0, 2000, 5000], interp=:linear),
+    soundspeed = 1500,
+    density = 1000,
+    seabed = FluidBoundary(2000, 2000)
+  )
+  pm = @inferred AdiabaticExt(PekerisModeSolver, env)
+  tx = @inferred AcousticSource(0, -20, 300)
+  rxs = @inferred AcousticReceiverGrid2D(100:100:5000, -150)
+  x = @inferred transmission_loss(pm, tx, rxs)
+  @test vec(x) ≈ [62.233, 46.392, 46.456, 51.631, 45.669, 54.690, 48.586,
+    50.710, 49.661, 48.844, 52.003, 50.907, 59.314, 55.976, 55.497, 53.547,
+    61.082, 55.273, 60.577, 53.672, 50.658, 51.736, 52.712, 53.007, 53.595,
+    53.587, 53.936, 59.569, 60.200, 61.482, 57.863, 58.901, 56.467, 70.807,
+    53.391, 57.480, 58.761, 55.793, 69.782, 57.063, 67.308, 61.774, 64.339,
+    56.078, 65.519, 62.946, 67.441, 68.531, 54.778, 79.428] atol=0.1
+  arr = @inferred arrivals(pm, tx, AcousticReceiver(5000, -50))
+  @test length(arr) == 40
+  @test all([a.v < 1500 for a ∈ arr])
+  @test all([a.vₚ > 1500 for a ∈ arr])
+end

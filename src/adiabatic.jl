@@ -51,11 +51,12 @@ function arrivals(pm::AdiabaticExt, tx::AbstractAcousticSource, rx::AbstractAcou
   dz = pm.dz > 0 ? pm.dz : minimum(pm.env.soundspeed) / (frequency(tx) * 10)
   dx = pm.dx > 0 ? pm.dx : minimum(pm.env.soundspeed) / (frequency(tx) * 10)
   # precompute modes and cache them
-  cache = _precompute(pm, tx, min_depth, max_depth, dz)
+  tx_depth = value(pm.env.bathymetry, location(tx))
+  cache = _precompute_arrivals(pm, tx, tx_depth, rx, min_depth, max_depth, dz)
   # compute all modes
   xs = range(location(tx).x, location(rx).x; step = location(tx).x ≤ location(rx).x ? dx : -dx)
-  modes = map(x -> _cached(cache, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz), xs)
-  rx_modes = _cached(cache, -value(pm.env.bathymetry, (x=location(rx).x, y=0.0, z=0.0)), dz)
+  modes = map(x -> _cached_arrivals(cache, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz), xs)
+  rx_modes = _cached_arrivals(cache, -value(pm.env.bathymetry, (x=location(rx).x, y=0.0, z=0.0)), dz)
   nmodes = min(mapreduce(length, min, modes), length(rx_modes))
   ω = 2π * frequency(tx)
   map(1:nmodes) do m
@@ -84,8 +85,12 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
   # dz is allowable error in z for cached mode, dx is step size in x for integration
   dz = pm.dz > 0 ? pm.dz : minimum(pm.env.soundspeed) / (frequency(tx) * 10)
   dx = pm.dx > 0 ? pm.dx : minimum(pm.env.soundspeed) / (frequency(tx) * 10)
-  # precompute modes and cache them
-  cache = _precompute(pm, tx, min_depth, max_depth, dz)
+  # precompute modes and cache them using a virtual rx as far as possible just
+  # to help with choice of solver parameters for some models
+  tx_depth = value(pm.env.bathymetry, location(tx))
+  max_r = maximum(rx -> abs(location(rx).x - location(tx).x), rxs)
+  virtual_rx = AcousticReceiver(location(tx).x + max_r, 0, tx_depth)
+  cache = _precompute_arrivals(pm, tx, tx_depth, virtual_rx, min_depth, max_depth, dz)
   # get x positions of interest
   xs = unique!(sort!(map(rx -> location(rx).x, vec(rxs))))
   ndx = map(x -> findall(rx -> location(rx).x == x, rxs), xs)
@@ -93,23 +98,23 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
   z0 = -value(pm.env.bathymetry, (x=x0, y=0.0, z=0.0))
   i0 = something(findfirst(≥(x0), xs), length(xs)+1)
   fld = zeros(ComplexF64, size(rxs))
-  tx_modes = _cached(cache, z0, dz)
+  tx_modes = _cached_arrivals(cache, z0, dz)
   for m ∈ eachindex(tx_modes)
     kri = zeros(ComplexF64, size(xs))
     # compute kr-integral for all receivers on the right of the source
     x = x0
     for i ∈ i0:length(xs)
       i > i0 && (kri[i] = kri[i-1])
-      m1 = _cached(cache, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz)
+      m1 = _cached_arrivals(cache, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz)
       while x < xs[i] - dx
         x += dx
-        m2 = _cached(cache, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz)
+        m2 = _cached_arrivals(cache, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz)
         min(length(m1), length(m2)) < m && break
         kri[i] += 0.5 * (m1[m].kᵣ + m2[m].kᵣ) * dx
         m1 = m2
       end
       if x < xs[i]
-        m2 = _cached(cache, -value(pm.env.bathymetry, (x=xs[i], y=0.0, z=0.0)), dz)
+        m2 = _cached_arrivals(cache, -value(pm.env.bathymetry, (x=xs[i], y=0.0, z=0.0)), dz)
         if x < xs[i] - dx || min(length(m1), length(m2)) < m
           kri[i] = 0
           break
@@ -122,16 +127,16 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
     x = x0
     for i ∈ i0-1:-1:1
       i < i0-1 && (kri[i] = kri[i+1])
-      m1 = _cached(cache, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz)
+      m1 = _cached_arrivals(cache, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz)
       while x > xs[i] + dx
         x -= dx
-        m2 = _cached(cache, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz)
+        m2 = _cached_arrivals(cache, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz)
         min(length(m1), length(m2)) < m && break
         kri[i] += 0.5 * (m1[m].kᵣ + m2[m].kᵣ) * dx
         m1 = m2
       end
       if x > xs[i]
-        m2 = _cached(cache, -value(pm.env.bathymetry, (x=xs[i], y=0.0, z=0.0)), dz)
+        m2 = _cached_arrivals(cache, -value(pm.env.bathymetry, (x=xs[i], y=0.0, z=0.0)), dz)
         if x > xs[i] + dx || min(length(m1), length(m2)) < m
           kri[i] = 0
           break
@@ -148,7 +153,7 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
       end
       kri1 == 0 && break
       z = -value(pm.env.bathymetry, (x=x1, y=0.0, z=0.0))
-      rx_modes = _cached(cache, z, dz)
+      rx_modes = _cached_arrivals(cache, z, dz)
       if m ≤ length(rx_modes)
         R = abs(x1 - x0)
         A = tx_modes[m].ψ(location(tx).z) * cis(-kri1) /
@@ -177,21 +182,21 @@ struct ModeCache{T}
   ModeCache(T) = new{T}(Float64[], Vector{T}[])
 end
 
-function _cached(cache, z, dz)
+function _cached_arrivals(cache, z, dz)
   i = searchsortedfirst(cache.zs, z)
   i ≤ length(cache.zs) && cache.zs[i] == z && return cache.modes[i]
   dz1 = i > 1 ? z - cache.zs[i-1] : Inf
   dz2 = i ≤ length(cache.zs) ? cache.zs[i] - z : Inf
   if dz1 < dz2
-    dz1 > dz && error("Cache miss for required mode")
+    dz1 > 1.01dz && error("Cache miss for required mode")
     cache.modes[i-1]
   else
-    dz2 > dz && error("Cache miss for required mode")
+    dz2 > 1.01dz && error("Cache miss for required mode")
     cache.modes[i]
   end
 end
 
-function _cache(cache, z, v)
+function _cache_arrivals(cache, z, v)
   i = searchsortedfirst(cache.zs, z)
   if i > length(cache.zs)
     push!(cache.zs, z)
@@ -205,24 +210,34 @@ function _cache(cache, z, v)
   nothing
 end
 
-function _precompute(pm, tx, min_depth, max_depth, dz)
+function _precompute_arrivals(pm, tx, tx_depth, rx, min_depth, max_depth, dz)
   n = ceil(Int, (max_depth - min_depth) / 2dz) + 1
-  zs = range(-max_depth, -min_depth; length=n)
-  arr = _compute_arrivals(pm, tx, zs[1])
+  arr = _compute_arrivals(pm, tx, -tx_depth, rx)
   cache = ModeCache(eltype(arr))
-  _cache(cache, zs[1], arr)
-  for z ∈ zs[2:end]
-    arr = _compute_arrivals(pm, tx, z)
-    _cache(cache, z, arr)
+  _cache_arrivals(cache, -tx_depth, arr)
+  for z ∈ range(-max_depth, -min_depth; length=n)
+    i = searchsortedlast(cache.zs, z)
+    if i == 0 || cache.zs[i] != z
+      arr = _compute_arrivals(pm, tx, z, rx)
+      _align_arrivals!(arr, cache.modes[max(1,i)])
+      _cache_arrivals(cache, z, arr)
+    end
   end
   cache
 end
 
-function _compute_arrivals(pm, tx, z)
+function _compute_arrivals(pm, tx, z, rx)
+  # compute arrivals for a water depth of z
   env = let env = pm.env
     @set env.bathymetry = -z
   end
   pm1 = _model(pm)(env; pm.kwargs...)
-  rx1 = AcousticReceiver(location(tx))
-  arr = arrivals(pm1, tx, rx1)
+  arr = arrivals(pm1, tx, rx)
+  # TODO trim off arrivals that cannot be excited by tx
+  # θ = 0.01 * maximum(m -> abs2(m.ψ(location(tx).z)), arr)
+  # filter!(m -> abs2(m.ψ(location(tx).z)) > θ, arr)
+end
+
+function _align_arrivals!(m1, m0)
+  # TODO implement mode alignment/tracking
 end

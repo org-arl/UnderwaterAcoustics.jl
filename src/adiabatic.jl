@@ -233,11 +233,21 @@ function _compute_arrivals(pm, tx, z, rx)
   end
   pm1 = _model(pm)(env; pm.kwargs...)
   arr = arrivals(pm1, tx, rx)
-  # TODO trim off arrivals that cannot be excited by tx
-  # θ = 0.01 * maximum(m -> abs2(m.ψ(location(tx).z)), arr)
-  # filter!(m -> abs2(m.ψ(location(tx).z)) > θ, arr)
+  convert(Vector{Union{Nothing,eltype(arr)}}, arr)
 end
 
-function _align_arrivals!(m1, m0)
-  # TODO implement mode alignment/tracking
+function _align_arrivals!(arr1, arr0; candidates=3, corr_threshold=0.5)
+  arr2 = similar(arr0)
+  arr2 .= nothing
+  for m1 ∈ arr1
+    zs = m1.ψ.zrange
+    m1ψ = m1.ψ.(zs)
+    ndx = sortperm(map(zip(arr0, arr2)) do (m0, m2)
+      m0 === nothing || m2 !== nothing ? Inf : abs(m0.kᵣ - m1.kᵣ)
+    end)
+    resize!(ndx, min(candidates, length(ndx)))
+    v, i = findmax(map(m0 -> abs(m1ψ' * m0.ψ.(zs)), arr0[ndx]))
+    v / abs(m1ψ' * m1ψ) > corr_threshold && (arr2[ndx[i]] = m1)
+  end
+  arr2
 end

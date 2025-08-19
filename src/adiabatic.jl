@@ -59,10 +59,15 @@ function arrivals(pm::AdiabaticExt, tx::AbstractAcousticSource, rx::AbstractAcou
   rx_modes = _cached_arrivals(cache, -value(pm.env.bathymetry, (x=location(rx).x, y=0.0, z=0.0)), dz)
   nmodes = min(mapreduce(length, min, modes), length(rx_modes))
   ω = 2π * frequency(tx)
-  map(1:nmodes) do m
-    v = length(modes) / sum(mode -> 1 / mode[m].v, modes)
-    ModeArrival(m, rx_modes[m].kᵣ, rx_modes[m].ψ, v, ω / real(rx_modes[m].kᵣ))
+  rv = map(1:nmodes) do m
+    if any(map(mode -> mode[m] === nothing, modes))
+      ModeArrival(0, rx_modes[m].kᵣ, rx_modes[m].ψ, rx_modes[m].v, rx_modes[m].vₚ)
+    else
+      v = length(modes) / sum(mode -> 1 / mode[m].v, modes)
+      ModeArrival(m, rx_modes[m].kᵣ, rx_modes[m].ψ, v, ω / real(rx_modes[m].kᵣ))
+    end
   end
+  filter(mode -> mode.m != 0, rv)
 end
 
 function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rx::AbstractAcousticReceiver; mode=:coherent)
@@ -110,6 +115,7 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
         x += dx
         m2 = _cached_arrivals(cache, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz)
         min(length(m1), length(m2)) < m && break
+        (m1[m] === nothing || m2[m] === nothing) && break
         kri[i] += 0.5 * (m1[m].kᵣ + m2[m].kᵣ) * dx
         m1 = m2
       end
@@ -132,6 +138,7 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
         x -= dx
         m2 = _cached_arrivals(cache, -value(pm.env.bathymetry, (x=x, y=0.0, z=0.0)), dz)
         min(length(m1), length(m2)) < m && break
+        (m1[m] === nothing || m2[m] === nothing) && break
         kri[i] += 0.5 * (m1[m].kᵣ + m2[m].kᵣ) * dx
         m1 = m2
       end
@@ -151,7 +158,7 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
         fld[ndx1] .= NaN
         continue
       end
-      kri1 == 0 && break
+      kri1 == 0 && continue
       z = -value(pm.env.bathymetry, (x=x1, y=0.0, z=0.0))
       rx_modes = _cached_arrivals(cache, z, dz)
       if m ≤ length(rx_modes)

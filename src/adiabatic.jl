@@ -236,11 +236,11 @@ function _compute_arrivals(pm, tx, z, rx)
   convert(Vector{Union{Nothing,eltype(arr)}}, arr)
 end
 
-function _align_arrivals!(arr1, arr0; candidates=3, corr_threshold=0.5)
+function _align_arrivals!(arr1, arr0; candidates=3, corr_threshold=0.5, npts=101)
   arr2 = similar(arr0)
   arr2 .= nothing
   for m1 ∈ arr1
-    zs = m1.ψ.zrange
+    zs = range(extrema(m1.ψ.zrange)...; length=npts)
     m1ψ = m1.ψ.(zs)
     ndx = sortperm(map(zip(arr0, arr2)) do (m0, m2)
       m0 === nothing || m2 !== nothing ? Inf : abs(m0.kᵣ - m1.kᵣ)

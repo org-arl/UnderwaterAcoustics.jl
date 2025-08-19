@@ -65,7 +65,7 @@ function BasebandReplayChannel(filename::AbstractString; upsample=false, rxs=:, 
     data = matread(filename)
     all(["version", "h_hat", "theta_hat", "params"] .∈ Ref(keys(data))) || error("Bad channel file format")
     data["version"] == 1.0 || @warn "Unsupported channel file version"
-    h = data["h_hat"]
+    h = reverse(data["h_hat"]; dims=1)
     M = size(h, 2)
     rxs === (:) && (rxs = 1:M)
     ndims(rxs) == 0 && (rxs = [rxs])

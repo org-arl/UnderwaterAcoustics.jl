@@ -176,7 +176,8 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
   end
   mode === :coherent || (fld .= sqrt.(fld))
   fld .*= sqrt(2π) * cispi(-0.25) * db2amp(spl(tx))
-  fld
+  # conjugation required because we use the convention of cis(-kᵣR) to match with Kraken
+  conj.(fld)
 end
 
 ## private methods

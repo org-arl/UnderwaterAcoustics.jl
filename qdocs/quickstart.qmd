@@ -103,7 +103,7 @@ Often, we are interested in the arrival structure at a receiver. We generate an 
 plot(impulse_response(pm, tx, rx, 48000))
 ```
 
-The first arrival is at 0 ms, as the impulse response is generated with timing relative to the first arrival. If we wanted timings relative to the transmission time, we can set keyword argument `abstime` to `true`:
+The first arrival is at about 1 ms, as the impulse response is generated with timing relative to the first arrival with a guard time of 1 ms. If we wanted timings relative to the transmission time, we can set keyword argument `abstime` to `true`:
 ```{julia}
 plot(impulse_response(pm, tx, rx, 48000; abstime=true))
 ```

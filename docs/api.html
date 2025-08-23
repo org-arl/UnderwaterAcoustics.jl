@@ -296,12 +296,30 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         <li class="sidebar-item sidebar-item-section">
       <div class="sidebar-item-container"> 
             <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
- <span class="menu-text"><b>Related tools</b></span></a>
+ <span class="menu-text"><b>Notes</b></span></a>
           <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
             <i class="bi bi-chevron-right ms-2"></i>
           </a> 
       </div>
       <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./modes.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">On modal models</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="px-0"><hr class="sidebar-divider hi "></li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text"><b>Related tools</b></span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="https://github.com/org-arl/VirtualAcousticOcean.jl" class="sidebar-item-text sidebar-link">
@@ -550,6 +568,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="callout-body-container">
 <div class="sourceCode" id="cb16"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">impulse_response</span>(pm, tx, rx, fs; abstime<span class="op">=</span><span class="cn">false</span>, ntaps<span class="op">=</span><span class="cn">nothing</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Compute the impulse response at the receiver <code>rx</code> due to the source <code>tx</code> using propagation model <code>pm</code> at the given sampling frequency <code>fs</code>. If <code>abstime</code> is <code>true</code>, the result is in absolute time from the start of transmission. Otherwise, the result is relative to the earliest arrival time of the signal at the receiver (possibly with some guard period to accommodate acausal response). <code>ntaps</code> specifies the number of taps in the impulse response. If not specified, the number of taps is chosen automatically based on the arrival times.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">impulse_response</span>(pm, tx, rx, fs; abstime, ntaps, fmin, fmax)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Compute the impulse response at the receiver <code>rx</code> due to the source <code>tx</code> using propagation model <code>pm</code> at the given sampling frequency <code>fs</code>.</p>
+<p>If <code>abstime</code> is <code>true</code> (default is <code>false</code>), the result is in absolute time from the start of transmission. Otherwise, the result is relative to the earliest arrival time of the signal at the receiver (with some guard period to accommodate acausal response).</p>
+<p><code>ntaps</code> specifies the number of taps in the impulse response. If not specified, the number of taps is chosen automatically based on the arrival times.</p>
+<p><code>fmin</code> and <code>fmax</code> specifies the bandwidth of interest. If unspecified, a 50% bandwidth is assumed, i.e., if the transmitter frequency is 300 Hz the bandwidth of interest is assumed to be 150 Hz (<code>fmin = 225</code>, <code>fmax = 375</code>). Larger bandwidths require more modal computations, and hence increase computational load.</p>
+<p>The impulse response is computed only for positive frequencies. Such an impulse response is suitable for convolution with passband complex analytic signals. If convolved with real signals, the resulting signal is approximately equivalent to converting the real signal to a complex analytic form and then convolving it with the impulse response.</p>
 </div>
 </div>
 </div>
@@ -562,7 +586,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb17"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">channel</span>(pm, txs, rxs, fs; noise<span class="op">=</span><span class="cn">nothing</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">channel</span>(pm, txs, rxs, fs; noise<span class="op">=</span><span class="cn">nothing</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Compute a channel model from the sources <code>txs</code> to the receivers <code>rxs</code> using propagation model <code>pm</code>. The result is a channel model with the same number of input channels as the number of sources and output channels as the number of receivers. The channel model accepts signals sampled at rate <code>fs</code> and returns signals sampled at the same rate.</p>
 <p>An additive noise model may be optionally specified as <code>noise</code>. If specified, it is used to corrupt the received signals.</p>
 </div>
@@ -574,11 +598,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb18"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">BasebandReplayChannel</span>(h, θ, fs, fc, step<span class="op">=</span><span class="fl">1</span>; noise<span class="op">=</span><span class="cn">nothing</span>)</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">BasebandReplayChannel</span>(h, fs, fc, step<span class="op">=</span><span class="fl">1</span>; noise<span class="op">=</span><span class="cn">nothing</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">BasebandReplayChannel</span>(h, θ, fs, fc, step<span class="op">=</span><span class="fl">1</span>; noise<span class="op">=</span><span class="cn">nothing</span>)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">BasebandReplayChannel</span>(h, fs, fc, step<span class="op">=</span><span class="fl">1</span>; noise<span class="op">=</span><span class="cn">nothing</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Construct a baseband replay channel with impulse responses <code>h</code> and phase estimates <code>θ</code>. The phase estimates are optional. <code>fs</code> is the sampling frequency in Sa/s, <code>fc</code> is the carrier frequency in Hz, and <code>step</code> is the decimation rate for the time axis of <code>h</code>. The effective sampling frequency of the impulse responses is <code>fs ÷ step</code> impulse responses per second.</p>
 <p>An additive noise model may be optionally specified as <code>noise</code>. If specified, it is used to corrupt the received signals.</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">BasebandReplayChannel</span>(filename; upsample<span class="op">=</span><span class="cn">false</span>, rxs<span class="op">=:</span>, noise<span class="op">=</span><span class="cn">nothing</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">BasebandReplayChannel</span>(filename; upsample<span class="op">=</span><span class="cn">false</span>, rxs<span class="op">=:</span>, noise<span class="op">=</span><span class="cn">nothing</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Load a baseband replay channel from a file.</p>
 <p>If <code>upsample</code> is <code>true</code>, the impulse responses are upsampled to the delay axis sampling rate. This makes applying the channel faster but requires more memory. <code>rxs</code> controls which receivers to load from the file. By default, all receivers are loaded.</p>
 <p>An additive noise model may be optionally specified as <code>noise</code>. If specified, it is used to corrupt the received signals.</p>
@@ -595,11 +619,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb20"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">transmit</span>(ch, x; txs<span class="op">=:</span>, rxs<span class="op">=:</span>, abstime<span class="op">=</span><span class="cn">false</span>, noisy<span class="op">=</span><span class="cn">true</span>, fs<span class="op">=</span><span class="cn">nothing</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">transmit</span>(ch, x; txs<span class="op">=:</span>, rxs<span class="op">=:</span>, abstime<span class="op">=</span><span class="cn">false</span>, noisy<span class="op">=</span><span class="cn">true</span>, fs<span class="op">=</span><span class="cn">nothing</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Simulate the transmission of passband signal <code>x</code> through the channel model <code>ch</code>. If <code>txs</code> is specified, it specifies the indices of the sources active in the simulation. The number of sources must match the number of channels in the input signal. If <code>rxs</code> is specified, it specifies the indices of the receivers active in the simulation. Returns the received signal at the specified (or all) receivers.</p>
 <p><code>fs</code> specifies the sampling rate of the input signal. The output signal is sampled at the same rate. If <code>fs</code> is not specified but <code>x</code> is a <code>SampledSignal</code>, the sampling rate of <code>x</code> is used. Otherwise, the signal is assumed to be sampled at the channel’s sampling rate.</p>
 <p>If <code>abstime</code> is <code>true</code>, the returned signals begin at the start of transmission. Otherwise, the result is relative to the earliest arrival time of the signal at any receiver. If <code>noisy</code> is <code>true</code> and the channel has a noise model associated with it, the received signal is corrupted by additive noise.</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">transmit</span>(ch<span class="op">::</span><span class="dt">BasebandReplayChannel</span>, x; rxs<span class="op">=:</span>, abstime<span class="op">=</span><span class="cn">false</span>, noisy<span class="op">=</span><span class="cn">true</span>, fs<span class="op">=</span><span class="cn">nothing</span>, start<span class="op">=</span><span class="cn">nothing</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">transmit</span>(ch<span class="op">::</span><span class="dt">BasebandReplayChannel</span>, x; rxs<span class="op">=:</span>, abstime<span class="op">=</span><span class="cn">false</span>, noisy<span class="op">=</span><span class="cn">true</span>, fs<span class="op">=</span><span class="cn">nothing</span>, start<span class="op">=</span><span class="cn">nothing</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Simulate the transmission of passband signal <code>x</code> through the channel model <code>ch</code>. If <code>txs</code> is specified, it specifies the indices of the sources active in the simulation. The number of sources must match the number of channels in the input signal. If <code>rxs</code> is specified, it specifies the indices of the receivers active in the simulation. Returns the received signal at the specified (or all) receivers.</p>
 <p><code>fs</code> specifies the sampling rate of the input signal. The output signal is sampled at the same rate. If <code>fs</code> is not specified but <code>x</code> is a <code>SampledSignal</code>, the sampling rate of <code>x</code> is used. Otherwise, the signal is assumed to be sampled at the channel’s sampling rate.</p>
 <p>If <code>abstime</code> is <code>true</code>, the returned signals begin at the start of transmission. Otherwise, the result is relative to the earliest arrival time of the signal at any receiver. If <code>noisy</code> is <code>true</code> and the channel has a noise model associated with it, the received signal is corrupted by additive noise.</p>
@@ -616,7 +640,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb22"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">reflection_coef</span>(θ, ρᵣ, cᵣ, cᵣₛ, δ, δₛ)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb23"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">reflection_coef</span>(θ, ρᵣ, cᵣ, cᵣₛ, δ, δₛ)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Compute complex reflection coefficient at a fluid-solid boundary, given:</p>
 <ul>
 <li>angle of incidence <code>θ</code> (angle to the surface normal)</li>
@@ -636,7 +660,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb23"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>PressureReleaseBoundary</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>PressureReleaseBoundary</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Pressure-release boundary condition.</p>
 </div>
 </div>
@@ -647,7 +671,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb24"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>RigidBoundary</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>RigidBoundary</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Rigid boundary condition.</p>
 </div>
 </div>
@@ -658,7 +682,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb25"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">FluidBoundary</span>(ρ, c, δ<span class="op">=</span><span class="fl">0</span>, σ<span class="op">=</span><span class="fl">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb26"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">FluidBoundary</span>(ρ, c, δ<span class="op">=</span><span class="fl">0</span>, σ<span class="op">=</span><span class="fl">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Create a fluid half-space boundary with density <code>ρ</code>, sound speed <code>c</code>, dimensionless absorption coefficient <code>δ</code>, and interfacial roughness <code>σ</code>.</p>
 <section id="examples" class="level4">
 <h4 class="anchored" data-anchor-id="examples">Examples</h4>
@@ -695,9 +719,9 @@ FluidBoundary(ρ=1200.0, c=1500.0)</code></pre>
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb27"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ElasticBoundary</span>(ρ, cₚ, cₛ)</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ElasticBoundary</span>(ρ, cₚ, cₛ, δₚ, δₛ)</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ElasticBoundary</span>(ρ, cₚ, cₛ, δₚ, δₛ, σ)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb28"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ElasticBoundary</span>(ρ, cₚ, cₛ)</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ElasticBoundary</span>(ρ, cₚ, cₛ, δₚ, δₛ)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ElasticBoundary</span>(ρ, cₚ, cₛ, δₚ, δₛ, σ)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Create a solid half-space boundary with density <code>ρ</code>, compressional sound speed <code>cₚ</code>, shear sound speed <code>cₛ</code>, dimensionless compressional absorption coefficient <code>δₚ</code>, dimensionless shear absorption coefficient <code>δₛ</code>, and interfacial roughness <code>σ</code>. If the absorption coefficients or interfacial roughness are unspecified, they are assumed to be 0.</p>
 <section id="examples-1" class="level4">
 <h4 class="anchored" data-anchor-id="examples-1">Examples</h4>
@@ -731,9 +755,9 @@ ElasticBoundary(ρ=1200.0, cₚ=1500.0, cₛ=500.0)</code></pre>
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb29"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">MultilayerElasticBoundary</span>([(h, ρ, cₚ, cₛ), <span class="op">...</span>])</span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="fu">MultilayerElasticBoundary</span>([(h, ρ, cₚ, cₛ, δₚ, δₛ), <span class="op">...</span>])</span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="fu">MultilayerElasticBoundary</span>([(h, ρ, cₚ, cₛ, δₚ, δₛ, σ), <span class="op">...</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb30"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">MultilayerElasticBoundary</span>([(h, ρ, cₚ, cₛ), <span class="op">...</span>])</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="fu">MultilayerElasticBoundary</span>([(h, ρ, cₚ, cₛ, δₚ, δₛ), <span class="op">...</span>])</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="fu">MultilayerElasticBoundary</span>([(h, ρ, cₚ, cₛ, δₚ, δₛ, σ), <span class="op">...</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Create a multilayer solid boundary with layers defined by a vector of tuples specifying the layer thickness <code>h</code>, density <code>ρ</code>, compressional sound speed <code>cₚ</code>, shear sound speed <code>cₛ</code>, dimensionless compressional absorption coefficient <code>δₚ</code>, dimensionless shear absorption coefficient <code>δₛ</code>, and interfacial roughness <code>σ</code> for each layer. If the absorption coefficients or interfacial roughness is unspecified, they are assumed to be 0. The last entry in the vector is considered the bottom half-space and has an infinite thickness. By convention, we specify a value of <code>Inf</code> for <code>h</code> for that layer.</p>
 <p><code>ρ</code>, <code>cₚ</code>, and <code>cₛ</code> may also be specified with linear variation within a layer by specifying the value as a 2-tuple, with the first entry being the value at the top of the layer and the second entry being the value at the bottom.</p>
 <section id="examples-2" class="level4">
@@ -787,7 +811,7 @@ MultilayerElasticBoundary(2 layers):
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb31"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">WindySurface</span>(windspeed)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb32"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">WindySurface</span>(windspeed)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Reflection model for a water surface affected by wind. <code>windspeed</code> is given in m/s.</p>
 </div>
 </div>
@@ -799,33 +823,33 @@ MultilayerElasticBoundary(2 layers):
 </div>
 <div class="callout-body-container">
 <p>Pre-defined boundary conditions based on APL-UW Technical Report 9407:</p>
-<div class="sourceCode" id="cb32"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># sea surface boundary conditions</span></span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState0    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">0.8</span>)</span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState1    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">2.6</span>)</span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState2    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">4.4</span>)</span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState3    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">6.9</span>)</span>
-<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState4    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">9.8</span>)</span>
-<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState5    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">12.6</span>)</span>
-<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState6    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">19.3</span>)</span>
-<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState7    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">26.5</span>)</span>
-<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState8    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">30.6</span>)</span>
-<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState9    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">32.9</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="sourceCode" id="cb33"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># seabed boundary conditions</span></span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Rock         <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2557.5</span>, <span class="fl">3820.0</span>, <span class="fl">0.01374</span>)</span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Pebbles      <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2557.5</span>, <span class="fl">2750.4</span>, <span class="fl">0.01374</span>)</span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SandyGravel  <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2547.8</span>, <span class="fl">2041.6</span>, <span class="fl">0.01705</span>)</span>
-<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> CoarseSand   <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2282.3</span>, <span class="fl">1911.1</span>, <span class="fl">0.01638</span>)</span>
-<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> MediumSand   <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1886.8</span>, <span class="fl">1799.5</span>, <span class="fl">0.01624</span>)</span>
-<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> FineSand     <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1483.5</span>, <span class="fl">1690.7</span>, <span class="fl">0.01602</span>)</span>
-<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> VeryFineSand <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1297.8</span>, <span class="fl">1613.4</span>, <span class="fl">0.01875</span>)</span>
-<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ClayeySand   <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1251.0</span>, <span class="fl">1581.3</span>, <span class="fl">0.02019</span>)</span>
-<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> CoarseSilt   <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1222.1</span>, <span class="fl">1553.3</span>, <span class="fl">0.02158</span>)</span>
-<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SandySilt    <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1195.0</span>, <span class="fl">1525.9</span>, <span class="fl">0.01261</span>)</span>
-<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Silt         <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1175.1</span>, <span class="fl">1508.1</span>, <span class="fl">0.00386</span>)</span>
-<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> FineSilt     <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1173.8</span>, <span class="fl">1506.3</span>, <span class="fl">0.00306</span>)</span>
-<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SandyClay    <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1172.5</span>, <span class="fl">1504.6</span>, <span class="fl">0.00242</span>)</span>
-<span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SiltyClay    <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1171.2</span>, <span class="fl">1501.7</span>, <span class="fl">0.00163</span>)</span>
-<span id="cb33-16"><a href="#cb33-16" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Clay         <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1169.8</span>, <span class="fl">1498.4</span>, <span class="fl">0.00148</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb33"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># sea surface boundary conditions</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState0    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">0.8</span>)</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState1    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">2.6</span>)</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState2    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">4.4</span>)</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState3    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">6.9</span>)</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState4    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">9.8</span>)</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState5    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">12.6</span>)</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState6    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">19.3</span>)</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState7    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">26.5</span>)</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState8    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">30.6</span>)</span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState9    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">32.9</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb34"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># seabed boundary conditions</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Rock         <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2557.5</span>, <span class="fl">3820.0</span>, <span class="fl">0.01374</span>)</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Pebbles      <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2557.5</span>, <span class="fl">2750.4</span>, <span class="fl">0.01374</span>)</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SandyGravel  <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2547.8</span>, <span class="fl">2041.6</span>, <span class="fl">0.01705</span>)</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> CoarseSand   <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2282.3</span>, <span class="fl">1911.1</span>, <span class="fl">0.01638</span>)</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> MediumSand   <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1886.8</span>, <span class="fl">1799.5</span>, <span class="fl">0.01624</span>)</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> FineSand     <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1483.5</span>, <span class="fl">1690.7</span>, <span class="fl">0.01602</span>)</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> VeryFineSand <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1297.8</span>, <span class="fl">1613.4</span>, <span class="fl">0.01875</span>)</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ClayeySand   <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1251.0</span>, <span class="fl">1581.3</span>, <span class="fl">0.02019</span>)</span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> CoarseSilt   <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1222.1</span>, <span class="fl">1553.3</span>, <span class="fl">0.02158</span>)</span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SandySilt    <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1195.0</span>, <span class="fl">1525.9</span>, <span class="fl">0.01261</span>)</span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Silt         <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1175.1</span>, <span class="fl">1508.1</span>, <span class="fl">0.00386</span>)</span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> FineSilt     <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1173.8</span>, <span class="fl">1506.3</span>, <span class="fl">0.00306</span>)</span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SandyClay    <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1172.5</span>, <span class="fl">1504.6</span>, <span class="fl">0.00242</span>)</span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SiltyClay    <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1171.2</span>, <span class="fl">1501.7</span>, <span class="fl">0.00163</span>)</span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Clay         <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1169.8</span>, <span class="fl">1498.4</span>, <span class="fl">0.00148</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>
@@ -838,9 +862,9 @@ MultilayerElasticBoundary(2 layers):
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb34"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticSource</span>(pos, frequency; spl<span class="op">=</span><span class="fl">0</span>)</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticSource</span>(x, z, frequency; spl<span class="op">=</span><span class="fl">0</span>)</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticSource</span>(x, y, z, frequency; spl<span class="op">=</span><span class="fl">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb35"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticSource</span>(pos, frequency; spl<span class="op">=</span><span class="fl">0</span>)</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticSource</span>(x, z, frequency; spl<span class="op">=</span><span class="fl">0</span>)</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticSource</span>(x, y, z, frequency; spl<span class="op">=</span><span class="fl">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>An source at location <code>pos</code> with nominal <code>frequency</code> and source level <code>spl</code> (dB re 1 µPa @ 1 m). The source is assumed to be omnidirectional and well approximated by a point source. While the source may have some bandwidth, the nominal frequency is used to estimate propagation effects such as absorption, reflection coefficients, etc.</p>
 <p>If the location of the source is unknown, it may be specified as <code>nothing</code>. This is useful when the propagation model does not require the source location (e.g., data-driven models).</p>
 </div>
@@ -852,9 +876,9 @@ MultilayerElasticBoundary(2 layers):
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb35"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticReceiver</span>(pos)</span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticReceiver</span>(x, z)</span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticReceiver</span>(x, y, z)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb36"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticReceiver</span>(pos)</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticReceiver</span>(x, z)</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticReceiver</span>(x, y, z)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Receiver at location <code>pos</code>.</p>
 </div>
 </div>
@@ -865,7 +889,7 @@ MultilayerElasticBoundary(2 layers):
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb36"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticReceiverGrid2D</span>(xrange, zrange)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb37"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticReceiverGrid2D</span>(xrange, zrange)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>A 2D grid of receivers with the specified location ranges.</p>
 </div>
 </div>
@@ -876,7 +900,7 @@ MultilayerElasticBoundary(2 layers):
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb37"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticReceiverGrid3D</span>(xrange, yrange, zrange)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb38"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticReceiverGrid3D</span>(xrange, yrange, zrange)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>A 3D grid of receivers with the specified location ranges.</p>
 </div>
 </div>
@@ -887,8 +911,8 @@ MultilayerElasticBoundary(2 layers):
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb38"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">location</span>(tx<span class="op">::</span><span class="dt">AbstractAcousticSource</span>)</span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="fu">location</span>(rx<span class="op">::</span><span class="dt">AbstractAcousticReceiver</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb39"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">location</span>(tx<span class="op">::</span><span class="dt">AbstractAcousticSource</span>)</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="fu">location</span>(rx<span class="op">::</span><span class="dt">AbstractAcousticReceiver</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Get the location of the source or receiver.</p>
 </div>
 </div>
@@ -899,7 +923,7 @@ MultilayerElasticBoundary(2 layers):
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb39"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">frequency</span>(tx<span class="op">::</span><span class="dt">AbstractAcousticSource</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb40"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">frequency</span>(tx<span class="op">::</span><span class="dt">AbstractAcousticSource</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Get the nominal frequency of an acoustic source.</p>
 </div>
 </div>
@@ -910,7 +934,7 @@ MultilayerElasticBoundary(2 layers):
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb40"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">spl</span>(tx<span class="op">::</span><span class="dt">AbstractAcousticSource</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb41"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">spl</span>(tx<span class="op">::</span><span class="dt">AbstractAcousticSource</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Get the source level of an acoustic source.</p>
 </div>
 </div>
@@ -924,8 +948,8 @@ MultilayerElasticBoundary(2 layers):
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb41"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">WhiteGaussianNoise</span>(σ)</span>
-<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="fu">WhiteGaussianNoise</span>(psd, fs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb42"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">WhiteGaussianNoise</span>(σ)</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="fu">WhiteGaussianNoise</span>(psd, fs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Create a white Gaussian ambient noise model with variance <code>σ²</code> µPa² or with power spectral density <code>psd</code> µPa²/Hz and bandwidth <code>fs/2</code> Hz.</p>
 </div>
 </div>
@@ -936,7 +960,7 @@ MultilayerElasticBoundary(2 layers):
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb42"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">RedGaussianNoise</span>(σ)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb43"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">RedGaussianNoise</span>(σ)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Create an ambient noise model with variance <code>σ²</code> µPa² and <code>1/f²</code> variation in power spectral density.</p>
 </div>
 </div>
@@ -947,8 +971,8 @@ MultilayerElasticBoundary(2 layers):
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb43"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rand</span>([rng<span class="op">::</span><span class="dt">AbstractRNG</span>, ] noise<span class="op">::</span><span class="dt">AbstractNoiseModel</span>, nsamples; fs)</span>
-<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rand</span>([rng<span class="op">::</span><span class="dt">AbstractRNG</span>, ] noise<span class="op">::</span><span class="dt">AbstractNoiseModel</span>, nsamples, nchannels; fs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb44"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rand</span>([rng<span class="op">::</span><span class="dt">AbstractRNG</span>, ] noise<span class="op">::</span><span class="dt">AbstractNoiseModel</span>, nsamples; fs)</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rand</span>([rng<span class="op">::</span><span class="dt">AbstractRNG</span>, ] noise<span class="op">::</span><span class="dt">AbstractNoiseModel</span>, nsamples, nchannels; fs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Generate random noise samples from the noise model <code>noise</code> with the specified size <code>nsamples</code> (can be a 2-tuple for multichannel noise). The noise is returned as a signal sampled at <code>fs</code>. The optional <code>rng</code> argument specifies the random number generator to use.</p>
 </div>
 </div>

@@ -50,6 +50,7 @@ website:
 
 execute:
   echo: true
+  freeze: auto
 
 format:
   html:

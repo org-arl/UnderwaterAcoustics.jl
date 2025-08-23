@@ -33,9 +33,9 @@ using TestItems
   ir2 = @inferred impulse_response(pm, tx, rx, 10000.0; abstime=true)
   @test ir1 isa AbstractVector{<:Complex}
   @test ir2 isa AbstractVector{<:Complex}
-  @test length(ir2) ≈ length(ir1) + round(Int, 10000.0 * arr[1].t) atol=1
-  @test length(ir2) ≈ round(Int, 10000.0 * arr[end].t) + 1 atol=1
-  @test all(abs.(ir1[[round(Int, 10000.0 * (arr[j].t - arr[1].t)) + 1 for j ∈ 1:7]]) .> 0)
+  @test length(ir2) ≈ length(ir1) + round(Int, 10000.0 * arr[1].t) - 10 atol=1
+  @test length(ir2) ≈ round(Int, 10000.0 * arr[end].t) + 11 atol=1
+  @test all(abs.(ir1[[round(Int, 10000.0 * (arr[j].t - arr[1].t + 0.001)) + 1 for j ∈ 1:7]]) .> 0)
   @test all(abs.(ir2[[round(Int, 10000.0 * arr[j].t) + 1 for j ∈ 1:7]]) .> 0)
   @test length(impulse_response(pm, tx, rx, 10000.0; ntaps=256, abstime=true)) == 256
   @test length(impulse_response(pm, tx, rx, 10000.0; ntaps=64, abstime=true)) == 64
@@ -226,23 +226,20 @@ end
 @testitem "pekeris-modes-ir" begin
   env = @inferred UnderwaterEnvironment(bathymetry=100, seabed=SandyGravel)
   pm = @inferred PekerisModeSolver(env)
-  tx = @inferred AcousticSource(0, -30, 100)
+  tx = @inferred AcousticSource(0, -30, 300)
   rx = @inferred AcousticReceiver(1000, -40)
   ir1 = @inferred impulse_response(pm, tx, rx, 8000; abstime=false)
   ir2 = @inferred impulse_response(pm, tx, rx, 8000; abstime=true)
   @test ir1 isa AbstractVector{<:Complex}
   @test ir2 isa AbstractVector{<:Complex}
   x = abs.(ir2)
-  let i = findfirst(x .> maximum(x) / 10)
-    while x[i+1] > x[i]
-      i += 1
-    end
+  let i = argmax(x)
     @test abs((i - 1) / 8000 - hypot(1000, 10) / env.soundspeed) < 0.002
   end
   function get_Δt_first5(x)
     ndx = Int[]
     θ = maximum(x) / 10
-    i = findfirst(x .> θ)
+    i = argmax(x)
     for j ∈ 1:5
       while i < length(x) && x[i+1] > x[i]
         i += 1
@@ -259,10 +256,10 @@ end
   end
   d51 = get_Δt_first5(abs.(ir1))
   d52 = get_Δt_first5(abs.(ir2))
-  @test d51 == [13, 31, 49, 21]
-  @test d52 == [13, 31, 49, 21]
-  @test length(@inferred(impulse_response(pm, tx, rx, 8000; ntaps=4096, abstime=false))) == 4096
-  @test length(@inferred(impulse_response(pm, tx, rx, 8000; ntaps=700, abstime=false))) == 700
+  @test d51 == [179, 38, 54, 38]
+  @test d52 == [179, 38, 54, 38]
+  @test length(@inferred(impulse_response(pm, tx, rx, 8000; ntaps=4096))) == 4096
+  @test length(@inferred(impulse_response(pm, tx, rx, 8000; ntaps=700))) == 700
 end
 
 @testitem "pekeris-modes-∂" begin

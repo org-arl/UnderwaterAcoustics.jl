@@ -324,8 +324,8 @@ function impulse_response(pm::AbstractModePropagationModel, tx::AbstractAcoustic
   Δt = R / maximum(a -> a.v, arr)
   N = ceil(Int, R / minimum(a -> a.v, arr) * fs)
   M = ceil(Int, Δt * fs)
-  N -= M
-  N = nextfastfft(2N)                       # heuristic to ensure no aliasing
+  N = 6 * (N - M) ÷ 5                       # heuristic to ensure no aliasing
+  N = nextfastfft(2N)
   Δf = fs / N
   f = (0:N-1) .* Δf
   ndx = findall(fmin .≤ f .≤ fmax)
@@ -334,7 +334,7 @@ function impulse_response(pm::AbstractModePropagationModel, tx::AbstractAcoustic
     tx1 = AcousticSource(location(tx), f[i+1])
     X[i+1] = conj(acoustic_field(pm, tx1, rx))
   end
-  Δt -= 0.01                                # heuristic acausal guard period
+  Δt -= 0.02                                # heuristic acausal guard period
   X .*= cispi.(2f * Δt)
   x = ifft(X)
   if abstime

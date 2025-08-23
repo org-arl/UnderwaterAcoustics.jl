@@ -271,9 +271,10 @@ function acoustic_field(pm::PekerisModeSolver, tx::AbstractAcousticSource, rxs::
     modal_terms = @. sin(γ * -p1.z) * sin(γ * -p2.z) * cis(-kᵣ * R) / sqrt(kᵣ)
     multiplier = cispi(-0.25) * 2 / pm.h * sqrt(2π / R)
     if mode === :coherent
-      sum(modal_terms) * db2amp(spl(tx)) * multiplier
+      # conjugation required because we use the convention of cis(-kᵣR) to match with Kraken
+      conj(sum(modal_terms) * db2amp(spl(tx)) * multiplier)
     else
-      complex(√sum(abs2, modal_terms)) * db2amp(spl(tx)) * multiplier
+      conj(complex(√sum(abs2, modal_terms)) * db2amp(spl(tx)) * multiplier)
     end
   end
 end
@@ -295,7 +296,7 @@ function impulse_response(pm::AbstractModePropagationModel, tx::AbstractAcoustic
   X = zeros(ComplexF64, N)
   Threads.@threads for i ∈ 1:N-1
     tx1 = AcousticSource(location(tx), i * Δf)
-    X[i+1] = conj(acoustic_field(pm, tx1, rx))
+    X[i+1] = acoustic_field(pm, tx1, rx)
   end
   x = ifft(X)
   if abstime

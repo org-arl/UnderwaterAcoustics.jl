@@ -281,7 +281,7 @@ function acoustic_field(pm::PekerisModeSolver, tx::AbstractAcousticSource, rxs::
 end
 
 """
-    impulse_response(pm, tx, rx, fs; abstime, ntaps, fmin, fmax)
+    impulse_response(pm::AbstractModePropagationModel, tx, rx, fs; abstime, ntaps, fmin, fmax)
 
 Compute the impulse response at the receiver `rx` due to the source `tx` using
 propagation model `pm` at the given sampling frequency `fs`.

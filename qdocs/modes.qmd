@@ -1,0 +1,122 @@
+# On modal models
+
+## Introduction
+
+Modal acoustic propagation models decompose the acoustic field into a sum of normal modes, each of which propagates independently through the waveguide. In its basic form, the model assumes a range-independent environment, where the sound speed, density, and seabed properties are constant with respect to range. The environment can be complicated in depth though, modeling variation of sound speed and density with depth, as well as multilayered elastic seabeds supporting shear waves and frequency-dependent absorption. Extensions to these models (e.g., adiabatic modes, coupled modes, etc.) can deal with range-dependent environments by modeling the interaction between modes at different ranges. Modal models are narrowband and computationally most suited to low frequency modeling. At high frequencies, the number of modes required to accurately represent the acoustic field increases significantly, leading to higher computational costs and potential numerical challenges.
+
+## Theory
+
+### Basic formulation
+
+Consider a waveguide with the top boundary at $z=0$ and the bottom boundary at $z=-D$. To keep things simple, we first consider a homogenous seabed modeled as a bottom halfspace below $z=-D$, and air as a top halfspace above $z=0$. The acoustic pressure field in the waveguide due to a source of frequency $f$ located at $(r=0, z=z_s)$ can be modeled as:
+$$
+p(r,z,t) \propto \sum_{m=1}^{\infty} \psi_m(z_s)\psi_m(z)H_0(k_{rm}r)e^{i\omega t},
+$$
+where $\omega = 2\pi f$ and $H_0(\cdot)$ is the Hankel function. The function $\psi_m(z)$ is a modal function that describes the vertical structure of the acoustic field in the waveguide, and $k_{rm}$ is the radial wavenumber for mode $m$. Each mode is normalized such that:
+$$
+\int_{-D}^{0} \psi^2_m(z) \; dz = 1.
+$$
+We select a scaling factor to ensure transmission loss agrees with the convention used in [@coa2011, §5.2.1]. Further, suppressing the time variability and replacing the Hankel function $H_0(\cdot)$ by its asymptotic approximation, we can write the pressure field as:
+$$
+p(r,z) \approx \sqrt\frac{2\pi}{r}e^{-i\pi/4}\sum_{m=1}^{\infty} \psi_m(z_s)\psi_m(z)\frac{e^{-ik_{rm}r}}{\sqrt{k_{rm}}},
+$$
+where $k_0$ is the wavenumber at the source.
+
+The radial wavenumber $k_{rm}$ and the shape of the mode $\psi_m(z)$ are obtained by solving the following Sturm-Liouville eigenvalue problem with boundary conditions determined by the top and bottom halfspace properties:
+$$
+\rho(z)\frac{d}{dz}\left[\frac{1}{\rho(z)}\psi^\prime_m(z)\right] + \left[\frac{\omega^2}{c^2(z)}-k_{rm}^2\right]\psi_m(z) = 0,
+$$
+where $\psi^\prime_m \equiv d\psi_m/dz$.
+
+Since the acoustic impedance of air is much lower than that of water, the boundary condition at the air-water interface can be simplified to a pressure release boundary, i.e., $\psi_m(0) = 0$. The boundary conditions at the water-sediment interface depend on the sediment properties.
+
+### Sediment boundary conditions
+
+#### Hard boundary
+
+For a hard boundary at the sediment interface, we impose a no-penetration condition, which leads to the following boundary condition:
+$$
+\psi^\prime_m(-D) = 0.
+$$
+In case of an isovelocity channel with constant sound speed $c(z) = c$ and density $\rho(z) = \rho$, the problem simplifies significantly and has an analytical solution[^1]:
+$$
+\psi_m(z) = \sqrt\frac{2}{D}\sin(-k_{zm}z),
+$$
+where the vertical wavenumber $k_{zm}$ is given by:
+$$
+k_{zm} = \left(m - \frac{1}{2}\right)\frac{\pi}{D},
+$$
+and the radial wavenumber $k_{rm}$ is given by:
+$$
+k_{rm} = \sqrt{\frac{\omega^2}{c^2}-k_{zm}^2}.
+$$
+When $k_{zm} \le \omega/c$, $k_{rm}$ is real and corresponds to propagating modes. When $k_{zm} > \omega/c$, $k_{rm}$ becomes imaginary, indicating evanescent modes that decay with range.
+
+::: {.callout-note}
+The `PekerisModeSolver` does not compute evanescent modes, as they do not contribute significantly to the acoustic field at long ranges. However, it returns wavenumbers with an imaginary component to account for frequency-dependent absorption in the water.
+:::
+
+[^1]: While $\sin(k_{zm}z)$ could also be a solution, we choose $\sin(-k_{zm}z)$ to get modal functions consistent with literature that uses $z$ as depth (positive downwards).
+
+#### Soft boundary
+
+At long ranges, many seabeds behave like soft boundaries, and we can impose a pressure release condition at the sediment interface: $\psi_m(-D) = 0$. The analytical solution to the modal problem is then the same as the hard boundary case, except:
+$$
+k_{zm} = \frac{m\pi}{D}.
+$$
+
+#### Fluid halfspace
+
+In the case of a fluid halfspace (e.g., water overlying a sediment layer that does not support shear waves), the sediment boundary conditions is:
+$$
+\rho_b\psi^\prime_m(-D) + \rho\sqrt{k_{rm}^2 - \left(\frac{\omega}{c_b}\right)^2}\psi_m(-D) = 0,
+$$
+where $\rho_b$ is the density of the sediment and $c_b$ is the sound speed in the sediment. The modal function for this case is the same as the hard boundary case, but an analytical expression for $k_{zm}$ is not available. Instead, $k_{zm}$ is obtained numerically by solving the above boundary condition equation.
+
+Fluid halfspace absorption can be modeled using a complex sound speed. However, this adds complexity to the root finding process as a complex domain numerical root finder becomes necessary.
+
+::: {.callout-note}
+The `PekerisModeSolver` does not support fluid halfspace absorption and ignores the `δ` parameter in the seabed definition. The `Kraken` model supports absorption in the fluid halfspaces.
+:::
+
+#### Acousto-elastic halfspace
+
+TODO
+
+::: {.callout-note}
+The `PekerisModeSolver` currently does not support acousto-elastic halfspaces. The `Kraken` model supports acousto-elastic halfspaces.
+:::
+
+#### Multilayered sediment
+
+The treatment for multilayered sediment uses the same boundary conditions as the single-layer cases, but the boundary conditions are applied at each interface between layers. The formulation is not detailed here, but the approach is fairly straightforward in formulating a numerical recipe.
+
+::: {.callout-note}
+The `PekerisModeSolver` does not support multilayered sediment seabed. The `Kraken` model supports multilayered sediment.
+:::
+
+### Sound speed profile
+
+Solving the modal equation with a depth-dependent sound speed requires a numerical solver, as no analytical solution exists in a general case. The approach is straightforward in principle.
+
+::: {.callout-note}
+The `PekerisModeSolver` only supports iso-velocity environments. The `Kraken` model supports arbitrary sound speed profiles.
+:::
+
+### Group velocity
+
+The group velocity of the modes can be obtained from the dispersion relation. For a given mode $m$, the group velocity is defined as:
+$$
+v_g(m) = \frac{d\omega}{dk_{rm}}.
+$$
+
+### Range dependence
+
+Several approaches exist to extending the modal models for range dependent environments. In all the approaches, we compute the mode shapes and wavenumbers at discrete ranges from the source to the receiver, taking into account the varying environmental parameters. In order to compute the acoustic field, the modes excitation at the source is first estimated, and the modal excitation is propagated to the next range bin. The procedure continues iteratively, updating the modal excitation at each step until we reach the intended receiver range. The acoustic field at that range is then computed using the mode excitation at that range. The different approaches differ in how the modal excitation is transferred from one range bin to the next.
+
+#### Adiabatic modes
+
+The simplest approach to transferring excitation from one range bin to the next is to assume that the excitation of a mode remains confined to the same mode in the next bin. Using this approach, we get a simple expression for the acoustic field:
+$$
+p(r,z) \approx \sqrt{2\pi}e^{-i\pi/4}\sum_{m=1}^{\infty} \psi_m(0,z_s)\psi_m(r,z)\frac{e^{-i\int_0^r k_{rm}dr}}{\sqrt{\int_0^r k_{rm}dr}}.
+$$

@@ -175,7 +175,7 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
     end
   end
   mode === :coherent || (fld .= sqrt.(fld))
-  fld .*= sqrt(2π) * cispi(0.25) * db2amp(spl(tx))
+  fld .*= sqrt(2π) * cispi(-0.25) * db2amp(spl(tx))
   fld
 end
 

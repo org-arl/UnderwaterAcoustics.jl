@@ -27,6 +27,10 @@ Implementation largely based on mathematical description in:
 
 - M. B. Porter, "The KRAKEN normal mode program", Technical report NRL/MR/5120-92-6920, Naval Research Laboratory, 1992 [(pdf)](https://apps.dtic.mil/sti/tr/pdf/ADA252409.pdf).
 
+::: {.callout-tip}
+The theory of modal models is summarized in a brief note "[On modal models](modes.qmd)". It provides an overview of the key concepts and mathematical formulations, as implemented in this model.
+:::
+
 While the `PekerisModeSolver` is range-independent by itself, it can be made range-dependent by using `AdiabaticExt` as shown in the example below.
 
 ## Examples

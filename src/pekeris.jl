@@ -89,8 +89,9 @@ function impulse_response(pm::AbstractRayPropagationModel, tx::AbstractAcousticS
   T = _phasortype(eltype(arr))
   length(arr) == 0 && return signal(Vector{T}(undef, 0), fs)
   t0, tmax = extrema(a -> a.t, arr)
-  abstime && (t0 = zero(t0))
-  n = something(ntaps, ceil(Int, (tmax - t0) * fs) + 1)
+  # leave 1 ms guard period before and after the impulse response
+  t0 = abstime ? zero(t0) : t0 - 0.001
+  n = something(ntaps, ceil(Int, (tmax - t0 + 0.001) * fs) + 1)
   signal(_arr2ir([a.t for a ∈ arr], [a.ϕ for a ∈ arr]; T, t0, fs, n), fs)
 end
 
@@ -279,33 +280,65 @@ function acoustic_field(pm::PekerisModeSolver, tx::AbstractAcousticSource, rxs::
   end
 end
 
-# impulse response computation is designed for Pekeris mode solver, but should
-# work for any mode solver that returns ModeArrival, and hence is marked as
-# a fallback for any AbstractModePropagationModel
-function impulse_response(pm::AbstractModePropagationModel, tx::AbstractAcousticSource, rx::AbstractAcousticReceiver, fs; abstime=false, ntaps=nothing)
+"""
+    impulse_response(pm, tx, rx, fs; abstime, ntaps, fmin, fmax)
+
+Compute the impulse response at the receiver `rx` due to the source `tx` using
+propagation model `pm` at the given sampling frequency `fs`.
+
+If `abstime` is `true` (default is `false`), the result is in absolute time
+from the start of transmission. Otherwise, the result is relative to the
+earliest arrival time of the signal at the receiver (with some guard period
+to accommodate acausal response).
+
+`ntaps` specifies the number of taps in the impulse response. If not specified,
+the number of taps is chosen automatically based on the arrival times.
+
+`fmin` and `fmax` specifies the bandwidth of interest. If unspecified, a
+50% bandwidth is assumed, i.e., if the transmitter frequency is 300 Hz the
+bandwidth of interest is assumed to be 150 Hz (`fmin = 225`, `fmax = 375`).
+Larger bandwidths require more modal computations, and hence increase
+computational load.
+
+The impulse response is computed only for positive frequencies. Such an impulse
+response is suitable for convolution with passband complex analytic signals.
+If convolved with real signals, the resulting signal is approximately equivalent
+to converting the real signal to a complex analytic form and then convolving it
+with the impulse response.
+"""
+function impulse_response(pm::AbstractModePropagationModel, tx::AbstractAcousticSource,
+  rx::AbstractAcousticReceiver, fs; abstime=false, ntaps=nothing, fmin=nothing, fmax=nothing)
+  # impulse response computation is designed for Pekeris mode solver, but should
+  # work for any mode solver that returns ModeArrival, and hence is marked as
+  # a fallback for any AbstractModePropagationModel
+  f0 = frequency(tx)
+  fmin = something(fmin, 0.5 * f0)
+  fmax = something(fmax, min(1.5 * f0, fs/2))
+  0 < fmin < fs/2 || error("fmin must be positive and less than fs/2")
+  fmin < fmax ≤ fs/2 || error("fmax must be between fmin and fs/2")
   arr = arrivals(pm, tx, rx)
   isempty(arr) && return signal(ComplexF64[], fs)
   p1 = location(tx)
   p2 = location(rx)
   R = sqrt(abs2(p1.x - p2.x) + abs2(p1.y - p2.y))
+  Δt = R / maximum(a -> a.v, arr)
   N = ceil(Int, R / minimum(a -> a.v, arr) * fs)
-  M = ceil(Int, R / maximum(a -> a.v, arr) * fs)
+  M = ceil(Int, Δt * fs)
   N -= M
   N = nextfastfft(2N)                       # heuristic to ensure no aliasing
   Δf = fs / N
+  f = (0:N-1) .* Δf
+  ndx = findall(fmin .≤ f .≤ fmax)
   X = zeros(ComplexF64, N)
-  Threads.@threads for i ∈ 1:N-1
-    tx1 = AcousticSource(location(tx), i * Δf)
-    X[i+1] = acoustic_field(pm, tx1, rx)
+  Threads.@threads for i ∈ ndx
+    tx1 = AcousticSource(location(tx), f[i+1])
+    X[i+1] = conj(acoustic_field(pm, tx1, rx))
   end
+  Δt -= 0.01                                # heuristic acausal guard period
+  X .*= cispi.(2f * Δt)
   x = ifft(X)
   if abstime
-    absx = abs.(x)
-    i = findfirst(>(maximum(absx) / 10), absx)
-    while i < length(absx) && absx[i+1] > absx[i]
-     i += 1
-    end
-    x = vcat(zeros(eltype(x), M - i - 1), x)
+    x = vcat(zeros(eltype(x), round(Int, Δt * fs)), x)
   end
   if ntaps !== nothing
     if length(x) ≥ ntaps

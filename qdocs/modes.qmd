@@ -81,7 +81,9 @@ The `PekerisModeSolver` does not support fluid halfspace absorption and ignores 
 
 #### Acousto-elastic halfspace
 
+::: {.callout-caution title="Work in progress"}
 TODO
+:::
 
 ::: {.callout-note}
 The `PekerisModeSolver` currently does not support acousto-elastic halfspaces. The `Kraken` model supports acousto-elastic halfspaces.

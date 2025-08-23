@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Adding new models – UnderwaterAcoustics.jl</title>
+<title>modes – UnderwaterAcoustics.jl</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -20,42 +20,27 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for syntax highlighting */
-html { -webkit-text-size-adjust: 100%; }
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
 }
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
 }
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
 }
-</style>
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="site_libs/quarto-nav/quarto-nav.js"></script>
@@ -103,6 +88,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -128,7 +142,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html"><b>UnderwaterAcoustics.jl</b></a></li><li class="breadcrumb-item"><a href="./ext.html">Adding new models</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./modes.html"><b>Notes</b></a></li><li class="breadcrumb-item"><a href="./modes.html">On modal models</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
     </div>
@@ -187,7 +201,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./ext.html" class="sidebar-item-text sidebar-link active">
+  <a href="./ext.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Adding new models</span></a>
   </div>
 </li>
@@ -304,7 +318,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./modes.html" class="sidebar-item-text sidebar-link">
+  <a href="./modes.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">On modal models</span></a>
   </div>
 </li>
@@ -338,239 +352,199 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#propagation-models" id="toc-propagation-models" class="nav-link active" data-scroll-target="#propagation-models">Propagation models</a></li>
-  <li><a href="#channel-model" id="toc-channel-model" class="nav-link" data-scroll-target="#channel-model">Channel model</a></li>
+  <li><a href="#on-modal-models" id="toc-on-modal-models" class="nav-link active" data-scroll-target="#on-modal-models">On modal models</a>
+  <ul class="collapse">
+  <li><a href="#introduction" id="toc-introduction" class="nav-link" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#theory" id="toc-theory" class="nav-link" data-scroll-target="#theory">Theory</a>
+  <ul class="collapse">
+  <li><a href="#basic-formulation" id="toc-basic-formulation" class="nav-link" data-scroll-target="#basic-formulation">Basic formulation</a></li>
+  <li><a href="#sediment-boundary-conditions" id="toc-sediment-boundary-conditions" class="nav-link" data-scroll-target="#sediment-boundary-conditions">Sediment boundary conditions</a></li>
+  <li><a href="#sound-speed-profile" id="toc-sound-speed-profile" class="nav-link" data-scroll-target="#sound-speed-profile">Sound speed profile</a></li>
+  <li><a href="#group-velocity" id="toc-group-velocity" class="nav-link" data-scroll-target="#group-velocity">Group velocity</a></li>
+  <li><a href="#range-dependence" id="toc-range-dependence" class="nav-link" data-scroll-target="#range-dependence">Range dependence</a></li>
+  </ul></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content">
-
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html"><b>UnderwaterAcoustics.jl</b></a></li><li class="breadcrumb-item"><a href="./ext.html">Adding new models</a></li></ol></nav>
-<div class="quarto-title">
-<h1 class="title">Adding new models</h1>
-</div>
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./modes.html"><b>Notes</b></a></li><li class="breadcrumb-item"><a href="./modes.html">On modal models</a></li></ol></nav></header>
 
 
 
-<div class="quarto-title-meta">
 
-    
-  
-    
-  </div>
-  
-
-
-</header>
-
-
-<p><code>UnderwaterAcoustics.jl</code> is designed to allow the community to extend it by adding propagation models and channel models.</p>
-<section id="propagation-models" class="level2">
-<h2 class="anchored" data-anchor-id="propagation-models">Propagation models</h2>
-<p>A new propagation model (let’s call it <code>MyPropagationModel</code> for illustration) should define a type that extends one of:</p>
-<div class="callout callout-style-simple callout-tip no-icon">
-<div class="callout-body d-flex">
-<div class="callout-icon-container">
-<i class="callout-icon no-icon"></i>
-</div>
-<div class="callout-body-container">
-<div class="sourceCode" id="cb1"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>AbstractPropagationModel</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Superclass for all propagation models.</p>
-</div>
-</div>
-</div>
-<div class="callout callout-style-simple callout-tip no-icon">
-<div class="callout-body d-flex">
-<div class="callout-icon-container">
-<i class="callout-icon no-icon"></i>
-</div>
-<div class="callout-body-container">
-<div class="sourceCode" id="cb2"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>AbstractRayPropagationModel</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Superclass for all ray propagation models.</p>
-</div>
-</div>
-</div>
-<div class="callout callout-style-simple callout-tip no-icon">
-<div class="callout-body d-flex">
-<div class="callout-icon-container">
-<i class="callout-icon no-icon"></i>
-</div>
-<div class="callout-body-container">
-<div class="sourceCode" id="cb3"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>AbstractModePropagationModel</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Superclass for all mode propagation models.</p>
-</div>
-</div>
-</div>
-<p>The constructor for <code>MyPropagationModel</code> usually will take in an environmental description and optionally, keyword options that control the model:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">MyPropagationModel</span>(env<span class="op">::</span><span class="dt">UnderwaterEnvironment</span>; kwargs<span class="op">...</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>However, for data-driven models, the constructor might take in data or partial environmental information and data:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">MyPropagationModel</span>(data; kwargs<span class="op">...</span>)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">MyPropagationModel</span>(env, data; kwargs<span class="op">...</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>The following methods should be defined for <code>MyPropagationModel</code>:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>acoustic_field</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>The acoustic field is represented by complex numbers with amplitude that is related to the source level (<code>spl</code>) and transmission loss, and angle that is related to the acoustic phase at the source frequency.</p>
-<div class="callout callout-style-default callout-tip callout-titled" title="Additional options">
+<section id="on-modal-models" class="level1">
+<h1>On modal models</h1>
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>Modal acoustic propagation models decompose the acoustic field into a sum of normal modes, each of which propagates independently through the waveguide. In its basic form, the model assumes a range-independent environment, where the sound speed, density, and seabed properties are constant with respect to range. The environment can be complicated in depth though, modeling variation of sound speed and density with depth, as well as multilayered elastic seabeds supporting shear waves and frequency-dependent absorption. Extensions to these models (e.g., adiabatic modes, coupled modes, etc.) can deal with range-dependent environments by modeling the interaction between modes at different ranges. Modal models are narrowband and computationally most suited to low frequency modeling. At high frequencies, the number of modes required to accurately represent the acoustic field increases significantly, leading to higher computational costs and potential numerical challenges.</p>
+</section>
+<section id="theory" class="level2">
+<h2 class="anchored" data-anchor-id="theory">Theory</h2>
+<section id="basic-formulation" class="level3">
+<h3 class="anchored" data-anchor-id="basic-formulation">Basic formulation</h3>
+<p>Consider a waveguide with the top boundary at <span class="math inline">\(z=0\)</span> and the bottom boundary at <span class="math inline">\(z=-D\)</span>. To keep things simple, we first consider a homogenous seabed modeled as a bottom halfspace below <span class="math inline">\(z=-D\)</span>, and air as a top halfspace above <span class="math inline">\(z=0\)</span>. The acoustic pressure field in the waveguide due to a source of frequency <span class="math inline">\(f\)</span> located at <span class="math inline">\((r=0, z=z_s)\)</span> can be modeled as: <span class="math display">\[
+p(r,z,t) \propto \sum_{m=1}^{\infty} \psi_m(z_s)\psi_m(z)H_0(k_{rm}r)e^{i\omega t},
+\]</span> where <span class="math inline">\(\omega = 2\pi f\)</span> and <span class="math inline">\(H_0(\cdot)\)</span> is the Hankel function. The function <span class="math inline">\(\psi_m(z)\)</span> is a modal function that describes the vertical structure of the acoustic field in the waveguide, and <span class="math inline">\(k_{rm}\)</span> is the radial wavenumber for mode <span class="math inline">\(m\)</span>. Each mode is normalized such that: <span class="math display">\[
+\int_{-D}^{0} \psi^2_m(z) \; dz = 1.
+\]</span> We select a scaling factor to ensure transmission loss agrees with the convention used in <span class="citation" data-cites="coa2011">(<a href="#ref-coa2011" role="doc-biblioref">Jensen et al. 2011, sec. 5.2.1</a>)</span>. Further, suppressing the time variability and replacing the Hankel function <span class="math inline">\(H_0(\cdot)\)</span> by its asymptotic approximation, we can write the pressure field as: <span class="math display">\[
+p(r,z) \approx \sqrt\frac{2\pi}{r}e^{-i\pi/4}\sum_{m=1}^{\infty} \psi_m(z_s)\psi_m(z)\frac{e^{-ik_{rm}r}}{\sqrt{k_{rm}}},
+\]</span> where <span class="math inline">\(k_0\)</span> is the wavenumber at the source.</p>
+<p>The radial wavenumber <span class="math inline">\(k_{rm}\)</span> and the shape of the mode <span class="math inline">\(\psi_m(z)\)</span> are obtained by solving the following Sturm-Liouville eigenvalue problem with boundary conditions determined by the top and bottom halfspace properties: <span class="math display">\[
+\rho(z)\frac{d}{dz}\left[\frac{1}{\rho(z)}\psi^\prime_m(z)\right] + \left[\frac{\omega^2}{c^2(z)}-k_{rm}^2\right]\psi_m(z) = 0,
+\]</span> where <span class="math inline">\(\psi^\prime_m \equiv d\psi_m/dz\)</span>.</p>
+<p>Since the acoustic impedance of air is much lower than that of water, the boundary condition at the air-water interface can be simplified to a pressure release boundary, i.e., <span class="math inline">\(\psi_m(0) = 0\)</span>. The boundary conditions at the water-sediment interface depend on the sediment properties.</p>
+</section>
+<section id="sediment-boundary-conditions" class="level3">
+<h3 class="anchored" data-anchor-id="sediment-boundary-conditions">Sediment boundary conditions</h3>
+<section id="hard-boundary" class="level4">
+<h4 class="anchored" data-anchor-id="hard-boundary">Hard boundary</h4>
+<p>For a hard boundary at the sediment interface, we impose a no-penetration condition, which leads to the following boundary condition: <span class="math display">\[
+\psi^\prime_m(-D) = 0.
+\]</span> In case of an isovelocity channel with constant sound speed <span class="math inline">\(c(z) = c\)</span> and density <span class="math inline">\(\rho(z) = \rho\)</span>, the problem simplifies significantly and has an analytical solution<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>: <span class="math display">\[
+\psi_m(z) = \sqrt\frac{2}{D}\sin(-k_{zm}z),
+\]</span> where the vertical wavenumber <span class="math inline">\(k_{zm}\)</span> is given by: <span class="math display">\[
+k_{zm} = \left(m - \frac{1}{2}\right)\frac{\pi}{D},
+\]</span> and the radial wavenumber <span class="math inline">\(k_{rm}\)</span> is given by: <span class="math display">\[
+k_{rm} = \sqrt{\frac{\omega^2}{c^2}-k_{zm}^2}.
+\]</span> When <span class="math inline">\(k_{zm} \le \omega/c\)</span>, <span class="math inline">\(k_{rm}\)</span> is real and corresponds to propagating modes. When <span class="math inline">\(k_{zm} &gt; \omega/c\)</span>, <span class="math inline">\(k_{rm}\)</span> becomes imaginary, indicating evanescent modes that decay with range.</p>
+<div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-Additional options
+Note
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The <code>acoustic_field()</code>, <code>transmission_loss()</code>, <code>arrivals()</code> and <code>impulse_response()</code> methods may support propagation model specific keyword arguments (options) to control finer details of the propagation model.</p>
+<p>The <code>PekerisModeSolver</code> does not compute evanescent modes, as they do not contribute significantly to the acoustic field at long ranges. However, it returns wavenumbers with an imaginary component to account for frequency-dependent absorption in the water.</p>
 </div>
 </div>
-<p>A <code>transmission_loss()</code> method may be optionally defined for <code>MyPropagationModel</code>:</p>
-<div class="callout callout-style-simple callout-tip no-icon">
-<div class="callout-body d-flex">
-<div class="callout-icon-container">
-<i class="callout-icon no-icon"></i>
-</div>
-<div class="callout-body-container">
-<div class="sourceCode" id="cb7"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">transmission_loss</span>(pm, tx, rxs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Compute the transmission loss from the source <code>tx</code> to the receivers <code>rxs</code> using propagation model <code>pm</code>. If <code>rxs</code> denotes a single receiver, the result is a scalar. If <code>rxs</code> is an <code>AbstractArray</code>, the result is an array of transmission losses (in dB) with the same shape as <code>rxs</code>.</p>
-</div>
-</div>
-</div>
-<p>If it is not defined, the transmission loss is automatically computed as <code>20 * log10(acoustic_field(...))</code>.</p>
-<p>A propagation model should also typically define:</p>
-<div class="callout callout-style-simple callout-tip no-icon">
-<div class="callout-body d-flex">
-<div class="callout-icon-container">
-<i class="callout-icon no-icon"></i>
-</div>
-<div class="callout-body-container">
-<div class="sourceCode" id="cb8"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">arrivals</span>(pm, tx, rx; paths<span class="op">=</span><span class="cn">true</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Compute the arrivals at the receiver <code>rx</code> due to the source <code>tx</code> using propagation model <code>pm</code>. Returns an array of arrivals.</p>
-<p>For ray models, eigenray paths are typically included in the arrivals. However, if they are not needed, one may set <code>paths=false</code> to allow the propagation model to avoid computing them.</p>
-</div>
-</div>
-</div>
-<p>The returned arrivals should be an array of arrivals that extend:</p>
-<div class="callout callout-style-simple callout-tip no-icon">
-<div class="callout-body d-flex">
-<div class="callout-icon-container">
-<i class="callout-icon no-icon"></i>
-</div>
-<div class="callout-body-container">
-<div class="sourceCode" id="cb9"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>AbstractAcousticArrival</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Superclass for all acoustic arrivals.</p>
-</div>
-</div>
-</div>
-<p>The information held in an arrival is propagation model dependent. For example, ray models may return arrivals that contain ray information such as time of arrival, angle of arrival, amplitude and phase of arrival, eigenpath, etc. On the other hand, models based on normal modes may return arrivals containing mode information such as mode number, horizontal and vertical wavenumber, etc. For ray and mode arrivals, the following concrete subtypes should be used when possible:</p>
-<div class="callout callout-style-simple callout-tip no-icon">
-<div class="callout-body d-flex">
-<div class="callout-icon-container">
-<i class="callout-icon no-icon"></i>
-</div>
-<div class="callout-body-container">
-<div class="sourceCode" id="cb10"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>RayArrival</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Type representing a single acoustic ray arrival.</p>
-<p>Properties:</p>
-<ul>
-<li><code>t</code> / <code>time</code>: arrival time (s)</li>
-<li><code>ϕ</code> / <code>phasor</code>: complex amplitude</li>
-<li><code>ns</code> / <code>surface_bounces</code>: number of surface bounces</li>
-<li><code>nb</code> / <code>bottom_bounces</code>: number of bottom bounces</li>
-<li><code>θₛ</code> / <code>launch_angle</code>: launch angle at source (rad)</li>
-<li><code>θᵣ</code> / <code>arrival_angle</code>: arrival angle at receiver (rad)</li>
-<li><code>path</code>: ray path (optional, vector of 3-tuples or missing)</li>
-</ul>
-<p>The properties are accessible with the short names for brevity, and longer more descriptive names where readability is desired or unicode symbols are undesired.</p>
-</div>
-</div>
-</div>
-<div class="callout callout-style-simple callout-tip no-icon">
-<div class="callout-body d-flex">
-<div class="callout-icon-container">
-<i class="callout-icon no-icon"></i>
-</div>
-<div class="callout-body-container">
-<div class="sourceCode" id="cb11"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>ModeArrival</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Type representing a single acoustic mode arrival.</p>
-<p>Properties:</p>
-<ul>
-<li><code>m</code> / <code>mode</code>: mode number</li>
-<li><code>kᵣ</code> / <code>hwavenumber</code>: horizontal wavenumber (rad/m)</li>
-<li><code>ψ(z)</code> / <code>mode_function</code>: mode function</li>
-<li><code>v</code> / <code>group_velocity</code>: group velocity (m/s)</li>
-<li><code>vₚ</code> / <code>phase_velocity</code>: phase velocity (m/s)</li>
-</ul>
-<p>The properties are accessible with the short names for brevity, and longer more descriptive names where readability is desired or unicode symbols are undesired.</p>
-</div>
-</div>
-</div>
-<p>Some propagation models may be able to generate an impulse response. If so, they should define:</p>
-<div class="callout callout-style-simple callout-tip no-icon">
-<div class="callout-body d-flex">
-<div class="callout-icon-container">
-<i class="callout-icon no-icon"></i>
-</div>
-<div class="callout-body-container">
-<div class="sourceCode" id="cb12"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">impulse_response</span>(pm, tx, rx, fs; abstime<span class="op">=</span><span class="cn">false</span>, ntaps<span class="op">=</span><span class="cn">nothing</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Compute the impulse response at the receiver <code>rx</code> due to the source <code>tx</code> using propagation model <code>pm</code> at the given sampling frequency <code>fs</code>. If <code>abstime</code> is <code>true</code>, the result is in absolute time from the start of transmission. Otherwise, the result is relative to the earliest arrival time of the signal at the receiver (possibly with some guard period to accommodate acausal response). <code>ntaps</code> specifies the number of taps in the impulse response. If not specified, the number of taps is chosen automatically based on the arrival times.</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">impulse_response</span>(pm, tx, rx, fs; abstime, ntaps, fmin, fmax)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Compute the impulse response at the receiver <code>rx</code> due to the source <code>tx</code> using propagation model <code>pm</code> at the given sampling frequency <code>fs</code>.</p>
-<p>If <code>abstime</code> is <code>true</code> (default is <code>false</code>), the result is in absolute time from the start of transmission. Otherwise, the result is relative to the earliest arrival time of the signal at the receiver (with some guard period to accommodate acausal response).</p>
-<p><code>ntaps</code> specifies the number of taps in the impulse response. If not specified, the number of taps is chosen automatically based on the arrival times.</p>
-<p><code>fmin</code> and <code>fmax</code> specifies the bandwidth of interest. If unspecified, a 50% bandwidth is assumed, i.e., if the transmitter frequency is 300 Hz the bandwidth of interest is assumed to be 150 Hz (<code>fmin = 225</code>, <code>fmax = 375</code>). Larger bandwidths require more modal computations, and hence increase computational load.</p>
-<p>The impulse response is computed only for positive frequencies. Such an impulse response is suitable for convolution with passband complex analytic signals. If convolved with real signals, the resulting signal is approximately equivalent to converting the real signal to a complex analytic form and then convolving it with the impulse response.</p>
-</div>
-</div>
-</div>
-<p>If defined, the impulse response may be used to generate a channel model automatically (by calling <code>channel()</code>).</p>
 </section>
-<section id="channel-model" class="level2">
-<h2 class="anchored" data-anchor-id="channel-model">Channel model</h2>
-<p>If a propagation model can estimate a received signal from a transmit signal without having to compute an impulse response and convolve it, it may wish to implement the channel modeling API directly:</p>
-<div class="callout callout-style-simple callout-tip no-icon">
-<div class="callout-body d-flex">
+<section id="soft-boundary" class="level4">
+<h4 class="anchored" data-anchor-id="soft-boundary">Soft boundary</h4>
+<p>At long ranges, many seabeds behave like soft boundaries, and we can impose a pressure release condition at the sediment interface: <span class="math inline">\(\psi_m(-D) = 0\)</span>. The analytical solution to the modal problem is then the same as the hard boundary case, except: <span class="math display">\[
+k_{zm} = \frac{m\pi}{D}.
+\]</span></p>
+</section>
+<section id="fluid-halfspace" class="level4">
+<h4 class="anchored" data-anchor-id="fluid-halfspace">Fluid halfspace</h4>
+<p>In the case of a fluid halfspace (e.g., water overlying a sediment layer that does not support shear waves), the sediment boundary conditions is: <span class="math display">\[
+\rho_b\psi^\prime_m(-D) + \rho\sqrt{k_{rm}^2 - \left(\frac{\omega}{c_b}\right)^2}\psi_m(-D) = 0,
+\]</span> where <span class="math inline">\(\rho_b\)</span> is the density of the sediment and <span class="math inline">\(c_b\)</span> is the sound speed in the sediment. The modal function for this case is the same as the hard boundary case, but an analytical expression for <span class="math inline">\(k_{zm}\)</span> is not available. Instead, <span class="math inline">\(k_{zm}\)</span> is obtained numerically by solving the above boundary condition equation.</p>
+<p>Fluid halfspace absorption can be modeled using a complex sound speed. However, this adds complexity to the root finding process as a complex domain numerical root finder becomes necessary.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
-<i class="callout-icon no-icon"></i>
+<i class="callout-icon"></i>
 </div>
-<div class="callout-body-container">
-<div class="sourceCode" id="cb14"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">channel</span>(pm, txs, rxs, fs; noise<span class="op">=</span><span class="cn">nothing</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Compute a channel model from the sources <code>txs</code> to the receivers <code>rxs</code> using propagation model <code>pm</code>. The result is a channel model with the same number of input channels as the number of sources and output channels as the number of receivers. The channel model accepts signals sampled at rate <code>fs</code> and returns signals sampled at the same rate.</p>
-<p>An additive noise model may be optionally specified as <code>noise</code>. If specified, it is used to corrupt the received signals.</p>
+<div class="callout-title-container flex-fill">
+Note
 </div>
 </div>
+<div class="callout-body-container callout-body">
+<p>The <code>PekerisModeSolver</code> does not support fluid halfspace absorption and ignores the <code>δ</code> parameter in the seabed definition. The <code>Kraken</code> model supports absorption in the fluid halfspaces.</p>
 </div>
-<p>The returned channel model must extend:</p>
-<div class="callout callout-style-simple callout-tip no-icon">
-<div class="callout-body d-flex">
+</div>
+</section>
+<section id="acousto-elastic-halfspace" class="level4">
+<h4 class="anchored" data-anchor-id="acousto-elastic-halfspace">Acousto-elastic halfspace</h4>
+<div class="callout callout-style-default callout-caution callout-titled" title="Work in progress">
+<div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
-<i class="callout-icon no-icon"></i>
+<i class="callout-icon"></i>
 </div>
-<div class="callout-body-container">
-<div class="sourceCode" id="cb15"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>AbstractChannelModel</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Superclass for all channel models.</p>
-</div>
+<div class="callout-title-container flex-fill">
+Work in progress
 </div>
 </div>
-<p>and support:</p>
-<div class="callout callout-style-simple callout-tip no-icon">
-<div class="callout-body d-flex">
+<div class="callout-body-container callout-body">
+<p>TODO</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
-<i class="callout-icon no-icon"></i>
+<i class="callout-icon"></i>
 </div>
-<div class="callout-body-container">
-<div class="sourceCode" id="cb16"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">transmit</span>(ch, x; txs<span class="op">=:</span>, rxs<span class="op">=:</span>, abstime<span class="op">=</span><span class="cn">false</span>, noisy<span class="op">=</span><span class="cn">true</span>, fs<span class="op">=</span><span class="cn">nothing</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Simulate the transmission of passband signal <code>x</code> through the channel model <code>ch</code>. If <code>txs</code> is specified, it specifies the indices of the sources active in the simulation. The number of sources must match the number of channels in the input signal. If <code>rxs</code> is specified, it specifies the indices of the receivers active in the simulation. Returns the received signal at the specified (or all) receivers.</p>
-<p><code>fs</code> specifies the sampling rate of the input signal. The output signal is sampled at the same rate. If <code>fs</code> is not specified but <code>x</code> is a <code>SampledSignal</code>, the sampling rate of <code>x</code> is used. Otherwise, the signal is assumed to be sampled at the channel’s sampling rate.</p>
-<p>If <code>abstime</code> is <code>true</code>, the returned signals begin at the start of transmission. Otherwise, the result is relative to the earliest arrival time of the signal at any receiver. If <code>noisy</code> is <code>true</code> and the channel has a noise model associated with it, the received signal is corrupted by additive noise.</p>
+<div class="callout-title-container flex-fill">
+Note
 </div>
 </div>
+<div class="callout-body-container callout-body">
+<p>The <code>PekerisModeSolver</code> currently does not support acousto-elastic halfspaces. The <code>Kraken</code> model supports acousto-elastic halfspaces.</p>
 </div>
-<p>In some cases (e.g.&nbsp;channel replay techniques), a channel model may be defined without the need to derive it from a propagation model. In such a case, one may extend <code>UnderwaterAcoustics.jl</code> by directly defining the channel model.</p>
+</div>
+</section>
+<section id="multilayered-sediment" class="level4">
+<h4 class="anchored" data-anchor-id="multilayered-sediment">Multilayered sediment</h4>
+<p>The treatment for multilayered sediment uses the same boundary conditions as the single-layer cases, but the boundary conditions are applied at each interface between layers. The formulation is not detailed here, but the approach is fairly straightforward in formulating a numerical recipe.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The <code>PekerisModeSolver</code> does not support multilayered sediment seabed. The <code>Kraken</code> model supports multilayered sediment.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="sound-speed-profile" class="level3">
+<h3 class="anchored" data-anchor-id="sound-speed-profile">Sound speed profile</h3>
+<p>Solving the modal equation with a depth-dependent sound speed requires a numerical solver, as no analytical solution exists in a general case. The approach is straightforward in principle.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The <code>PekerisModeSolver</code> only supports iso-velocity environments. The <code>Kraken</code> model supports arbitrary sound speed profiles.</p>
+</div>
+</div>
+</section>
+<section id="group-velocity" class="level3">
+<h3 class="anchored" data-anchor-id="group-velocity">Group velocity</h3>
+<p>The group velocity of the modes can be obtained from the dispersion relation. For a given mode <span class="math inline">\(m\)</span>, the group velocity is defined as: <span class="math display">\[
+v_g(m) = \frac{d\omega}{dk_{rm}}.
+\]</span></p>
+</section>
+<section id="range-dependence" class="level3">
+<h3 class="anchored" data-anchor-id="range-dependence">Range dependence</h3>
+<p>Several approaches exist to extending the modal models for range dependent environments. In all the approaches, we compute the mode shapes and wavenumbers at discrete ranges from the source to the receiver, taking into account the varying environmental parameters. In order to compute the acoustic field, the modes excitation at the source is first estimated, and the modal excitation is propagated to the next range bin. The procedure continues iteratively, updating the modal excitation at each step until we reach the intended receiver range. The acoustic field at that range is then computed using the mode excitation at that range. The different approaches differ in how the modal excitation is transferred from one range bin to the next.</p>
+<section id="adiabatic-modes" class="level4">
+<h4 class="anchored" data-anchor-id="adiabatic-modes">Adiabatic modes</h4>
+<p>The simplest approach to transferring excitation from one range bin to the next is to assume that the excitation of a mode remains confined to the same mode in the next bin. Using this approach, we get a simple expression for the acoustic field: <span class="math display">\[
+p(r,z) \approx \sqrt{2\pi}e^{-i\pi/4}\sum_{m=1}^{\infty} \psi_m(0,z_s)\psi_m(r,z)\frac{e^{-i\int_0^r k_{rm}dr}}{\sqrt{\int_0^r k_{rm}dr}}.
+\]</span></p>
+
 
 
 </section>
+</section>
+</section>
+</section>
 
-</main> <!-- /main -->
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-coa2011" class="csl-entry" role="listitem">
+Jensen, Finn B, William A Kuperman, Michael B Porter, Henrik Schmidt, and Alexandra Tolstoy. 2011. <em>Computational Ocean Acoustics</em>. Springer.
+</div>
+</div></section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>While <span class="math inline">\(\sin(k_{zm}z)\)</span> could also be a solution, we choose <span class="math inline">\(\sin(-k_{zm}z)\)</span> to get modal functions consistent with literature that uses <span class="math inline">\(z\)</span> as depth (positive downwards).<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";

@@ -26,6 +26,10 @@ A good overview of the Kraken model can be found at:
 
 - M. B. Porter, "The KRAKEN normal mode program", Technical report NRL/MR/5120-92-6920, Naval Research Laboratory, 1992 [(original report pdf)](https://apps.dtic.mil/sti/tr/pdf/ADA252409.pdf) [(updated draft pdf)](https://oalib-acoustics.org/website_resources/Modes/kraken.pdf).
 
+::: {.callout-tip}
+The theory of modal models is summarized in a brief note "[On modal models](modes.qmd)". It provides an overview of key concepts and relevant mathematical formulations.
+:::
+
 ## Examples
 
 ### Range-independent scenario

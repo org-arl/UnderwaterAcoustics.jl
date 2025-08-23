@@ -262,17 +262,18 @@ function acoustic_field(pm::PekerisModeSolver, tx::AbstractAcousticSource, rxs::
   # modes don't depend on the receiver, so we can compute based on any receiver
   modes = arrivals(pm, tx, first(rxs))
   kᵣ = [m.kᵣ for m ∈ modes]
-  k² = (2π * frequency(tx) / pm.c)^2
+  k = (2π * frequency(tx) / pm.c)
+  k² = k^2
   γ = sqrt.(k² .- kᵣ.^2)
   map(rxs) do rx
     p2 = location(rx)
-    R = sqrt(abs2(p1.x - p2.x) + abs2(p1.y - p2.y))
-    modal_terms = @. sin(γ * -p1.z) * sin(γ * -p2.z) * cis(kᵣ * R) / sqrt(kᵣ)
-    multiplier = cis(-π/4 - sqrt(k²)) * 4π * sqrt(2 / (π * R))
+    R = sqrt(abs2(p1.x - p2.x))
+    modal_terms = @. sin(γ * -p1.z) * sin(γ * -p2.z) * cis(-kᵣ * R) / sqrt(kᵣ)
+    multiplier = cispi(-0.25) * 2 / pm.h * sqrt(2π / R)
     if mode === :coherent
-      sum(modal_terms) * im / (2 * pm.h) * db2amp(spl(tx)) * multiplier
+      sum(modal_terms) * db2amp(spl(tx)) * multiplier
     else
-      complex(√sum(abs2, modal_terms) / (2 * pm.h)) * db2amp(spl(tx)) * multiplier
+      complex(√sum(abs2, modal_terms)) * db2amp(spl(tx)) * multiplier
     end
   end
 end

@@ -200,7 +200,7 @@ function Base.show(io::IO, ch::SampledPassbandChannel)
 end
 
 """
-    channel(pm, txs, rxs, fs; noise=nothing)
+    channel(pm, txs, rxs, fs; noise=nothing, kwargs...)
 
 Compute a channel model from the sources `txs` to the receivers `rxs` using
 propagation model `pm`. The result is a channel model with the same number of
@@ -210,12 +210,15 @@ signals sampled at the same rate.
 
 An additive noise model may be optionally specified as `noise`. If specified,
 it is used to corrupt the received signals.
+
+Propagation model specific keyword arguments `kwargs` supported by
+`impulse_response()` can be passed through when generating a channel.
 """
-function channel(pm, txs, rxs, fs; abstime=false, noise=nothing)
+function channel(pm, txs, rxs, fs; noise=nothing, kwargs...)
   txs isa AbstractArray || (txs = [txs])
   rxs isa AbstractArray || (rxs = [rxs])
   ch = [
-    samples(impulse_response(pm, tx, rx, fs; abstime=true)) .* db2amp(spl(tx))
+    samples(impulse_response(pm, tx, rx, fs; abstime=true, kwargs...)) .* db2amp(spl(tx))
     for tx in vec(txs), rx in vec(rxs)
   ]
   t0 = minimum(findfirst(x -> abs(x) > 0, ch1) for ch1 ∈ ch)

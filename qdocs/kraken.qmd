@@ -103,7 +103,7 @@ plot(modes)
 hline!([-200])    # seabed location
 ```
 ```{julia}
-rxs = AcousticReceiverGrid2D(10:10:7000, -200:1)
+rxs = AcousticReceiverGrid2D(10:10:7000, -200:-1)
 x = transmission_loss(pm, tx, rxs)
 
 plot(rxs, x; crange=50)

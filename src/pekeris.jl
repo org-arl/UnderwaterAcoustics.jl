@@ -336,7 +336,7 @@ function impulse_response(pm::AbstractModePropagationModel,
   nmodes = something(nmodes, max_modes)
   nmodes = min(nmodes, max_modes, length(arr))
   mintaps = ceil(Int, (R / arr[nmodes].v - R / arr[1].v) * fs)
-  N = nextfastfft(round(Int, (1 + taper) * mintaps))
+  N = nextfastfft(round(Int, (1 + 2 * taper) * mintaps))
   Δf = fs / N
   f = (0:N-1) .* Δf
   ndx = findall(fmin .< f .< fmax)
@@ -347,7 +347,7 @@ function impulse_response(pm::AbstractModePropagationModel,
   end
   X .*= cispi.(2f * Δt)
   x = √2 * ifft(X)  # factor of √2 to account for energy only in +ve freq
-  taper > 0 && (x .*= tukey(length(x), 2 * taper))
+  taper > 0 && (x .*= tukey(length(x), taper))
   if abstime
     x = vcat(zeros(eltype(x), round(Int, Δt * fs)), x)
   end

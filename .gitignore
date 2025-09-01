@@ -30,3 +30,5 @@ qdocs/_site
 qdocs/red.mat
 qdocs/.gitignore
 qdocs/_freeze
+UnderwaterAcoustics.code-workspace
+tmp

@@ -225,41 +225,47 @@ end
 
 @testitem "pekeris-modes-ir" begin
   env = @inferred UnderwaterEnvironment(bathymetry=100, seabed=SandyGravel)
-  pm = @inferred PekerisModeSolver(env)
+  pm1 = @inferred PekerisModeSolver(env)
+  pm2 = @inferred PekerisRayTracer(env; max_bounces=8)
   tx = @inferred AcousticSource(0, -30, 300)
   rx = @inferred AcousticReceiver(1000, -40)
-  ir1 = @inferred impulse_response(pm, tx, rx, 8000; abstime=false)
-  ir2 = @inferred impulse_response(pm, tx, rx, 8000; abstime=true)
+  ir1 = @inferred impulse_response(pm1, tx, rx, 8000; abstime=false)
+  ir2 = @inferred impulse_response(pm1, tx, rx, 8000; abstime=true)
+  ir2a = @inferred impulse_response(pm2, tx, rx, 8000; abstime=true)
   @test ir1 isa AbstractVector{<:Complex}
   @test ir2 isa AbstractVector{<:Complex}
-  x = abs.(ir2)
-  let i = argmax(x)
-    @test abs((i - 1) / 8000 - hypot(1000, 10) / env.soundspeed) < 0.002
-  end
-  function get_Δt_first5(x)
+  @test ir2a isa AbstractVector{<:Complex}
+  function get_arrivals(x, θ)
+    x = copy(x)
     ndx = Int[]
-    θ = maximum(x) / 10
     i = argmax(x)
-    for j ∈ 1:5
-      while i < length(x) && x[i+1] > x[i]
-        i += 1
-      end
+    while x[i] > θ
       push!(ndx, i)
-      while i < length(x) && x[i] > θ
-        i += 1
+      x[i] = 0
+      j = i
+      while j > 1 && x[j-1] > θ
+        j -= 1
+        x[j] = 0
       end
-      while i < length(x) && x[i] < θ
-        i += 1
+      j = i
+      while j < length(x) && x[j+1] > θ
+        j += 1
+        x[j] = 0
       end
+      i = argmax(x)
     end
-    diff(ndx)
+    sort!(ndx)
   end
-  d51 = get_Δt_first5(abs.(ir1))
-  d52 = get_Δt_first5(abs.(ir2))
-  @test d51 == [179, 38, 54, 38]
-  @test d52 == [179, 38, 54, 38]
-  @test length(@inferred(impulse_response(pm, tx, rx, 8000; ntaps=4096))) == 4096
-  @test length(@inferred(impulse_response(pm, tx, rx, 8000; ntaps=700))) == 700
+  d1 = get_arrivals(abs.(ir1), 0.0003)
+  d2 = get_arrivals(abs.(ir2), 0.0003)
+  d2a = get_arrivals(abs.(ir2a), 0.0003)
+  @test diff(d1) == diff(d2)
+  @test ir1[d1] == ir2[d2]
+  @test d2 == d2a
+  @test all(abs.(real.(ir2[d2]) - real.(ir2a[d2a])) .< 0.00053)
+  @test all(abs.(imag.(ir2[d2]) - imag.(ir2a[d2a])) .< 0.0003)
+  @test length(@inferred(impulse_response(pm1, tx, rx, 8000; ntaps=4096))) == 4096
+  @test length(@inferred(impulse_response(pm1, tx, rx, 8000; ntaps=700))) == 700
 end
 
 @testitem "pekeris-modes-∂" begin

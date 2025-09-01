@@ -1,4 +1,4 @@
-import SignalAnalysis: signal
+import SignalAnalysis: signal, db2pow, tukey
 import NonlinearSolve: IntervalNonlinearProblem, solve
 import DSP: nextfastfft
 import FFTW: ifft
@@ -281,24 +281,31 @@ function acoustic_field(pm::PekerisModeSolver, tx::AbstractAcousticSource, rxs::
 end
 
 """
-    impulse_response(pm::AbstractModePropagationModel, tx, rx, fs; abstime, ntaps, fmin, fmax)
+    impulse_response(pm::AbstractModePropagationModel, tx, rx, fs; kwargs...)
 
 Compute the impulse response at the receiver `rx` due to the source `tx` using
 propagation model `pm` at the given sampling frequency `fs`.
 
-If `abstime` is `true` (default is `false`), the result is in absolute time
-from the start of transmission. Otherwise, the result is relative to the
-earliest arrival time of the signal at the receiver (with some guard period
-to accommodate acausal response).
+Several `kwargs` may be specified:
 
-`ntaps` specifies the number of taps in the impulse response. If not specified,
-the number of taps is chosen automatically based on the arrival times.
-
-`fmin` and `fmax` specifies the bandwidth of interest. If unspecified, a
-50% bandwidth is assumed, i.e., if the transmitter frequency is 300 Hz the
-bandwidth of interest is assumed to be 150 Hz (`fmin = 225`, `fmax = 375`).
-Larger bandwidths require more modal computations, and hence increase
-computational load.
+- If `abstime` is `true` (default: `false`), the result is in absolute time
+  from the start of transmission. Otherwise, the result is relative to the
+  earliest arrival time of the signal at the receiver (with some guard period
+  to accommodate acausal response).
+- `ntaps` (default: `nothing` for automatic) specifies the number of taps in
+  the impulse response.
+- `fmin` and `fmax` specifies the bandwidth of interest (default: `0` to `fs/2`).
+  If the impulse response is used to convolve with bandlimited signals, it is
+  recommended that the impulse response bandwidth be reduced to match the signal
+  bandwidth to reduce computational load and improve numerical stability.
+- `nmodes` (default: `nothing` for no limit) is the maximum of modes used in
+  impulse response computation.
+- `threshold` (default: `-60` dB) is used to drop attenuated modes to manage
+  computational load.
+- `acausal` (default: `0.02` s) controls the computation of acausal impulse
+  response (before the estimated time of arrival of first mode).
+- `taper` (default: `0.1`) applies a tukey window to the impulse response
+  to limit it to the estimated delay spread.
 
 The impulse response is computed only for positive frequencies. Such an impulse
 response is suitable for convolution with passband complex analytic signals.
@@ -306,37 +313,41 @@ If convolved with real signals, the resulting signal is approximately equivalent
 to converting the real signal to a complex analytic form and then convolving it
 with the impulse response.
 """
-function impulse_response(pm::AbstractModePropagationModel, tx::AbstractAcousticSource,
-  rx::AbstractAcousticReceiver, fs; abstime=false, ntaps=nothing, fmin=nothing, fmax=nothing)
+function impulse_response(pm::AbstractModePropagationModel,
+  tx::AbstractAcousticSource, rx::AbstractAcousticReceiver, fs;
+  abstime=false, ntaps=nothing, fmin=0, fmax=fs/2, nmodes=nothing,
+  acausal=0.02, threshold=-60.0, taper=0.1)
   # impulse response computation is designed for Pekeris mode solver, but should
   # work for any mode solver that returns ModeArrival, and hence is marked as
   # a fallback for any AbstractModePropagationModel
-  f0 = frequency(tx)
-  fmin = something(fmin, 0.5 * f0)
-  fmax = something(fmax, min(1.5 * f0, fs/2))
-  0 < fmin < fs/2 || error("fmin must be positive and less than fs/2")
+  0 ≤ fmin < fs/2 || error("fmin must be positive and less than fs/2")
   fmin < fmax ≤ fs/2 || error("fmax must be between fmin and fs/2")
   arr = arrivals(pm, tx, rx)
   isempty(arr) && return signal(ComplexF64[], fs)
   p1 = location(tx)
   p2 = location(rx)
-  R = sqrt(abs2(p1.x - p2.x) + abs2(p1.y - p2.y))
-  Δt = R / maximum(a -> a.v, arr)
-  N = ceil(Int, R / minimum(a -> a.v, arr) * fs)
-  M = ceil(Int, Δt * fs)
-  N = 6 * (N - M) ÷ 5                       # heuristic to ensure no aliasing
-  N = nextfastfft(2N)
+  R = abs(p1.x - p2.x)
+  Δt = R / maximum(a -> a.v, arr) - acausal
+  apow = [abs2(cis(-R * a.kᵣ)) for a ∈ arr]
+  θ = db2pow(-threshold)
+  max_modes = findfirst(1:length(apow)) do i
+    sum(apow[1:i]) > θ * sum(apow[i+1:end])
+  end
+  nmodes = something(nmodes, max_modes)
+  nmodes = min(nmodes, max_modes, length(arr))
+  mintaps = ceil(Int, (R / arr[nmodes].v - R / arr[1].v) * fs)
+  N = nextfastfft(round(Int, (1 + taper) * mintaps))
   Δf = fs / N
   f = (0:N-1) .* Δf
-  ndx = findall(fmin .≤ f .≤ fmax)
+  ndx = findall(fmin .< f .< fmax)
   X = zeros(ComplexF64, N)
   Threads.@threads for i ∈ ndx
     tx1 = AcousticSource(location(tx), f[i+1])
     X[i+1] = conj(acoustic_field(pm, tx1, rx))
   end
-  Δt -= 0.02                                # heuristic acausal guard period
   X .*= cispi.(2f * Δt)
-  x = ifft(X)
+  x = √2 * ifft(X)  # factor of √2 to account for energy only in +ve freq
+  taper > 0 && (x .*= tukey(length(x), 2 * taper))
   if abstime
     x = vcat(zeros(eltype(x), round(Int, Δt * fs)), x)
   end

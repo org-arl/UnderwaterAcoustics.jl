@@ -568,11 +568,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="callout-body-container">
 <div class="sourceCode" id="cb16"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">impulse_response</span>(pm, tx, rx, fs; abstime<span class="op">=</span><span class="cn">false</span>, ntaps<span class="op">=</span><span class="cn">nothing</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Compute the impulse response at the receiver <code>rx</code> due to the source <code>tx</code> using propagation model <code>pm</code> at the given sampling frequency <code>fs</code>. If <code>abstime</code> is <code>true</code>, the result is in absolute time from the start of transmission. Otherwise, the result is relative to the earliest arrival time of the signal at the receiver (possibly with some guard period to accommodate acausal response). <code>ntaps</code> specifies the number of taps in the impulse response. If not specified, the number of taps is chosen automatically based on the arrival times.</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">impulse_response</span>(pm<span class="op">::</span><span class="dt">AbstractModePropagationModel</span>, tx, rx, fs; abstime, ntaps, fmin, fmax)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">impulse_response</span>(pm<span class="op">::</span><span class="dt">AbstractModePropagationModel</span>, tx, rx, fs; kwargs<span class="op">...</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Compute the impulse response at the receiver <code>rx</code> due to the source <code>tx</code> using propagation model <code>pm</code> at the given sampling frequency <code>fs</code>.</p>
-<p>If <code>abstime</code> is <code>true</code> (default is <code>false</code>), the result is in absolute time from the start of transmission. Otherwise, the result is relative to the earliest arrival time of the signal at the receiver (with some guard period to accommodate acausal response).</p>
-<p><code>ntaps</code> specifies the number of taps in the impulse response. If not specified, the number of taps is chosen automatically based on the arrival times.</p>
-<p><code>fmin</code> and <code>fmax</code> specifies the bandwidth of interest. If unspecified, a 50% bandwidth is assumed, i.e., if the transmitter frequency is 300 Hz the bandwidth of interest is assumed to be 150 Hz (<code>fmin = 225</code>, <code>fmax = 375</code>). Larger bandwidths require more modal computations, and hence increase computational load.</p>
+<p>Several <code>kwargs</code> may be specified:</p>
+<ul>
+<li>If <code>abstime</code> is <code>true</code> (default: <code>false</code>), the result is in absolute time from the start of transmission. Otherwise, the result is relative to the earliest arrival time of the signal at the receiver (with some guard period to accommodate acausal response).</li>
+<li><code>ntaps</code> (default: <code>nothing</code> for automatic) specifies the number of taps in the impulse response.</li>
+<li><code>fmin</code> and <code>fmax</code> specifies the bandwidth of interest (default: <code>0</code> to <code>fs/2</code>). If the impulse response is used to convolve with bandlimited signals, it is recommended that the impulse response bandwidth be reduced to match the signal bandwidth to reduce computational load and improve numerical stability.</li>
+<li><code>nmodes</code> (default: <code>nothing</code> for no limit) is the maximum of modes used in impulse response computation.</li>
+<li><code>threshold</code> (default: <code>-60</code> dB) is used to drop attenuated modes to manage computational load.</li>
+<li><code>acausal</code> (default: <code>0.02</code> s) controls the computation of acausal impulse response (before the estimated time of arrival of first mode).</li>
+<li><code>taper</code> (default: <code>0.1</code>) applies a tukey window to the impulse response to limit it to the estimated delay spread.</li>
+</ul>
 <p>The impulse response is computed only for positive frequencies. Such an impulse response is suitable for convolution with passband complex analytic signals. If convolved with real signals, the resulting signal is approximately equivalent to converting the real signal to a complex analytic form and then convolving it with the impulse response.</p>
 </div>
 </div>
@@ -586,9 +593,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb18"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">channel</span>(pm, txs, rxs, fs; noise<span class="op">=</span><span class="cn">nothing</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">channel</span>(pm, txs, rxs, fs; noise<span class="op">=</span><span class="cn">nothing</span>, kwargs<span class="op">...</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Compute a channel model from the sources <code>txs</code> to the receivers <code>rxs</code> using propagation model <code>pm</code>. The result is a channel model with the same number of input channels as the number of sources and output channels as the number of receivers. The channel model accepts signals sampled at rate <code>fs</code> and returns signals sampled at the same rate.</p>
 <p>An additive noise model may be optionally specified as <code>noise</code>. If specified, it is used to corrupt the received signals.</p>
+<p>Propagation model specific keyword arguments <code>kwargs</code> supported by <code>impulse_response()</code> can be passed through when generating a channel.</p>
 </div>
 </div>
 </div>

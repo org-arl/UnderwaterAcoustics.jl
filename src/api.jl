@@ -75,6 +75,13 @@ function Base.show(io::IO, a::RayArrival)
     rad2deg(angle(a.ϕ)), a.path === missing || length(a.path) == 0 ? "" : "↝")
 end
 
+function Base.show(io::IO, ::MIME"text/plain", v::AbstractVector{<:RayArrival})
+  println(io, "$(length(v)) element Vector{RayArrival}:")
+  for a ∈ v
+    println(io, a)
+  end
+end
+
 # alternative property names for readability
 Base.propertynames(a::RayArrival) = (:t, :ϕ, :ns, :nb, :θₛ, :θᵣ, :path,
   :time, :phasor, :surface_bounces, :bottom_bounces, :launch_angle, :arrival_angle)
@@ -114,6 +121,13 @@ function Base.show(io::IO, a::ModeArrival)
   @printf(io, "%8s: kᵣ = %s rad/m", "mode $(a.m)", string(round(ComplexF64(a.kᵣ); digits=6)))
   a.v isa Real && @printf(io, ", v = %0.2f m/s", a.v)
   a.vₚ isa Real && @printf(io, ", vₚ = %0.2f m/s", a.vₚ)
+end
+
+function Base.show(io::IO, ::MIME"text/plain", v::AbstractVector{<:ModeArrival})
+  println(io, "$(length(v)) element Vector{ModeArrival}:")
+  for a ∈ v
+    println(io, a)
+  end
 end
 
 # alternative property names for readability

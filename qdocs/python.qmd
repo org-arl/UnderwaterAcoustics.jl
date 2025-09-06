@@ -149,31 +149,55 @@ import juliapkg
 juliapkg.add("AcousticsToolbox", "268a15bc-5756-47d6-9bea-fa5dc21c97f8")
 ```
 
-<br>To use the propagation models from `AcousticToolbox.jl`:
+::: {.callout-note}
+To use models like Bellhop, Kraken, etc, you will NOT need to install the FORTRAN binaries separately. They are automatically installed when you install the relevant Julia packages.
+:::
+
+To use the propagation models from `AcousticToolbox.jl`:
 ```python
 from juliacall import Main as jl
 jl.seval("using UnderwaterAcoustics")
 jl.seval("using AcousticsToolbox")
 
-env = jl.UnderwaterEnvironment(bathymetry=20, seabed=jl.SandyClay)
+bathy = jl.SampledField(np.array([200, 150]), x=np.array([0, 1000]))
+ssp = jl.SampledField(np.array([1500, 1480, 1495, 1510, 1520]), z=jl.range(0, -200, step=-50), interp=jl.Symbol("cubic"))
+env = jl.UnderwaterEnvironment(bathymetry=bathy, soundspeed=ssp, seabed=jl.SandyClay)
 pm = jl.Bellhop(env)
 tx = jl.AcousticSource(0.0, -5.0, 1000.0)
 rx = jl.AcousticReceiver(100.0, -10.0)
-jl.arrivals(pm, tx, rx)
+rays = jl.arrivals(pm, tx, rx)
 ```
 ```{julia}
 #| echo: false
 using AcousticsToolbox
-env = UnderwaterEnvironment(bathymetry=20, seabed=SandyClay)
+env = UnderwaterEnvironment(
+  bathymetry = SampledField([200, 150]; x=[0, 1000], interp=:linear),
+  soundspeed = SampledField([1500, 1480, 1495, 1510, 1520]; z=0:-50:-200, interp=:cubic),
+  seabed = SandyClay
+)
 pm = Bellhop(env)
-tx = AcousticSource(0.0, -5.0, 1000.0)
-rx = AcousticReceiver(100.0, -10.0)
-arrivals(pm, tx, rx)
+tx = AcousticSource(0.0, -50.0, 300.0)
+rx = AcousticReceiver(1000.0, -100.0)
+rays = arrivals(pm, tx, rx)
 ```
 
-::: {.callout-note}
-To use models like Bellhop, Kraken, etc, you will NOT need to install the FORTRAN binaries separately. They are automatically installed when you install the relevant Julia packages.
-:::
+```python
+jl.seval("using Plots")
+jl.seval("plot_add = plot!")
+
+p = jl.plot(env, xlims=(-10,110))
+jl.plot_add(tx)
+jl.plot_add(rx)
+jl.plot_add(rays)
+jl.display(p)
+```
+```{julia}
+#| echo: false
+plot(env; xlims=(-10, 1010))
+plot!(tx)
+plot!(rx)
+plot!(rays)
+```
 
 ## Channel modeling
 
@@ -198,6 +222,8 @@ y = np.array(y)                # so we convert it to a numpy array
 
 <br>and plot it using `matplotlib`:
 ```python
+import matplotlib.pyplot as plt
+
 fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 ax1.plot(x)
 ax2.plot(y[:1000])

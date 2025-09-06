@@ -37,6 +37,7 @@ website:
       - text: <b>AcousticsToolbox.jl</b>
       - bellhop.qmd
       - kraken.qmd
+      - orca.qmd
       - text: <b>AcousticRayTracers.jl</b>
       - raysolver.qmd
     - text: "---"

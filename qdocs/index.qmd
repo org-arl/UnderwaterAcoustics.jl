@@ -9,7 +9,7 @@ engine: julia
 
 The `UnderwaterAcoustics.jl` ecosystem provides a set of tools for modeling and simulating underwater acoustic propagation. The main package, `UnderwaterAcoustics.jl`, defines the core application programming interface (API), and provides a set of core differentiable propagation models and utilities. It also provides support for replay channels, where measurements from the ocean are used to empirically construct channel models. The package is designed to be extensible, allowing other packages to add models to the ecosystem.
 
-The `AcousticsToolbox.jl` package adds support for popular benchmark Fortran models from the Ocean Acoustic Library ([OALIB](http://oalib.hlsresearch.com/AcousticsToolbox/)) such as the [Bellhop](bellhop.qmd) ray tracer and [Kraken](kraken.qmd) normal mode models. The `AcousticRayTracers.jl` package provides a fully differentiable ray tracer [`RaySolver`](raysolver.qmd) written in Julia.
+The `AcousticsToolbox.jl` package adds support for popular benchmark Fortran models from the Ocean Acoustic Library ([OALIB](http://oalib.hlsresearch.com/AcousticsToolbox/)) such as the [Bellhop](bellhop.qmd) ray tracer, [Kraken](kraken.qmd) normal mode model, and [Orca](orca.qmd) normal mode model. The `AcousticRayTracers.jl` package provides a fully differentiable ray tracer [`RaySolver`](raysolver.qmd) written in Julia.
 
 <!--
 The `DataDrivenAcoustics.jl` package provides a set of tools ([`RBNN`](rbnn.qmd) and [`MBNN`](mbnn.qmd)) for building and using data-driven propagation models that can be used with partial or no environmental information.

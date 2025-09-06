@@ -288,6 +288,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </div>
 </li>
           <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./orca.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Orca</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
  <span class="menu-text"><b>AcousticRayTracers.jl</b></span>
   </li>
           <li class="sidebar-item">
@@ -381,7 +387,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="overview" class="level2">
 <h2 class="anchored" data-anchor-id="overview">Overview</h2>
 <p>The <code>UnderwaterAcoustics.jl</code> ecosystem provides a set of tools for modeling and simulating underwater acoustic propagation. The main package, <code>UnderwaterAcoustics.jl</code>, defines the core application programming interface (API), and provides a set of core differentiable propagation models and utilities. It also provides support for replay channels, where measurements from the ocean are used to empirically construct channel models. The package is designed to be extensible, allowing other packages to add models to the ecosystem.</p>
-<p>The <code>AcousticsToolbox.jl</code> package adds support for popular benchmark Fortran models from the Ocean Acoustic Library (<a href="http://oalib.hlsresearch.com/AcousticsToolbox/">OALIB</a>) such as the <a href="./bellhop.html">Bellhop</a> ray tracer and <a href="./kraken.html">Kraken</a> normal mode models. The <code>AcousticRayTracers.jl</code> package provides a fully differentiable ray tracer <a href="./raysolver.html"><code>RaySolver</code></a> written in Julia.</p>
+<p>The <code>AcousticsToolbox.jl</code> package adds support for popular benchmark Fortran models from the Ocean Acoustic Library (<a href="http://oalib.hlsresearch.com/AcousticsToolbox/">OALIB</a>) such as the <a href="./bellhop.html">Bellhop</a> ray tracer, <a href="./kraken.html">Kraken</a> normal mode model, and <a href="./orca.html">Orca</a> normal mode model. The <code>AcousticRayTracers.jl</code> package provides a fully differentiable ray tracer <a href="./raysolver.html"><code>RaySolver</code></a> written in Julia.</p>
 <!--
 The `DataDrivenAcoustics.jl` package provides a set of tools ([`RBNN`](rbnn.qmd) and [`MBNN`](mbnn.qmd)) for building and using data-driven propagation models that can be used with partial or no environmental information.
 -->

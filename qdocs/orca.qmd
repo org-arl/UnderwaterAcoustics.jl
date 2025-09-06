@@ -1,0 +1,113 @@
+---
+title: "Orca"
+engine: julia
+---
+
+{{< include jdoc.snippet >}}
+
+| <span> | <span> |
+|---|---|
+| **Model** | `AcousticsToolbox.Orca` |
+| **Description** | [Orca normal mode model](https://oalib-acoustics.org/models-and-software/normal-modes/) (wrapper) |
+| **Language** | Fortran |
+| **Advantages** | Well-established benchmark model |
+| **Limitations** | Not differentiable |
+
+: {tbl-colwidths="[25,75]"}
+
+```{julia}
+#| echo: false
+#| output: asis
+import AcousticsToolbox
+jdoc(AcousticsToolbox, :Orca, 2)
+```
+
+A good overview of the Orca model can be found at:
+
+- [ORCA guide](https://oalib-acoustics.org/website_resources/Modes/orca/orca_guide_v3_0.pdf) (January 30, 2002).
+
+::: {.callout-tip}
+The theory of modal models is summarized in a brief note "[On modal models](modes.qmd)". It provides an overview of key concepts and relevant mathematical formulations.
+:::
+
+## Examples
+
+### Range-independent scenario
+
+Here's an example showing results for a simple test problem:
+
+```{julia}
+#| echo: false
+#| output: false
+using Plots
+default(size=(600, 400))
+```
+
+```{julia}
+using UnderwaterAcoustics
+using AcousticsToolbox
+using Plots
+
+env = UnderwaterEnvironment(
+  bathymetry = 100,
+  seabed = FineSand
+)
+pm = Orca(env)
+
+tx = AcousticSource(0, -50, 300)
+rx = AcousticReceiver(5000, -50)
+modes = arrivals(pm, tx, rx)
+```
+```{julia}
+# plot the modes
+plot(modes)
+```
+```{julia}
+rxs = AcousticReceiverGrid2D(100:10:5000, -50)
+x = transmission_loss(pm, tx, rxs)
+
+plot(100:10:5000, x; ylims=(30,80), yflip=true, legend=false,
+  xlabel="Range (km)", ylabel="Transmission loss (dB)")
+```
+
+### Range-dependent scenario with multilayered seabed
+
+While the Orca model is range-independent by itself, it can be made range-dependent by using `AdiabaticExt` as shown below:
+
+```{julia}
+using UnderwaterAcoustics
+using Plots
+
+env = UnderwaterEnvironment(
+  bathymetry = SampledField([200, 150, 200]; x=[0, 2000, 5000]),
+  soundspeed = 1500,
+  density = 1000,
+  seabed = MultilayerElasticBoundary([
+    (40, 1374, 1520, 0, dBperλ(0.1124), 0),           # 40m thick fluid sediment
+    (Inf, 2200, 1730, 800, dBperλ(0.5), dBperλ(0.5))  # hard half-space substrate
+  ])
+)
+
+# use an adiabatic extension to the Orca for range-dependence
+pm = AdiabaticExt(Orca, env)
+
+tx = AcousticSource(0, -50, 250)
+rx = AcousticReceiver(7000, -25)
+modes = arrivals(pm, tx, rx)[1:7]      # first 7 modes
+```
+```{julia}
+# plot the modes at 7 km range
+plot(modes)
+hline!([-200])    # seabed location
+```
+```{julia}
+rxs = AcousticReceiverGrid2D(10:10:7000, -200:-1)
+x = transmission_loss(pm, tx, rxs)
+
+plot(rxs, x; crange=50)
+plot!(env)
+```
+
+## Notes
+
+The Fortran Orca propagation model requires that the transmitter is located at $(x=0, y=0)$ and all receivers are located in the right half-plane (i.e., $x>0$ and $y=0$). While this limitation can be worked around in the wrapper by a coordinate transformation, automatic transformation is not yet implemented.

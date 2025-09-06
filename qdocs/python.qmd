@@ -160,7 +160,7 @@ jl.seval("using UnderwaterAcoustics")
 jl.seval("using AcousticsToolbox")
 
 bathy = jl.SampledField(np.array([200, 150]), x=np.array([0, 1000]))
-ssp = jl.SampledField(np.array([1500, 1480, 1495, 1510, 1520]), z=jl.range(0, -200, step=-50), interp=jl.Symbol("cubic"))
+ssp = jl.SampledField(np.array([1500, 1480, 1495, 1510, 1520]), z=jl.range(0, -200, step=-50), interp=jl.CubicSpline())
 env = jl.UnderwaterEnvironment(bathymetry=bathy, soundspeed=ssp, seabed=jl.SandyClay)
 pm = jl.Bellhop(env)
 tx = jl.AcousticSource(0.0, -5.0, 1000.0)
@@ -171,8 +171,8 @@ rays = jl.arrivals(pm, tx, rx)
 #| echo: false
 using AcousticsToolbox
 env = UnderwaterEnvironment(
-  bathymetry = SampledField([200, 150]; x=[0, 1000], interp=:linear),
-  soundspeed = SampledField([1500, 1480, 1495, 1510, 1520]; z=0:-50:-200, interp=:cubic),
+  bathymetry = SampledField([200, 150]; x=[0, 1000], interp=Linear()),
+  soundspeed = SampledField([1500, 1480, 1495, 1510, 1520]; z=0:-50:-200, interp=CubicSpline()),
   seabed = SandyClay
 )
 pm = Bellhop(env)

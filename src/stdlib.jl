@@ -1,6 +1,6 @@
 import Random: AbstractRNG
 import SignalAnalysis: RedGaussian, signal, db2amp
-import Interpolations: interpolate, extrapolate, Gridded, Flat, Linear, Throw
+import Interpolations: interpolate, extrapolate, Gridded, Flat, Throw, Interpolations
 import Interpolations: linear_interpolation, cubic_spline_interpolation
 
 export FluidBoundary, RigidBoundary, PressureReleaseBoundary, Rock, Pebbles
@@ -9,7 +9,7 @@ export CoarseSilt, SandySilt, Silt, FineSilt, SandyClay, SiltyClay, Clay
 export SeaState0, SeaState1, SeaState2, SeaState3, SeaState4, SeaState5
 export SeaState6, SeaState7, SeaState8, SeaState9, WhiteGaussianNoise
 export RedGaussianNoise, WindySurface, SampledField, ElasticBoundary
-export MultilayerElasticBoundary
+export MultilayerElasticBoundary, Linear, CubicSpline
 
 ################################################################################
 # boundary conditions
@@ -400,38 +400,50 @@ end
 ################################################################################
 # fields
 
-struct SampledFieldZ{T1,T2} <: DepthDependent
+abstract type Interpolation end
+
+"""
+Linear interpolation.
+"""
+struct Linear <: Interpolation end
+
+"""
+Cubic spline interpolation.
+"""
+struct CubicSpline <: Interpolation end
+
+struct SampledFieldZ{T1,T2,T3} <: DepthDependent
   f::T1
   zrange::T2
-  interp::Symbol
+  interp::T3
 end
 
-struct SampledFieldX{T1,T2} <: PositionDependent
+struct SampledFieldX{T1,T2,T3} <: PositionDependent
   f::T1
   xrange::T2
-  interp::Symbol
+  interp::T3
 end
 
-struct SampledFieldXZ{T1,T2} <: PositionDependent
+struct SampledFieldXZ{T1,T2,T3} <: PositionDependent
   f::T1
   xrange::T2
   zrange::T2
-  interp::Symbol
+  interp::T3
 end
 
-struct SampledFieldXY{T1,T2} <: PositionDependent
+struct SampledFieldXY{T1,T2,T3} <: PositionDependent
   f::T1
   xrange::T2
   yrange::T2
-  interp::Symbol
+  interp::T3
 end
 
-struct SampledFieldXYZ{T1,T2} <: PositionDependent
+struct SampledFieldXYZ{T1,T2,T3} <: PositionDependent
   f::T1
   xrange::T2
   yrange::T2
   zrange::T2
-  interp::Symbol
+  interp::T3
 end
 
 (v::SampledFieldZ)(z::Number) = v.f(z)
@@ -476,61 +488,61 @@ fields, the `x` and `y` coordinates or the `x` and `z` coordinates are
 required, and `v` is a matrix. For 3D fields, the `x`, `y`, and `z` coordinates
 are required, and `v` is a 3D array.
 
-Keyword argument `interp` is used to specify the interpolation method. `:linear`
+Keyword argument `interp` is used to specify the interpolation method. `Linear()`
 interpolation is supported for 1D, 2D and 3D fields. For 2D and 3D fields, the
 data must be sampled on a regular grid. For uniformly sampled `1D` fields,
-`:cubic` interpolation is also supported.
+`CubicSpline()` interpolation is also supported.
 """
-function SampledField(v; x=nothing, y=nothing, z=nothing, interp=:linear)
+function SampledField(v; x=nothing, y=nothing, z=nothing, interp=Linear())
   # TODO: support PCHIP interpolation (see HLS-2021-01.pdf in OALIB distribution)
   if x === nothing && y === nothing && z !== nothing
     v = float(v)
     z = float(z)
     ndx = sortperm(z)
-    if interp === :cubic
+    if interp === CubicSpline()
       z isa AbstractRange || error("Cubic interpolation requires `z` to be an `AbstractRange`")
       f = cubic_spline_interpolation(z[ndx], v[ndx]; extrapolation_bc=Flat())
-    elseif interp === :linear
+    elseif interp === Linear()
       f = linear_interpolation(z[ndx], v[ndx]; extrapolation_bc=Flat())
     else
       error("Unsupported interpolation")
     end
     SampledFieldZ(f, z, interp)
   elseif x !== nothing && y === nothing && z === nothing
-    interp ∈ (:linear, :cubic) || error("Unsupported interpolation")
+    interp ∈ (Linear(), CubicSpline()) || error("Unsupported interpolation")
     v = float(v)
     x = float(x)
     ndx = sortperm(x)
-    if interp === :cubic
+    if interp === CubicSpline()
       x isa AbstractRange || error("Cubic interpolation requires `x` to be an `AbstractRange`")
       f = cubic_spline_interpolation(x[ndx], v[ndx]; extrapolation_bc=Flat())
-    elseif interp === :linear
+    elseif interp === Linear()
       f = linear_interpolation(x[ndx], v[ndx]; extrapolation_bc=Flat())
     else
       error("Unsupported interpolation")
     end
     SampledFieldX(f, x, interp)
   elseif x !== nothing && y === nothing && z !== nothing
-    interp === :linear || error("Unsupported interpolation")
+    interp === Linear() || error("Unsupported interpolation")
     v = float(v)
     x = float(x)
     z = float(z)
-    f = extrapolate(interpolate((x, z), v, Gridded(Linear())), Flat())
+    f = extrapolate(interpolate((x, z), v, Gridded(Interpolations.Linear())), Flat())
     SampledFieldXZ(f, x, z, interp)
   elseif x !== nothing && y !== nothing && z === nothing
-    interp === :linear || error("Unsupported interpolation")
+    interp === Linear() || error("Unsupported interpolation")
     v = float(v)
     x = float(x)
     y = float(y)
-    f = extrapolate(interpolate((x, y), v, Gridded(Linear())), Flat())
+    f = extrapolate(interpolate((x, y), v, Gridded(Interpolations.Linear())), Flat())
     SampledFieldXY(f, x, y, interp)
   elseif x !== nothing && y !== nothing && z !== nothing
-    interp === :linear || error("Unsupported interpolation")
+    interp === Linear() || error("Unsupported interpolation")
     v = float(v)
     x = float(x)
     y = float(y)
     z = float(z)
-    f = extrapolate(interpolate((x, y, z), v, Gridded(Linear())), Flat())
+    f = extrapolate(interpolate((x, y, z), v, Gridded(Interpolations.Linear())), Flat())
     SampledFieldXYZ(f, x, y, z, interp)
   else
     error("Only x, z, x-z, x-y, or x-y-z interpolation supported")

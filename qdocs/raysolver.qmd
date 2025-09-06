@@ -43,8 +43,8 @@ using AcousticRayTracers
 using Plots
 
 env = UnderwaterEnvironment(
-  bathymetry = SampledField([200, 150]; x=[0, 1000], interp=:linear),
-  soundspeed = SampledField([1500, 1480, 1495, 1510, 1520]; z=0:-50:-200, interp=:cubic),
+  bathymetry = SampledField([200, 150]; x=[0, 1000], interp=Linear()),
+  soundspeed = SampledField([1500, 1480, 1495, 1510, 1520]; z=0:-50:-200, interp=CubicSpline()),
   seabed = SandyClay
 )
 pm = RaySolver(env)

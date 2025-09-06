@@ -6,7 +6,8 @@
 
 # UnderwaterAcoustics.jl
 
-**Julia toolbox for underwater acoustic modeling**
+**Julia toolbox for underwater acoustic modeling**<br>
+(can be [used quite easily from Python](https://org-arl.github.io/UnderwaterAcoustics.jl/python.html) too)
 
 ## Overview
 

@@ -297,190 +297,91 @@
     ]
   },
   {
-    "objectID": "replay.html",
-    "href": "replay.html",
-    "title": "Channel replay",
+    "objectID": "python.html",
+    "href": "python.html",
+    "title": "Calling from Python",
     "section": "",
-    "text": "Quickstart guide\nThe idea of channel replay was popularized in the underwater domain by the Watermark benchmark. The essential idea is to extract estimates of time-varying impulse response (TVIR) from measurements at sea, and to convolve it with a new signals to estimate what would have been received had that signal been transmitted during the measurement.\n\nLoading a replay channel\nTo do channel replay using UnderwaterAcoustics.jl, we build a AbstractAcousticChannel from the measured TVIR using the BasebandReplayChannel() constructor. It can either take in a TVIR as a matrix or load a TVIR from file (e.g. red.mat):\n\nusing UnderwaterAcoustics\nusing Plots\n\nch = BasebandReplayChannel(\"red.mat\")\n\nBasebandReplayChannel(4 × 48.6 s, 25000.0 Hz, 19200.0 Sa/s)\n\n\nThis channel has 4 receiving hydrophones and can replay up to 48.6 seconds of signal through the measured TVIR. The signal must fit within the frequency band that was used to probe the channel (for the red channel it is 25 ± 4.8 kHz).\nWe can visualize the TVIR for the first hydrophone by plotting it:\n\nplot(ch)\n\n\n\n\nIf we were interested in the second hydrophone, we could specify the hydrophone number to plot:\n\nplot(ch, 2)\n\n\n\n\n\n\nSimulating a transmission\nTo pass a signal through the channel, we generate a signal and transmit() it just like through any other AbstractAcousticChannel:\n\nusing SignalAnalysis\n\nx = cw(25000, 0.001, 192000; window=(tukey, 0.5)) |&gt; real\ny = transmit(ch, x; start=1)\n\nSampledSignal @ 192000.0 Hz, 2390×4 Matrix{Float64}:\n -2.36394e-7  -1.69694e-6   -1.12269e-6   -2.06586e-7\n -4.29307e-6  -8.93096e-6    6.95876e-6    4.47084e-6\n -1.33684e-5   3.69249e-6    4.18005e-5    1.90144e-5\n -1.32064e-5   4.8353e-5     7.69898e-5    3.06228e-5\n  6.18467e-6   9.96305e-5    5.37913e-5    8.18552e-6\n  3.31883e-5   9.15604e-5   -6.95737e-5   -6.69293e-5\n  1.76456e-5  -2.32089e-6   -0.000250489  -0.000218782\n -1.24373e-5  -0.000248442  -0.000373429  -0.000215902\n -5.13562e-5  -0.000408098  -0.000210405  -1.01444e-5\n -6.00964e-5  -0.000275095   0.000251239   0.000308053\n  ⋮                                       \n -1.35583e-6   2.11055e-6   -7.73661e-7    1.83786e-6\n -6.88518e-6   9.24505e-6    4.15114e-6   -5.58047e-6\n  5.75698e-6   1.93389e-5   -1.08536e-5   -3.94562e-6\n  1.91887e-5   1.49698e-5   -2.29123e-5    3.54112e-6\n  1.84976e-5  -1.03803e-6   -1.77804e-5    8.52323e-6\n -8.61728e-6  -7.32348e-6    2.71239e-6    3.37459e-6\n -1.52188e-5  -1.2458e-5     1.74921e-5   -8.65725e-6\n -9.08914e-6  -7.52549e-6    1.41939e-5   -9.43631e-6\n -1.10073e-6  -1.07966e-6    3.76185e-6   -3.39226e-6\n\n\nWe have 4 channels of received data since we have 4 hydrophones in the replay TVIR. We plot the transmitted signal and the first 5 ms of the replayed received signal (hydrophone 2):\n\nplot(\n  plot(x; xlims=(0,5)),\n  plot(y[:,2]; xlims=(0,5));\n  layout=(2,1)\n)\n\n\n\n\n\n\nAdding noise\nWe can also simulate channels with noise. For example, if we wanted white Gaussian noise with standard deviation σ = 0.1, we can specify that when loading the channel:\n\nch = BasebandReplayChannel(\"red.mat\"; noise=WhiteGaussianNoise(0.1))\ny = transmit(ch, x; start=1)\n\nplot(\n  plot(x; xlims=(0,5)),\n  plot(y[:,2]; xlims=(0,5));\n  layout=(2,1)\n)",
+    "text": "While UnderwaterAcoustics.jl is written in Julia, it can be called from Python using JuliaCall. For this, we need to install the juliacall package. For some of the examples below, we will also need to numpy and matplotlib, so let’s install them as well:\npip install juliacall numpy matplotlib\nNext, we will need to install UnderwaterAcoustics.jl and optionally Plots.jl. To do this, start a Python interpreter and run the following commands:\nimport juliapkg\njuliapkg.add(\"UnderwaterAcoustics\", \"0efb1f7a-1ce7-46d2-9f48-546a4c8fbb99\")\njuliapkg.add(\"Plots\", \"91a5bcdd-55d7-5caf-9e0b-520d859cae80\")\n\n\n\n\n\n\nTip\n\n\n\nWhile Plots.jl is not necessary if you plan to use matplotlib for plotting, we install it here to demonstrate its use from Python. The plot recipes for Plots.jl that come with UnderwaterAcoustics.jl are very convenient and work nicely if you using Plots.jl from Python. If you use matplotlib, you will need to write your own plotting code based on the data returned from UnderwaterAcoustics.jl. We will show examples of both approaches below.",
     "crumbs": [
       "<b>UnderwaterAcoustics.jl</b>",
-      "Channel replay"
+      "Calling from Python"
     ]
   },
   {
-    "objectID": "tut4.html",
-    "href": "tut4.html",
-    "title": "Sound speed profile from impulse response",
+    "objectID": "python.html#installation",
+    "href": "python.html#installation",
+    "title": "Calling from Python",
     "section": "",
-    "text": "Reference\n\n\n\nThis tutorial is adapted from Example D presented in:\n\nMandar Chitre, “Differentiable Ocean Acoustic Propagation Modeling,” in OCEANS 2023 IEEE/MTS – Limerick, 5-8 June 2023.",
+    "text": "While UnderwaterAcoustics.jl is written in Julia, it can be called from Python using JuliaCall. For this, we need to install the juliacall package. For some of the examples below, we will also need to numpy and matplotlib, so let’s install them as well:\npip install juliacall numpy matplotlib\nNext, we will need to install UnderwaterAcoustics.jl and optionally Plots.jl. To do this, start a Python interpreter and run the following commands:\nimport juliapkg\njuliapkg.add(\"UnderwaterAcoustics\", \"0efb1f7a-1ce7-46d2-9f48-546a4c8fbb99\")\njuliapkg.add(\"Plots\", \"91a5bcdd-55d7-5caf-9e0b-520d859cae80\")\n\n\n\n\n\n\nTip\n\n\n\nWhile Plots.jl is not necessary if you plan to use matplotlib for plotting, we install it here to demonstrate its use from Python. The plot recipes for Plots.jl that come with UnderwaterAcoustics.jl are very convenient and work nicely if you using Plots.jl from Python. If you use matplotlib, you will need to write your own plotting code based on the data returned from UnderwaterAcoustics.jl. We will show examples of both approaches below.",
     "crumbs": [
       "<b>UnderwaterAcoustics.jl</b>",
-      "Sound speed profile from impulse response"
+      "Calling from Python"
     ]
   },
   {
-    "objectID": "tut4.html#problem-statement",
-    "href": "tut4.html#problem-statement",
-    "title": "Sound speed profile from impulse response",
-    "section": "Problem statement",
-    "text": "Problem statement\nConsider a setup with a 1 kHz acoustic source at 1 km depth that sends a broadband pulse once every week. A receiver 10 km away at a depth of 800 m measures the impulse response from the received broadband pulse. We assume that we have an initial sound speed profile measurement with a CTD at the start of the experiment. The sound speed profile changes over the weeks of the experiment, and we wish to track the changes using the measured impulse response every week.",
+    "objectID": "python.html#getting-started",
+    "href": "python.html#getting-started",
+    "title": "Calling from Python",
+    "section": "Getting started",
+    "text": "Getting started\nNow we are ready to use UnderwaterAcoustics.jl from Python. To load the package from Python:\nfrom juliacall import Main as jl\njl.seval(\"using UnderwaterAcoustics\")\nLet’s start with a simple example similar to the one shown in Quickstart:\nenv = jl.UnderwaterEnvironment(bathymetry=20, seabed=jl.SandyClay)\npm = jl.PekerisRayTracer(env)\ntx = jl.AcousticSource(0.0, -5.0, 1000.0)\nrx = jl.AcousticReceiver(100.0, -10.0)\nrays = jl.arrivals(pm, tx, rx)\nWe can display the ray arrivals:\nrays\n\n\n7 element Vector{RayArrival}:\n∠ -2.9°  0⤒  0⤓ ∠  2.9° |  65.06 ms | -40.0 dB ϕ   0.0°↝\n∠  8.5°  1⤒  0⤓ ∠  8.5° |  65.71 ms | -40.1 dB ϕ 180.0°↝\n∠-14.0°  0⤒  1⤓ ∠-14.0° |  66.98 ms | -62.6 dB ϕ 170.9°↝\n∠ 19.3°  1⤒  1⤓ ∠-19.3° |  68.85 ms | -74.3 dB ϕ -23.4°↝\n∠-24.2°  1⤒  1⤓ ∠ 24.2° |  71.26 ms | -80.4 dB ϕ-145.6°↝\n∠ 28.8°  2⤒  1⤓ ∠ 28.8° |  74.16 ms | -73.5 dB ϕ  10.8°↝\n∠-33.0°  1⤒  2⤓ ∠-33.0° |  77.50 ms | -100.7 dB ϕ-167.2°↝\n\n\nor plot them using Plots.jl:\njl.seval(\"using Plots\")               # python doesn't support \"!\", so we create\njl.seval(\"plot_add = plot!\")          #  an alias plot_add for plot! in Julia\n\np = jl.plot(env, xlims=(-10,110))\njl.plot_add(tx)\njl.plot_add(rx)\njl.plot_add(rays)\njl.display(p)\n\n\n\n\n\nWe can also get the acoustic field or the transmission loss:\njl.acoustic_field(pm, tx, rx)\n\n\n0.011324625487986332 + 0.013441467920062827im\n\n\njl.transmission_loss(pm, tx, rx)\n\n\n35.101536894459066\n\n\nWe can also create a grid of receivers and compute the acoustic field over the grid:\nrxs = jl.AcousticReceiverGrid2D(jl.range(1.0, 100, step=0.1), jl.range(-20, 0, step=0.1))\nx = jl.transmission_loss(pm, tx, rxs)\nWe can display the transmission loss grid or plot it using Plots.jl:\nx\n\n\n991×201 Matrix{Float64}:\n 19.1283  19.2328  19.5428  19.8492  …   8.82646  11.1099  16.4209  87.1227\n 19.1329  19.2373  19.5471  19.8536      8.87496  11.1689  16.4855  87.123\n 19.1381  19.2424  19.552   19.8586      8.92702  11.2323  16.5549  87.1233\n 19.1442  19.2483  19.5577  19.8643      8.9824   11.2997  16.6288  87.1237\n 19.151   19.255   19.5641  19.8709      9.04085  11.3708  16.7068  87.124\n 19.1587  19.2626  19.5715  19.8784  …   9.10213  11.4454  16.7886  87.1244\n 19.1674  19.2712  19.5799  19.8869      9.16604  11.5232  16.8739  87.1248\n 19.1772  19.2809  19.5893  19.8965      9.23241  11.604   16.9625  87.1253\n 19.1882  19.2918  19.6     19.9073      9.30109  11.6875  17.0541  87.1258\n 19.2005  19.3039  19.6119  19.9194      9.37202  11.7737  17.1485  87.1263\n  ⋮                                  ⋱                               ⋮\n 37.3745  37.4387  37.4769  37.4921     57.8844   61.3578  67.2495  98.1624\n 37.4079  37.4741  37.5144  37.5317     57.9056   61.3788  67.2688  98.1837\n 37.4422  37.5104  37.5527  37.5722     57.9268   61.4001  67.2893  98.205\n 37.4774  37.5476  37.592   37.6136  …  57.9481   61.4217  67.3109  98.2263\n 37.5134  37.5857  37.6321  37.6558     57.9693   61.4435  67.3336  98.2477\n 37.5504  37.6247  37.6732  37.6989     57.9903   61.4655  67.3573  98.269\n 37.5882  37.6646  37.7151  37.7428     58.0112   61.4877  67.3819  98.2904\n 37.6269  37.7053  37.7578  37.7876     58.0319   61.5099  67.4075  98.3118\n 37.6665  37.7469  37.8014  37.8332  …  58.0524   61.5322  67.4338  98.3333\n\n\np = jl.plot(env, xlims=(0,100))\njl.plot_add(rxs, x)\njl.display(p)",
     "crumbs": [
       "<b>UnderwaterAcoustics.jl</b>",
-      "Sound speed profile from impulse response"
+      "Calling from Python"
     ]
   },
   {
-    "objectID": "tut4.html#key-idea",
-    "href": "tut4.html#key-idea",
-    "title": "Sound speed profile from impulse response",
-    "section": "Key idea",
-    "text": "Key idea\nSince the sound speed profile is an unknown function of depth, we model it using a small 3-layer neural network. We initialize the parameters by training the neural network on the known/estimated sound speed profile from the previous week. We use the neural network to provide sound speed estimates to RaySolver, thus effectively creating a model that combines a numerical physics-based differential equation solver with a data-driven neural network. The hybrid model returns a vector of predicted delays of the first few multipath arrivals in the impulse response. We minimize a loss function that measures the difference between the predictions and measurements using gradient descent and automatic differentiation. This essentially trains the neural network to approximate the sound speed profile via a loss function that utilizes the propagation model. At the end of each week’s training, we get a revised estimate of the sound speed profile.",
+    "objectID": "python.html#plotting-with-matplotlib",
+    "href": "python.html#plotting-with-matplotlib",
+    "title": "Calling from Python",
+    "section": "Plotting with matplotlib",
+    "text": "Plotting with matplotlib\nIf you prefer to use matplotlib for plotting, you can use the data returned from UnderwaterAcoustics.jl to create your own plots:\nimport numpy as np\nimport matplotlib.pyplot as plt\n\nxloss = np.flipud(np.array(x).transpose())\nnz, nx = xloss.shape\nx_axis = np.linspace(0, 100, nx)\nz_axis = np.linspace(0, -20, nz)\nplt.figure()\nmesh = plt.pcolormesh(x_axis, z_axis, xloss, shading='auto', cmap='viridis_r', vmin=0, vmax=42)\ncbar = plt.colorbar(mesh)\ncbar.set_label('Transmission loss (dB)')\nplt.xlabel('x (m)')\nplt.ylabel('z (m)')\nplt.tight_layout()\nplt.show()",
     "crumbs": [
       "<b>UnderwaterAcoustics.jl</b>",
-      "Sound speed profile from impulse response"
+      "Calling from Python"
     ]
   },
   {
-    "objectID": "tut4.html#dataset",
-    "href": "tut4.html#dataset",
-    "title": "Sound speed profile from impulse response",
-    "section": "Dataset",
-    "text": "Dataset\nTo illustrate this idea, let us generate a synthetic dataset:\n\nusing UnderwaterAcoustics\nusing AcousticRayTracers\n\n# define Munk sound speed profile\nstruct MunkSSP &lt;: UnderwaterAcoustics.DepthDependent end\n\nfunction (ssp::MunkSSP)(pos)\n  ϵ = 0.00737\n  z̃ = 2.0 * (-pos.z - 1300.0) / 1300.0\n  1500.0 * (1.0 + ϵ * (z̃ - 1 + exp(-z̃)))\nend\n\n# simulate acoustic propagation using RaySolver to generate impulse response\nfunction model(h, r, d1, d2, c, n)\n  env = UnderwaterEnvironment(bathymetry=h, seabed=Rock, soundspeed=c)\n  pm = RaySolver(env)\n  tx = AcousticSource(0.0, -d1, 1000.0)\n  rx = AcousticReceiver(r, -d2)\n  arr = arrivals(pm, tx, rx)\n  t = getfield.(arr, :t)        # get a.t for each arrival a in arr\n  (t[2:n] .- t[1]) .* 1000      # relative time in milliseconds\nend\n\n# estimated sound speed profile from previous week\nprev_depths = [0, 500.0, 1000.0, 2000.0, 3000.0, 4000.0, 5000.0]\nprev_soundspeeds = [1518.6, 1494.5, 1490.6, 1505.8, 1530.3, 1556.7, 1583.6]\n\n# generate data with first 6 multipath delays\ndata = model(5000.0, 10000.0, 1000.0, 1800.0, MunkSSP(), 7)\n\n6-element Vector{Float64}:\n  178.42786295390846\n 1406.6963669822208\n 2245.763511823167\n 3008.5299257637885\n 4014.4245725479186\n 6395.490526963947\n\n\n\n\n\n\n\nThe previous week’s sound speed profile is shown in the plot above as solid circles, whereas the true sound speed profile is shown as a blue line.",
+    "objectID": "python.html#more-propagation-models",
+    "href": "python.html#more-propagation-models",
+    "title": "Calling from Python",
+    "section": "More propagation models",
+    "text": "More propagation models\nUsing other acoustic propagation models such as Bellhop, Kraken, etc is a breeze. During installation, include the relevant Julia packages. For example, to use Bellhop or Kraken, include AcousticToolbox.jl:\nimport juliapkg\njuliapkg.add(\"AcousticsToolbox\", \"268a15bc-5756-47d6-9bea-fa5dc21c97f8\")\nTo use the propagation models from AcousticToolbox.jl:\nfrom juliacall import Main as jl\njl.seval(\"using UnderwaterAcoustics\")\njl.seval(\"using AcousticsToolbox\")\n\nenv = jl.UnderwaterEnvironment(bathymetry=20, seabed=jl.SandyClay)\npm = jl.Bellhop(env)\ntx = jl.AcousticSource(0.0, -5.0, 1000.0)\nrx = jl.AcousticReceiver(100.0, -10.0)\njl.arrivals(pm, tx, rx)\n\n\n6 element Vector{RayArrival}:\n∠ -2.9°  0⤒  0⤓ ∠  2.9° |  65.06 ms | -40.0 dB ϕ   0.0°↝\n∠  8.5°  1⤒  0⤓ ∠  8.5° |  65.71 ms | -40.1 dB ϕ 180.0°↝\n∠-14.0°  0⤒  1⤓ ∠-14.0° |  66.98 ms | -62.6 dB ϕ 170.9°↝\n∠ 19.3°  1⤒  1⤓ ∠-19.3° |  68.85 ms | -74.3 dB ϕ -23.5°↝\n∠-24.2°  1⤒  1⤓ ∠ 24.2° |  71.26 ms | -80.4 dB ϕ-145.2°↝\n∠ 28.8°  2⤒  1⤓ ∠ 28.8° |  74.16 ms | -73.5 dB ϕ  10.8°↝\n\n\n\n\n\n\n\n\nNote\n\n\n\nTo use models like Bellhop, Kraken, etc, you will NOT need to install the FORTRAN binaries separately. They are automatically installed when you install the relevant Julia packages.",
     "crumbs": [
       "<b>UnderwaterAcoustics.jl</b>",
-      "Sound speed profile from impulse response"
+      "Calling from Python"
     ]
   },
   {
-    "objectID": "tut4.html#neural-network-based-propagation-model",
-    "href": "tut4.html#neural-network-based-propagation-model",
-    "title": "Sound speed profile from impulse response",
-    "section": "Neural network based propagation model",
-    "text": "Neural network based propagation model\nWe don’t know the sound speed profile, so we will use a small 3-layer neural network to model it:\n\nusing SimpleChains\nusing StaticArrays\nusing Random: MersenneTwister\n\n# neural network based sound speed profile data type\nstruct NeuralSSP{T1,T2} &lt;: UnderwaterAcoustics.DepthDependent\n  model::T1                 # neural network structure\n  ps::T2                    # neural network parameters\n  max_depth::Float64        # used for scaling the input\n  min_soundspeed::Float64   # used for scaling the output\n  max_soundspeed::Float64   # used for scaling the output\nend\n\n# scale input, pass through the neural network, and scale output\nfunction (ssp::NeuralSSP)(pos)\n  z̄ = -pos.z / ssp.max_depth\n  c̄ = only(ssp.model(SA[z̄], ssp.ps))\n  (c̄ + 1) / 2 * (ssp.max_soundspeed - ssp.min_soundspeed) + ssp.min_soundspeed\nend\n\n# define the neural network\nssp = let mlp = SimpleChain(\n    static(1),\n    TurboDense(tanh, 3),\n    TurboDense(tanh, 3),\n    TurboDense(tanh, 1)\n  )\n  ps = SimpleChains.init_params(mlp; rng=MersenneTwister(0))\n  NeuralSSP(mlp, ps, 5000.0, 1450.0, 1600.0)\nend\n\nWe initialize the neural network parameters by training the neural network on the known/estimated sound speed profile from the previous week:\n\nc̄ = @. (prev_soundspeeds - ssp.min_soundspeed) / (ssp.max_soundspeed - ssp.min_soundspeed) * 2 - 1\nz̄ = @. prev_depths / ssp.max_depth\nG = SimpleChains.alloc_threaded_grad(ssp.model)\nL = SimpleChains.add_loss(ssp.model, SquaredLoss(transpose(c̄)))\nSimpleChains.train!(G, ssp.ps, L, transpose(collect(z̄)), SimpleChains.ADAM(0.1), 10000)\n\nWe plot the model output against the training data to check that it fits well:\n\nplot(ssp, -5000, 0; xlabel=\"Sound speed (m/s)\", size=(350, 400))\nscatter!(prev_soundspeeds, -prev_depths)\n\n\n\n\nNow we define a loss function that computes the difference between the predictions of RaySolver using the sound speed given by the NeuralSSP, and the measured impulse response:\n\n# compute loss using predictions of RaySolver using the NeuralSSP\nfunction loss(ps)\n  ssp1 = NeuralSSP(ssp.model, ps, 5000.0, 1450.0, 1600.0)\n  pred = model(5000.0, 10000.0, 1000.0, 1800.0, ssp1, length(data)+1)\n  sum(abs2, pred - data)\nend\n\nand perform gradient descent to minimize the loss function:\n\nimport ForwardDiff\n\nη = 1e-6            # learning rate\nps = copy(ssp.ps)   # start with the previous week’s parameters\n\n# this will take a few minutes to run...\nfor i ∈ 1:20\n  g = ForwardDiff.gradient(loss, ps)\n  ps .-= η .* g     # gradient descent\nend\n\nWe plot the trained neural sound speed profile against the ground truth:\n\nlet ssp = NeuralSSP(ssp.model, ps, 5000.0, 1450.0, 1600.0)\n  plot(MunkSSP(), -5000, 0; xlabel=\"Sound speed (m/s)\", size=(350, 400))\n  scatter!(prev_soundspeeds, -prev_depths)\n  plot!(ssp, -5000, 0)\nend\n\n\n\n\nand see that it indeed fits quite well!",
+    "objectID": "python.html#channel-modeling",
+    "href": "python.html#channel-modeling",
+    "title": "Calling from Python",
+    "section": "Channel modeling",
+    "text": "Channel modeling\nWe can also access the channel modeling API from Python. For example, we can obtain a channel from a propagation model:\nenv = jl.UnderwaterEnvironment(bathymetry=20, seabed=jl.SandyClay)\npm = jl.PekerisRayTracer(env)\ntx = jl.AcousticSource(0.0, -5.0, 1000.0, spl=170)\nrx = jl.AcousticReceiver(100.0, -10.0)\nfs = 192000\nch = jl.channel(pm, tx, rx, fs, noise=jl.RedGaussianNoise(0.5e6))\nWe can then create a signal and pass it through the channel:\nimport numpy as np\n\nx = np.sin(2 * np.pi * 10000 * np.arange(0, 0.001, 1/fs))\ny = jl.transmit(ch, x, fs=fs)  # returned signal is a Julia SampledSignal object\ny = np.array(y)                # so we convert it to a numpy array\nand plot it using matplotlib:\nfig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)\nax1.plot(x)\nax2.plot(y[:1000])\nax2.set_xlabel(\"Samples\")\nplt.tight_layout()\nplt.show()",
     "crumbs": [
       "<b>UnderwaterAcoustics.jl</b>",
-      "Sound speed profile from impulse response"
+      "Calling from Python"
     ]
   },
   {
-    "objectID": "tut3.html",
-    "href": "tut3.html",
-    "title": "Channel geometry from impulse response",
+    "objectID": "pekeris-rays.html",
+    "href": "pekeris-rays.html",
+    "title": "PekerisRayTracer",
     "section": "",
-    "text": "Reference\n\n\n\nThis tutorial is adapted from Example C presented in:\n\nMandar Chitre, “Differentiable Ocean Acoustic Propagation Modeling,” in OCEANS 2023 IEEE/MTS – Limerick, 5-8 June 2023.",
-    "crumbs": [
-      "<b>UnderwaterAcoustics.jl</b>",
-      "Channel geometry from impulse response"
-    ]
-  },
-  {
-    "objectID": "tut3.html#problem-statement",
-    "href": "tut3.html#problem-statement",
-    "title": "Channel geometry from impulse response",
-    "section": "Problem statement",
-    "text": "Problem statement\nConsider a scenario where a bottom-mounted sensor is deployed on a sub-surface mooring at an unknown altitude over the seabed. The exact location of the sensor is unknown, but we know the general area where it is deployed. The sensor is equipped with an acoustic transponder that we can query from a surface unit when we are within a 250 m range of it. We deploy the transducer of the surface unit from the boat on a 7 m rope with a weight attached. Due to currents, the transducer is not hanging perfectly vertically, and so it’s exact depth d1 is not known. The depth sounder of our boat tells us that the water depth h is 20 m, and the Captain of the boat assures us that the bathymetry is quite flat. We query the transponder and get a response. The broadband acoustic response from the transponder allows us to estimate the delays of 4 multipath arrivals. We wish to estimate the depth d2 of the sensor and the range r between the boat and the sensor using the multipath arrival delays.",
-    "crumbs": [
-      "<b>UnderwaterAcoustics.jl</b>",
-      "Channel geometry from impulse response"
-    ]
-  },
-  {
-    "objectID": "tut3.html#dataset",
-    "href": "tut3.html#dataset",
-    "title": "Channel geometry from impulse response",
-    "section": "Dataset",
-    "text": "Dataset\nTo illustrate this idea, let us generate a synthetic dataset with d1 = 7.2 m, d2 = 12.7 m, h = 20 m, and r = 97.3 m. Since we have an range-independent iso-velocity environment, we can use the PekerisRayTracer (otherwise we could use the RaySolver):\n\n\n\n\n\n\nusing UnderwaterAcoustics\n\nfunction model(h, r, d1, d2)\n  env = UnderwaterEnvironment(bathymetry=h)\n  pm = PekerisRayTracer(env; max_bounces=4)\n  tx = AcousticSource(r, -d2, 1000.0)\n  rx = AcousticReceiver(0.0, -d1)\n  arr = arrivals(pm, tx, rx)\n  t = getfield.(arr, :t)        # get a.t for each arrival a in arr\n  (t[2:end] .- t[1]) .* 1000    # relative time in milliseconds\nend\n\ndata = model(20, 97.3, 7.2, 12.7)\n\n8-element Vector{Float64}:\n  1.2078734494638532\n  1.2340398375722539\n  6.4705086705396235\n  3.755897382140966\n 10.919625105605624\n 10.987838758289167\n 20.841074171559228\n 16.304090813082887",
-    "crumbs": [
-      "<b>UnderwaterAcoustics.jl</b>",
-      "Channel geometry from impulse response"
-    ]
-  },
-  {
-    "objectID": "tut3.html#probabilistic-model",
-    "href": "tut3.html#probabilistic-model",
-    "title": "Channel geometry from impulse response",
-    "section": "Probabilistic model",
-    "text": "Probabilistic model\nWe can model this as a Bayesian inference problem using Turing.jl and some reasonable priors:\n\nusing Turing\nusing Random\n\n@model function pmodel(data)\n  h  ~ Normal(20.0, 0.1)\n  r  ~ Uniform(0.0, 250.0)\n  d1 ~ Normal(7.0, 1.0)\n  d2 ~ Uniform(0.0, 20.0)\n  μ = model(h, r, d1, d2)\n  data ~ MvNormal(μ, 0.1)\nend\n\nm = pmodel(data)\nq,_ = vi(MersenneTwister(1), m, q_meanfield_gaussian(m), 10000)\n\n# extract mean values of parameters h, r, d1 and d2\nμ = mean(rand(q, 10000); dims=2)\n\n\n\n4×1 Matrix{Float64}:\n 20.009226482010614\n 97.42325326194218\n  7.200312567411043\n 12.704686858499537\n\n\nWe see that the estimated values of h, r, d1 and d2 are fairly close to the ground truth values. We can also plot the uncertainty in the estimates:\n\nusing StatsPlots\n\nplot(h -&gt; pdf(q, [h, μ[2], μ[3], μ[4]]), 18, 22; xlabel=\"h\", legend=false)\n\n\n\n\n\nplot(r -&gt; pdf(q, [μ[1], r, μ[3], μ[4]]), 50, 150; xlabel=\"r\", legend=false)\n\n\n\n\n\nplot(d1 -&gt; pdf(q, [μ[1], μ[2], d1, μ[4]]), 5, 9; xlabel=\"d1\", legend=false)\n\n\n\n\n\nplot(d2 -&gt; pdf(q, [μ[1], μ[2], μ[3], d2]), 0, 20; xlabel=\"d2\", legend=false)",
-    "crumbs": [
-      "<b>UnderwaterAcoustics.jl</b>",
-      "Channel geometry from impulse response"
-    ]
-  },
-  {
-    "objectID": "tut1.html",
-    "href": "tut1.html",
-    "title": "Tracking a drifting transmitter",
-    "section": "",
-    "text": "References\n\n\n\nThis tutorial is adapted from Example A presented in:\n\nMandar Chitre, “Differentiable Ocean Acoustic Propagation Modeling,” in OCEANS 2023 IEEE/MTS – Limerick, 5-8 June 2023.\n\nA version of this example was also presented in the UComms 2020 webinar:\n\nMandar Chitre, “Underwater Acoustics in the age of differentiable and probabilistic programming”, UComms 2020 webinar, 3 December 2020.",
-    "crumbs": [
-      "<b>UnderwaterAcoustics.jl</b>",
-      "Tracking a drifting transmitter"
-    ]
-  },
-  {
-    "objectID": "tut1.html#problem-statement",
-    "href": "tut1.html#problem-statement",
-    "title": "Tracking a drifting transmitter",
-    "section": "Problem statement",
-    "text": "Problem statement\nLet us consider a scenario where a drifting probe acoustically transmits its sensor data periodically to a static receiver. The initial position of the sensor is perfectly known, and so is the environment. But the path of the sensor as it drifts is not known, but we’d like to get an estimate of it from the received acoustic signal. Due to the high data rate requirements, the receiver uses an equalization technique that requires an accurate estimate of the channel impulse response. We want to generate that using a propagation model and an accurate estimate of the location of the probe.\nThe environment is an iso-velocity channel with a constant depth of 20 m and known seabed parameters (density ρ = 1500 kg/m³, sound speed c = 1850 m/s, and attenuation δ = 0.001). The probe uses a 1-2 kHz band for data transmission, and includes 101 pilots at 10 Hz spacing to aid with channel estimation. The transmission loss can be accurately measured at those pilot frequencies, since the transmit source level is assumed to be known, but phase information is assumed to be unavailable at each pilot.",
-    "crumbs": [
-      "<b>UnderwaterAcoustics.jl</b>",
-      "Tracking a drifting transmitter"
-    ]
-  },
-  {
-    "objectID": "tut1.html#dataset",
-    "href": "tut1.html#dataset",
-    "title": "Tracking a drifting transmitter",
-    "section": "Dataset",
-    "text": "Dataset\nTo illustrate the idea, we generate a 60-transmission dataset with a linearly drifting path for the transmitter. Since we have an range-independent iso-velocity environment, we can use the PekerisRayTracer (otherwise we could use the RaySolver):\n\nusing UnderwaterAcoustics\nusing DataFrames\n\nfunction 𝒴((r, d, f, ρ, c, δ))\n  env = UnderwaterEnvironment(\n    bathymetry = 20.0,\n    seabed = FluidBoundary(ρ, c, δ)\n  )\n  tx = AcousticSource(r, -d, f)\n  rx = AcousticReceiver(0.0, -5.0)\n  pm = PekerisRayTracer(env)\n  transmission_loss(pm, tx, rx)\nend\n\ndata = DataFrame([(\n    range=100.0 + 0.5t,\n    depth=6.0 + 0.01t,\n    pilots=[𝒴([100.0 + 0.5t, 6.0 + 0.01t, f, 1500.0, 1850.0, 0.001]) for f ∈ 1000.0:10.0:2000.0]\n  ) for t ∈ 0.0:1.0:59.0])",
-    "crumbs": [
-      "<b>UnderwaterAcoustics.jl</b>",
-      "Tracking a drifting transmitter"
-    ]
-  },
-  {
-    "objectID": "tut1.html#gradient-descent",
-    "href": "tut1.html#gradient-descent",
-    "title": "Tracking a drifting transmitter",
-    "section": "Gradient descent",
-    "text": "Gradient descent\nIn order to recover the drift path of the probe, we build a simple error model for the measured pilots. We initialize the model with the known starting location of the probe, and track the probe by minimizing the error through gradient descent.\nSince our propagation model is differentiable, the gradient of the error can be automatically computed during the optimization using ForwardDiff.jl.\n\nusing ForwardDiff\n\n# channel model for pilots\npilots(r, d) = [𝒴([r, d, f, 1500.0, 1850.0, 0.001]) for f ∈ 1000.0:10.0:2000.0]\n\n# gradient descent optimization\nfunction chparams(data)\n  history = []\n  θ = [100.0, 6.0]    # known initial location\n  η = [1e-4, 1e-6]    # learning rate\n  for row ∈ eachrow(data)\n    err(θ) = sum(abs2, pilots(θ[1], θ[2]) .- row.pilots)  # error model\n    for i ∈ 1:100      # iterations of simple gradient descent\n      θ .-=  η .* ForwardDiff.gradient(err, θ)\n    end\n    push!(history, (range=θ[1], depth=θ[2]))\n  end\n  DataFrame(history)\nend\n\np = chparams(data)\n\nNow that we have a path estimate, let’s check it against the ground truth:\n\nusing Plots\n\nplot(data.range, -data.depth; linewidth=2, xlabel=\"Range (m)\", ylabel=\"Depth (m)\", label=\"Ground truth\")\nscatter!(p.range, -p.depth; markersize=2, label=\"Estimated\")\n\n\n\n\nWe have a pretty good match!",
-    "crumbs": [
-      "<b>UnderwaterAcoustics.jl</b>",
-      "Tracking a drifting transmitter"
-    ]
-  },
-  {
-    "objectID": "pekeris-modes.html",
-    "href": "pekeris-modes.html",
-    "title": "PekerisModeSolver",
-    "section": "",
-    "text": "Model\nUnderwaterAcoustics.PekerisModeSolver\n\n\nDescription\nNormal mode model for constant depth iso-velocity environments\n\n\nLanguage\nJulia\n\n\nAdvantages\nFast, differentiable (forward mode), multi-threaded\n\n\nLimitations\nIso-velocity, pressure-release surface, fluid half-space seabed, no seabed absorption (no leaky modes)\n\n\nDifferentiability\nForwardDiff\nImplementation largely based on mathematical description in:\nWhile the PekerisModeSolver is range-independent by itself, it can be made range-dependent by using AdiabaticExt as shown in the example below.",
+    "text": "Model\nUnderwaterAcoustics.PekerisRayTracer\n\n\nDescription\nRay tracer for constant depth iso-velocity environments\n\n\nLanguage\nJulia\n\n\nAdvantages\nFast, differentiable\n\n\nLimitations\nIso-velocity, range-independent\n\n\nDifferentiability\nForwardDiff, Zygote, Mooncake, Enzyme\nImplementation based on mathematical description in:",
     "crumbs": [
       "<b>Propagation models</b>",
-      "PekerisModeSolver"
+      "PekerisRayTracer"
     ]
   },
   {
-    "objectID": "pekeris-modes.html#examples",
-    "href": "pekeris-modes.html#examples",
-    "title": "PekerisModeSolver",
-    "section": "Examples",
-    "text": "Examples\n\nRange-independent scenario\n\nusing UnderwaterAcoustics\nusing Plots\n\nenv = UnderwaterEnvironment(\n  bathymetry = 5000,\n  soundspeed = 1500,\n  density = 1000,\n  seabed = FluidBoundary(2000, 2000)\n)\npm = PekerisModeSolver(env)\n\ntx = AcousticSource(0, -500, 10)\nrx = AcousticReceiver(200000, -2500)\nmodes = arrivals(pm, tx, rx)[1:7]      # first 7 modes\n\n7-element Vector{UnderwaterAcoustics.ModeArrival{ComplexF64, UnderwaterAcoustics.Mode{Float64}, Float64, Float64}}:\n   mode 1: kᵣ = 0.041883 - 0.0im rad/m, v = 1499.84 m/s, vₚ = 1500.16 m/s\n   mode 2: kᵣ = 0.04187 - 0.0im rad/m, v = 1499.36 m/s, vₚ = 1500.66 m/s\n   mode 3: kᵣ = 0.041847 - 0.0im rad/m, v = 1498.56 m/s, vₚ = 1501.48 m/s\n   mode 4: kᵣ = 0.041815 - 0.0im rad/m, v = 1497.45 m/s, vₚ = 1502.63 m/s\n   mode 5: kᵣ = 0.041773 - 0.0im rad/m, v = 1496.01 m/s, vₚ = 1504.12 m/s\n   mode 6: kᵣ = 0.041723 - 0.0im rad/m, v = 1494.24 m/s, vₚ = 1505.94 m/s\n   mode 7: kᵣ = 0.041663 - 0.0im rad/m, v = 1492.15 m/s, vₚ = 1508.10 m/s\n\n\n\n# plot the modes\nplot(modes)\n\n\n\n\n\nrxs = AcousticReceiverGrid2D(200000:10:220000, -2500)\nx = transmission_loss(pm, tx, rxs)\n\nplot(200:0.01:220, x; ylims=(70,110), yflip=true, legend=false,\n  xlabel=\"Range (km)\", ylabel=\"Transmission loss (dB)\")\n\n\n\n\n\n\nRange-dependent scenario\n\nusing UnderwaterAcoustics\nusing Plots\n\nenv = UnderwaterEnvironment(\n  bathymetry = SampledField([200, 150, 200]; x=[0, 2000, 5000], interp=:linear),\n  soundspeed = 1500,\n  density = 1000,\n  seabed = FluidBoundary(2000, 2000)\n)\n\n# use an adiabatic extension to the PekerisModeSolver for range-dependence\npm = AdiabaticExt(PekerisModeSolver, env)\n\ntx = AcousticSource(0, -50, 250)\nrx = AcousticReceiver(7000, -25)\nmodes = arrivals(pm, tx, rx)[1:7]      # first 7 modes\n\n7-element Vector{UnderwaterAcoustics.ModeArrival{ComplexF64, UnderwaterAcoustics.Mode{Float64}, Float64, Float64}}:\n   mode 1: kᵣ = 1.047083 - 0.0im rad/m, v = 1499.80 m/s, vₚ = 1500.16 m/s\n   mode 2: kᵣ = 1.04674 - 0.0im rad/m, v = 1499.22 m/s, vₚ = 1500.66 m/s\n   mode 3: kᵣ = 1.046167 - 0.0im rad/m, v = 1498.24 m/s, vₚ = 1501.48 m/s\n   mode 4: kᵣ = 1.045364 - 0.0im rad/m, v = 1496.86 m/s, vₚ = 1502.63 m/s\n   mode 5: kᵣ = 1.044331 - 0.0im rad/m, v = 1495.09 m/s, vₚ = 1504.12 m/s\n   mode 6: kᵣ = 1.043066 - 0.0im rad/m, v = 1492.91 m/s, vₚ = 1505.94 m/s\n   mode 7: kᵣ = 1.04157 - 0.0im rad/m, v = 1490.34 m/s, vₚ = 1508.10 m/s\n\n\n\n# plot the modes\nplot(modes)\n\n\n\n\n\nrxs = AcousticReceiverGrid2D(10:10:7000, -200:1)\nx = transmission_loss(pm, tx, rxs)\n\nplot(rxs, x; crange=50)\nplot!(env)\n\n\n\n\nWe can also estimate a bandlimited impulse response from the propagation model:\n\nplot(impulse_response(pm, tx, rx, 8000; fmin=200, fmax=300))",
+    "objectID": "pekeris-rays.html#example",
+    "href": "pekeris-rays.html#example",
+    "title": "PekerisRayTracer",
+    "section": "Example",
+    "text": "Example\n\nusing UnderwaterAcoustics\nusing Plots\n\nenv = UnderwaterEnvironment(bathymetry=20, seabed=SandyClay)\npm = PekerisRayTracer(env)\n\ntx = AcousticSource(0, -5, 1000)\nrx = AcousticReceiver(100, -10)\nrays = arrivals(pm, tx, rx)\n\nplot(env; xlims=(-10, 110))\nplot!(tx)\nplot!(rx)\nplot!(rays)\n\n\n\n\n\nrxs = AcousticReceiverGrid2D(1.0:0.1:100, -20:0.1:0)\nx = transmission_loss(pm, tx, rxs)\n\nplot(env; xlims=(0,100))\nplot!(rxs, x)",
     "crumbs": [
       "<b>Propagation models</b>",
-      "PekerisModeSolver"
-    ]
-  },
-  {
-    "objectID": "pekeris-modes.html#notes",
-    "href": "pekeris-modes.html#notes",
-    "title": "PekerisModeSolver",
-    "section": "Notes",
-    "text": "Notes\n\nDifferentiability currently works only with ForwardDiff, and excludes impulse_response().",
-    "crumbs": [
-      "<b>Propagation models</b>",
-      "PekerisModeSolver"
+      "PekerisRayTracer"
     ]
   },
   {
@@ -539,25 +440,190 @@
     ]
   },
   {
-    "objectID": "pekeris-rays.html",
-    "href": "pekeris-rays.html",
-    "title": "PekerisRayTracer",
+    "objectID": "pekeris-modes.html",
+    "href": "pekeris-modes.html",
+    "title": "PekerisModeSolver",
     "section": "",
-    "text": "Model\nUnderwaterAcoustics.PekerisRayTracer\n\n\nDescription\nRay tracer for constant depth iso-velocity environments\n\n\nLanguage\nJulia\n\n\nAdvantages\nFast, differentiable\n\n\nLimitations\nIso-velocity, range-independent\n\n\nDifferentiability\nForwardDiff, Zygote, Mooncake, Enzyme\nImplementation based on mathematical description in:",
+    "text": "Model\nUnderwaterAcoustics.PekerisModeSolver\n\n\nDescription\nNormal mode model for constant depth iso-velocity environments\n\n\nLanguage\nJulia\n\n\nAdvantages\nFast, differentiable (forward mode), multi-threaded\n\n\nLimitations\nIso-velocity, pressure-release surface, fluid half-space seabed, no seabed absorption (no leaky modes)\n\n\nDifferentiability\nForwardDiff\nImplementation largely based on mathematical description in:\nWhile the PekerisModeSolver is range-independent by itself, it can be made range-dependent by using AdiabaticExt as shown in the example below.",
     "crumbs": [
       "<b>Propagation models</b>",
-      "PekerisRayTracer"
+      "PekerisModeSolver"
     ]
   },
   {
-    "objectID": "pekeris-rays.html#example",
-    "href": "pekeris-rays.html#example",
-    "title": "PekerisRayTracer",
-    "section": "Example",
-    "text": "Example\n\nusing UnderwaterAcoustics\nusing Plots\n\nenv = UnderwaterEnvironment(bathymetry=20, seabed=SandyClay)\npm = PekerisRayTracer(env)\n\ntx = AcousticSource(0, -5, 1000)\nrx = AcousticReceiver(100, -10)\nrays = arrivals(pm, tx, rx)\n\nplot(env; xlims=(-10, 110))\nplot!(tx)\nplot!(rx)\nplot!(rays)\n\n\n\n\n\nrxs = AcousticReceiverGrid2D(1.0:0.1:100, -20:0.1:0)\nx = transmission_loss(pm, tx, rxs)\n\nplot(env; xlims=(0,100))\nplot!(rxs, x)",
+    "objectID": "pekeris-modes.html#examples",
+    "href": "pekeris-modes.html#examples",
+    "title": "PekerisModeSolver",
+    "section": "Examples",
+    "text": "Examples\n\nRange-independent scenario\n\nusing UnderwaterAcoustics\nusing Plots\n\nenv = UnderwaterEnvironment(\n  bathymetry = 5000,\n  soundspeed = 1500,\n  density = 1000,\n  seabed = FluidBoundary(2000, 2000)\n)\npm = PekerisModeSolver(env)\n\ntx = AcousticSource(0, -500, 10)\nrx = AcousticReceiver(200000, -2500)\nmodes = arrivals(pm, tx, rx)[1:7]      # first 7 modes\n\n7-element Vector{UnderwaterAcoustics.ModeArrival{ComplexF64, UnderwaterAcoustics.Mode{Float64}, Float64, Float64}}:\n   mode 1: kᵣ = 0.041883 - 0.0im rad/m, v = 1499.84 m/s, vₚ = 1500.16 m/s\n   mode 2: kᵣ = 0.04187 - 0.0im rad/m, v = 1499.36 m/s, vₚ = 1500.66 m/s\n   mode 3: kᵣ = 0.041847 - 0.0im rad/m, v = 1498.56 m/s, vₚ = 1501.48 m/s\n   mode 4: kᵣ = 0.041815 - 0.0im rad/m, v = 1497.45 m/s, vₚ = 1502.63 m/s\n   mode 5: kᵣ = 0.041773 - 0.0im rad/m, v = 1496.01 m/s, vₚ = 1504.12 m/s\n   mode 6: kᵣ = 0.041723 - 0.0im rad/m, v = 1494.24 m/s, vₚ = 1505.94 m/s\n   mode 7: kᵣ = 0.041663 - 0.0im rad/m, v = 1492.15 m/s, vₚ = 1508.10 m/s\n\n\n\n# plot the modes\nplot(modes)\n\n\n\n\n\nrxs = AcousticReceiverGrid2D(200000:10:220000, -2500)\nx = transmission_loss(pm, tx, rxs)\n\nplot(200:0.01:220, x; ylims=(70,110), yflip=true, legend=false,\n  xlabel=\"Range (km)\", ylabel=\"Transmission loss (dB)\")\n\n\n\n\n\n\nRange-dependent scenario\n\nusing UnderwaterAcoustics\nusing Plots\n\nenv = UnderwaterEnvironment(\n  bathymetry = SampledField([200, 150, 200]; x=[0, 2000, 5000], interp=:linear),\n  soundspeed = 1500,\n  density = 1000,\n  seabed = FluidBoundary(2000, 2000)\n)\n\n# use an adiabatic extension to the PekerisModeSolver for range-dependence\npm = AdiabaticExt(PekerisModeSolver, env)\n\ntx = AcousticSource(0, -50, 250)\nrx = AcousticReceiver(7000, -25)\nmodes = arrivals(pm, tx, rx)[1:7]      # first 7 modes\n\n7-element Vector{UnderwaterAcoustics.ModeArrival{ComplexF64, UnderwaterAcoustics.Mode{Float64}, Float64, Float64}}:\n   mode 1: kᵣ = 1.047083 - 0.0im rad/m, v = 1499.80 m/s, vₚ = 1500.16 m/s\n   mode 2: kᵣ = 1.04674 - 0.0im rad/m, v = 1499.22 m/s, vₚ = 1500.66 m/s\n   mode 3: kᵣ = 1.046167 - 0.0im rad/m, v = 1498.24 m/s, vₚ = 1501.48 m/s\n   mode 4: kᵣ = 1.045364 - 0.0im rad/m, v = 1496.86 m/s, vₚ = 1502.63 m/s\n   mode 5: kᵣ = 1.044331 - 0.0im rad/m, v = 1495.09 m/s, vₚ = 1504.12 m/s\n   mode 6: kᵣ = 1.043066 - 0.0im rad/m, v = 1492.91 m/s, vₚ = 1505.94 m/s\n   mode 7: kᵣ = 1.04157 - 0.0im rad/m, v = 1490.34 m/s, vₚ = 1508.10 m/s\n\n\n\n# plot the modes\nplot(modes)\n\n\n\n\n\nrxs = AcousticReceiverGrid2D(10:10:7000, -200:1)\nx = transmission_loss(pm, tx, rxs)\n\nplot(rxs, x; crange=50)\nplot!(env)\n\n\n\n\nWe can also estimate a bandlimited impulse response from the propagation model:\n\nplot(impulse_response(pm, tx, rx, 8000; fmin=200, fmax=300))",
     "crumbs": [
       "<b>Propagation models</b>",
-      "PekerisRayTracer"
+      "PekerisModeSolver"
+    ]
+  },
+  {
+    "objectID": "pekeris-modes.html#notes",
+    "href": "pekeris-modes.html#notes",
+    "title": "PekerisModeSolver",
+    "section": "Notes",
+    "text": "Notes\n\nDifferentiability currently works only with ForwardDiff, and excludes impulse_response().",
+    "crumbs": [
+      "<b>Propagation models</b>",
+      "PekerisModeSolver"
+    ]
+  },
+  {
+    "objectID": "tut1.html",
+    "href": "tut1.html",
+    "title": "Tracking a drifting transmitter",
+    "section": "",
+    "text": "References\n\n\n\nThis tutorial is adapted from Example A presented in:\n\nMandar Chitre, “Differentiable Ocean Acoustic Propagation Modeling,” in OCEANS 2023 IEEE/MTS – Limerick, 5-8 June 2023.\n\nA version of this example was also presented in the UComms 2020 webinar:\n\nMandar Chitre, “Underwater Acoustics in the age of differentiable and probabilistic programming”, UComms 2020 webinar, 3 December 2020.",
+    "crumbs": [
+      "<b>UnderwaterAcoustics.jl</b>",
+      "Tracking a drifting transmitter"
+    ]
+  },
+  {
+    "objectID": "tut1.html#problem-statement",
+    "href": "tut1.html#problem-statement",
+    "title": "Tracking a drifting transmitter",
+    "section": "Problem statement",
+    "text": "Problem statement\nLet us consider a scenario where a drifting probe acoustically transmits its sensor data periodically to a static receiver. The initial position of the sensor is perfectly known, and so is the environment. But the path of the sensor as it drifts is not known, but we’d like to get an estimate of it from the received acoustic signal. Due to the high data rate requirements, the receiver uses an equalization technique that requires an accurate estimate of the channel impulse response. We want to generate that using a propagation model and an accurate estimate of the location of the probe.\nThe environment is an iso-velocity channel with a constant depth of 20 m and known seabed parameters (density ρ = 1500 kg/m³, sound speed c = 1850 m/s, and attenuation δ = 0.001). The probe uses a 1-2 kHz band for data transmission, and includes 101 pilots at 10 Hz spacing to aid with channel estimation. The transmission loss can be accurately measured at those pilot frequencies, since the transmit source level is assumed to be known, but phase information is assumed to be unavailable at each pilot.",
+    "crumbs": [
+      "<b>UnderwaterAcoustics.jl</b>",
+      "Tracking a drifting transmitter"
+    ]
+  },
+  {
+    "objectID": "tut1.html#dataset",
+    "href": "tut1.html#dataset",
+    "title": "Tracking a drifting transmitter",
+    "section": "Dataset",
+    "text": "Dataset\nTo illustrate the idea, we generate a 60-transmission dataset with a linearly drifting path for the transmitter. Since we have an range-independent iso-velocity environment, we can use the PekerisRayTracer (otherwise we could use the RaySolver):\n\nusing UnderwaterAcoustics\nusing DataFrames\n\nfunction 𝒴((r, d, f, ρ, c, δ))\n  env = UnderwaterEnvironment(\n    bathymetry = 20.0,\n    seabed = FluidBoundary(ρ, c, δ)\n  )\n  tx = AcousticSource(r, -d, f)\n  rx = AcousticReceiver(0.0, -5.0)\n  pm = PekerisRayTracer(env)\n  transmission_loss(pm, tx, rx)\nend\n\ndata = DataFrame([(\n    range=100.0 + 0.5t,\n    depth=6.0 + 0.01t,\n    pilots=[𝒴([100.0 + 0.5t, 6.0 + 0.01t, f, 1500.0, 1850.0, 0.001]) for f ∈ 1000.0:10.0:2000.0]\n  ) for t ∈ 0.0:1.0:59.0])",
+    "crumbs": [
+      "<b>UnderwaterAcoustics.jl</b>",
+      "Tracking a drifting transmitter"
+    ]
+  },
+  {
+    "objectID": "tut1.html#gradient-descent",
+    "href": "tut1.html#gradient-descent",
+    "title": "Tracking a drifting transmitter",
+    "section": "Gradient descent",
+    "text": "Gradient descent\nIn order to recover the drift path of the probe, we build a simple error model for the measured pilots. We initialize the model with the known starting location of the probe, and track the probe by minimizing the error through gradient descent.\nSince our propagation model is differentiable, the gradient of the error can be automatically computed during the optimization using ForwardDiff.jl.\n\nusing ForwardDiff\n\n# channel model for pilots\npilots(r, d) = [𝒴([r, d, f, 1500.0, 1850.0, 0.001]) for f ∈ 1000.0:10.0:2000.0]\n\n# gradient descent optimization\nfunction chparams(data)\n  history = []\n  θ = [100.0, 6.0]    # known initial location\n  η = [1e-4, 1e-6]    # learning rate\n  for row ∈ eachrow(data)\n    err(θ) = sum(abs2, pilots(θ[1], θ[2]) .- row.pilots)  # error model\n    for i ∈ 1:100      # iterations of simple gradient descent\n      θ .-=  η .* ForwardDiff.gradient(err, θ)\n    end\n    push!(history, (range=θ[1], depth=θ[2]))\n  end\n  DataFrame(history)\nend\n\np = chparams(data)\n\nNow that we have a path estimate, let’s check it against the ground truth:\n\nusing Plots\n\nplot(data.range, -data.depth; linewidth=2, xlabel=\"Range (m)\", ylabel=\"Depth (m)\", label=\"Ground truth\")\nscatter!(p.range, -p.depth; markersize=2, label=\"Estimated\")\n\n\n\n\nWe have a pretty good match!",
+    "crumbs": [
+      "<b>UnderwaterAcoustics.jl</b>",
+      "Tracking a drifting transmitter"
+    ]
+  },
+  {
+    "objectID": "tut3.html",
+    "href": "tut3.html",
+    "title": "Channel geometry from impulse response",
+    "section": "",
+    "text": "Reference\n\n\n\nThis tutorial is adapted from Example C presented in:\n\nMandar Chitre, “Differentiable Ocean Acoustic Propagation Modeling,” in OCEANS 2023 IEEE/MTS – Limerick, 5-8 June 2023.",
+    "crumbs": [
+      "<b>UnderwaterAcoustics.jl</b>",
+      "Channel geometry from impulse response"
+    ]
+  },
+  {
+    "objectID": "tut3.html#problem-statement",
+    "href": "tut3.html#problem-statement",
+    "title": "Channel geometry from impulse response",
+    "section": "Problem statement",
+    "text": "Problem statement\nConsider a scenario where a bottom-mounted sensor is deployed on a sub-surface mooring at an unknown altitude over the seabed. The exact location of the sensor is unknown, but we know the general area where it is deployed. The sensor is equipped with an acoustic transponder that we can query from a surface unit when we are within a 250 m range of it. We deploy the transducer of the surface unit from the boat on a 7 m rope with a weight attached. Due to currents, the transducer is not hanging perfectly vertically, and so it’s exact depth d1 is not known. The depth sounder of our boat tells us that the water depth h is 20 m, and the Captain of the boat assures us that the bathymetry is quite flat. We query the transponder and get a response. The broadband acoustic response from the transponder allows us to estimate the delays of 4 multipath arrivals. We wish to estimate the depth d2 of the sensor and the range r between the boat and the sensor using the multipath arrival delays.",
+    "crumbs": [
+      "<b>UnderwaterAcoustics.jl</b>",
+      "Channel geometry from impulse response"
+    ]
+  },
+  {
+    "objectID": "tut3.html#dataset",
+    "href": "tut3.html#dataset",
+    "title": "Channel geometry from impulse response",
+    "section": "Dataset",
+    "text": "Dataset\nTo illustrate this idea, let us generate a synthetic dataset with d1 = 7.2 m, d2 = 12.7 m, h = 20 m, and r = 97.3 m. Since we have an range-independent iso-velocity environment, we can use the PekerisRayTracer (otherwise we could use the RaySolver):\n\n\n\n\n\n\nusing UnderwaterAcoustics\n\nfunction model(h, r, d1, d2)\n  env = UnderwaterEnvironment(bathymetry=h)\n  pm = PekerisRayTracer(env; max_bounces=4)\n  tx = AcousticSource(r, -d2, 1000.0)\n  rx = AcousticReceiver(0.0, -d1)\n  arr = arrivals(pm, tx, rx)\n  t = getfield.(arr, :t)        # get a.t for each arrival a in arr\n  (t[2:end] .- t[1]) .* 1000    # relative time in milliseconds\nend\n\ndata = model(20, 97.3, 7.2, 12.7)\n\n8-element Vector{Float64}:\n  1.2078734494638532\n  1.2340398375722539\n  6.4705086705396235\n  3.755897382140966\n 10.919625105605624\n 10.987838758289167\n 20.841074171559228\n 16.304090813082887",
+    "crumbs": [
+      "<b>UnderwaterAcoustics.jl</b>",
+      "Channel geometry from impulse response"
+    ]
+  },
+  {
+    "objectID": "tut3.html#probabilistic-model",
+    "href": "tut3.html#probabilistic-model",
+    "title": "Channel geometry from impulse response",
+    "section": "Probabilistic model",
+    "text": "Probabilistic model\nWe can model this as a Bayesian inference problem using Turing.jl and some reasonable priors:\n\nusing Turing\nusing Random\n\n@model function pmodel(data)\n  h  ~ Normal(20.0, 0.1)\n  r  ~ Uniform(0.0, 250.0)\n  d1 ~ Normal(7.0, 1.0)\n  d2 ~ Uniform(0.0, 20.0)\n  μ = model(h, r, d1, d2)\n  data ~ MvNormal(μ, 0.1)\nend\n\nm = pmodel(data)\nq,_ = vi(MersenneTwister(1), m, q_meanfield_gaussian(m), 10000)\n\n# extract mean values of parameters h, r, d1 and d2\nμ = mean(rand(q, 10000); dims=2)\n\n\n\n4×1 Matrix{Float64}:\n 20.009226482010614\n 97.42325326194218\n  7.200312567411043\n 12.704686858499537\n\n\nWe see that the estimated values of h, r, d1 and d2 are fairly close to the ground truth values. We can also plot the uncertainty in the estimates:\n\nusing StatsPlots\n\nplot(h -&gt; pdf(q, [h, μ[2], μ[3], μ[4]]), 18, 22; xlabel=\"h\", legend=false)\n\n\n\n\n\nplot(r -&gt; pdf(q, [μ[1], r, μ[3], μ[4]]), 50, 150; xlabel=\"r\", legend=false)\n\n\n\n\n\nplot(d1 -&gt; pdf(q, [μ[1], μ[2], d1, μ[4]]), 5, 9; xlabel=\"d1\", legend=false)\n\n\n\n\n\nplot(d2 -&gt; pdf(q, [μ[1], μ[2], μ[3], d2]), 0, 20; xlabel=\"d2\", legend=false)",
+    "crumbs": [
+      "<b>UnderwaterAcoustics.jl</b>",
+      "Channel geometry from impulse response"
+    ]
+  },
+  {
+    "objectID": "tut4.html",
+    "href": "tut4.html",
+    "title": "Sound speed profile from impulse response",
+    "section": "",
+    "text": "Reference\n\n\n\nThis tutorial is adapted from Example D presented in:\n\nMandar Chitre, “Differentiable Ocean Acoustic Propagation Modeling,” in OCEANS 2023 IEEE/MTS – Limerick, 5-8 June 2023.",
+    "crumbs": [
+      "<b>UnderwaterAcoustics.jl</b>",
+      "Sound speed profile from impulse response"
+    ]
+  },
+  {
+    "objectID": "tut4.html#problem-statement",
+    "href": "tut4.html#problem-statement",
+    "title": "Sound speed profile from impulse response",
+    "section": "Problem statement",
+    "text": "Problem statement\nConsider a setup with a 1 kHz acoustic source at 1 km depth that sends a broadband pulse once every week. A receiver 10 km away at a depth of 800 m measures the impulse response from the received broadband pulse. We assume that we have an initial sound speed profile measurement with a CTD at the start of the experiment. The sound speed profile changes over the weeks of the experiment, and we wish to track the changes using the measured impulse response every week.",
+    "crumbs": [
+      "<b>UnderwaterAcoustics.jl</b>",
+      "Sound speed profile from impulse response"
+    ]
+  },
+  {
+    "objectID": "tut4.html#key-idea",
+    "href": "tut4.html#key-idea",
+    "title": "Sound speed profile from impulse response",
+    "section": "Key idea",
+    "text": "Key idea\nSince the sound speed profile is an unknown function of depth, we model it using a small 3-layer neural network. We initialize the parameters by training the neural network on the known/estimated sound speed profile from the previous week. We use the neural network to provide sound speed estimates to RaySolver, thus effectively creating a model that combines a numerical physics-based differential equation solver with a data-driven neural network. The hybrid model returns a vector of predicted delays of the first few multipath arrivals in the impulse response. We minimize a loss function that measures the difference between the predictions and measurements using gradient descent and automatic differentiation. This essentially trains the neural network to approximate the sound speed profile via a loss function that utilizes the propagation model. At the end of each week’s training, we get a revised estimate of the sound speed profile.",
+    "crumbs": [
+      "<b>UnderwaterAcoustics.jl</b>",
+      "Sound speed profile from impulse response"
+    ]
+  },
+  {
+    "objectID": "tut4.html#dataset",
+    "href": "tut4.html#dataset",
+    "title": "Sound speed profile from impulse response",
+    "section": "Dataset",
+    "text": "Dataset\nTo illustrate this idea, let us generate a synthetic dataset:\n\nusing UnderwaterAcoustics\nusing AcousticRayTracers\n\n# define Munk sound speed profile\nstruct MunkSSP &lt;: UnderwaterAcoustics.DepthDependent end\n\nfunction (ssp::MunkSSP)(pos)\n  ϵ = 0.00737\n  z̃ = 2.0 * (-pos.z - 1300.0) / 1300.0\n  1500.0 * (1.0 + ϵ * (z̃ - 1 + exp(-z̃)))\nend\n\n# simulate acoustic propagation using RaySolver to generate impulse response\nfunction model(h, r, d1, d2, c, n)\n  env = UnderwaterEnvironment(bathymetry=h, seabed=Rock, soundspeed=c)\n  pm = RaySolver(env)\n  tx = AcousticSource(0.0, -d1, 1000.0)\n  rx = AcousticReceiver(r, -d2)\n  arr = arrivals(pm, tx, rx)\n  t = getfield.(arr, :t)        # get a.t for each arrival a in arr\n  (t[2:n] .- t[1]) .* 1000      # relative time in milliseconds\nend\n\n# estimated sound speed profile from previous week\nprev_depths = [0, 500.0, 1000.0, 2000.0, 3000.0, 4000.0, 5000.0]\nprev_soundspeeds = [1518.6, 1494.5, 1490.6, 1505.8, 1530.3, 1556.7, 1583.6]\n\n# generate data with first 6 multipath delays\ndata = model(5000.0, 10000.0, 1000.0, 1800.0, MunkSSP(), 7)\n\n6-element Vector{Float64}:\n  178.42786295390846\n 1406.6963669822208\n 2245.763511823167\n 3008.5299257637885\n 4014.4245725479186\n 6395.490526963947\n\n\n\n\n\n\n\nThe previous week’s sound speed profile is shown in the plot above as solid circles, whereas the true sound speed profile is shown as a blue line.",
+    "crumbs": [
+      "<b>UnderwaterAcoustics.jl</b>",
+      "Sound speed profile from impulse response"
+    ]
+  },
+  {
+    "objectID": "tut4.html#neural-network-based-propagation-model",
+    "href": "tut4.html#neural-network-based-propagation-model",
+    "title": "Sound speed profile from impulse response",
+    "section": "Neural network based propagation model",
+    "text": "Neural network based propagation model\nWe don’t know the sound speed profile, so we will use a small 3-layer neural network to model it:\n\nusing SimpleChains\nusing StaticArrays\nusing Random: MersenneTwister\n\n# neural network based sound speed profile data type\nstruct NeuralSSP{T1,T2} &lt;: UnderwaterAcoustics.DepthDependent\n  model::T1                 # neural network structure\n  ps::T2                    # neural network parameters\n  max_depth::Float64        # used for scaling the input\n  min_soundspeed::Float64   # used for scaling the output\n  max_soundspeed::Float64   # used for scaling the output\nend\n\n# scale input, pass through the neural network, and scale output\nfunction (ssp::NeuralSSP)(pos)\n  z̄ = -pos.z / ssp.max_depth\n  c̄ = only(ssp.model(SA[z̄], ssp.ps))\n  (c̄ + 1) / 2 * (ssp.max_soundspeed - ssp.min_soundspeed) + ssp.min_soundspeed\nend\n\n# define the neural network\nssp = let mlp = SimpleChain(\n    static(1),\n    TurboDense(tanh, 3),\n    TurboDense(tanh, 3),\n    TurboDense(tanh, 1)\n  )\n  ps = SimpleChains.init_params(mlp; rng=MersenneTwister(0))\n  NeuralSSP(mlp, ps, 5000.0, 1450.0, 1600.0)\nend\n\nWe initialize the neural network parameters by training the neural network on the known/estimated sound speed profile from the previous week:\n\nc̄ = @. (prev_soundspeeds - ssp.min_soundspeed) / (ssp.max_soundspeed - ssp.min_soundspeed) * 2 - 1\nz̄ = @. prev_depths / ssp.max_depth\nG = SimpleChains.alloc_threaded_grad(ssp.model)\nL = SimpleChains.add_loss(ssp.model, SquaredLoss(transpose(c̄)))\nSimpleChains.train!(G, ssp.ps, L, transpose(collect(z̄)), SimpleChains.ADAM(0.1), 10000)\n\nWe plot the model output against the training data to check that it fits well:\n\nplot(ssp, -5000, 0; xlabel=\"Sound speed (m/s)\", size=(350, 400))\nscatter!(prev_soundspeeds, -prev_depths)\n\n\n\n\nNow we define a loss function that computes the difference between the predictions of RaySolver using the sound speed given by the NeuralSSP, and the measured impulse response:\n\n# compute loss using predictions of RaySolver using the NeuralSSP\nfunction loss(ps)\n  ssp1 = NeuralSSP(ssp.model, ps, 5000.0, 1450.0, 1600.0)\n  pred = model(5000.0, 10000.0, 1000.0, 1800.0, ssp1, length(data)+1)\n  sum(abs2, pred - data)\nend\n\nand perform gradient descent to minimize the loss function:\n\nimport ForwardDiff\n\nη = 1e-6            # learning rate\nps = copy(ssp.ps)   # start with the previous week’s parameters\n\n# this will take a few minutes to run...\nfor i ∈ 1:20\n  g = ForwardDiff.gradient(loss, ps)\n  ps .-= η .* g     # gradient descent\nend\n\nWe plot the trained neural sound speed profile against the ground truth:\n\nlet ssp = NeuralSSP(ssp.model, ps, 5000.0, 1450.0, 1600.0)\n  plot(MunkSSP(), -5000, 0; xlabel=\"Sound speed (m/s)\", size=(350, 400))\n  scatter!(prev_soundspeeds, -prev_depths)\n  plot!(ssp, -5000, 0)\nend\n\n\n\n\nand see that it indeed fits quite well!",
+    "crumbs": [
+      "<b>UnderwaterAcoustics.jl</b>",
+      "Sound speed profile from impulse response"
+    ]
+  },
+  {
+    "objectID": "replay.html",
+    "href": "replay.html",
+    "title": "Channel replay",
+    "section": "",
+    "text": "Quickstart guide\nThe idea of channel replay was popularized in the underwater domain by the Watermark benchmark. The essential idea is to extract estimates of time-varying impulse response (TVIR) from measurements at sea, and to convolve it with a new signals to estimate what would have been received had that signal been transmitted during the measurement.\n\nLoading a replay channel\nTo do channel replay using UnderwaterAcoustics.jl, we build a AbstractAcousticChannel from the measured TVIR using the BasebandReplayChannel() constructor. It can either take in a TVIR as a matrix or load a TVIR from file (e.g. red.mat):\n\nusing UnderwaterAcoustics\nusing Plots\n\nch = BasebandReplayChannel(\"red.mat\")\n\nBasebandReplayChannel(4 × 48.6 s, 25000.0 Hz, 19200.0 Sa/s)\n\n\nThis channel has 4 receiving hydrophones and can replay up to 48.6 seconds of signal through the measured TVIR. The signal must fit within the frequency band that was used to probe the channel (for the red channel it is 25 ± 4.8 kHz).\nWe can visualize the TVIR for the first hydrophone by plotting it:\n\nplot(ch)\n\n\n\n\nIf we were interested in the second hydrophone, we could specify the hydrophone number to plot:\n\nplot(ch, 2)\n\n\n\n\n\n\nSimulating a transmission\nTo pass a signal through the channel, we generate a signal and transmit() it just like through any other AbstractAcousticChannel:\n\nusing SignalAnalysis\n\nx = cw(25000, 0.001, 192000; window=(tukey, 0.5)) |&gt; real\ny = transmit(ch, x; start=1)\n\nSampledSignal @ 192000.0 Hz, 2390×4 Matrix{Float64}:\n -2.36394e-7  -1.69694e-6   -1.12269e-6   -2.06586e-7\n -4.29307e-6  -8.93096e-6    6.95876e-6    4.47084e-6\n -1.33684e-5   3.69249e-6    4.18005e-5    1.90144e-5\n -1.32064e-5   4.8353e-5     7.69898e-5    3.06228e-5\n  6.18467e-6   9.96305e-5    5.37913e-5    8.18552e-6\n  3.31883e-5   9.15604e-5   -6.95737e-5   -6.69293e-5\n  1.76456e-5  -2.32089e-6   -0.000250489  -0.000218782\n -1.24373e-5  -0.000248442  -0.000373429  -0.000215902\n -5.13562e-5  -0.000408098  -0.000210405  -1.01444e-5\n -6.00964e-5  -0.000275095   0.000251239   0.000308053\n  ⋮                                       \n -1.35583e-6   2.11055e-6   -7.73661e-7    1.83786e-6\n -6.88518e-6   9.24505e-6    4.15114e-6   -5.58047e-6\n  5.75698e-6   1.93389e-5   -1.08536e-5   -3.94562e-6\n  1.91887e-5   1.49698e-5   -2.29123e-5    3.54112e-6\n  1.84976e-5  -1.03803e-6   -1.77804e-5    8.52323e-6\n -8.61728e-6  -7.32348e-6    2.71239e-6    3.37459e-6\n -1.52188e-5  -1.2458e-5     1.74921e-5   -8.65725e-6\n -9.08914e-6  -7.52549e-6    1.41939e-5   -9.43631e-6\n -1.10073e-6  -1.07966e-6    3.76185e-6   -3.39226e-6\n\n\nWe have 4 channels of received data since we have 4 hydrophones in the replay TVIR. We plot the transmitted signal and the first 5 ms of the replayed received signal (hydrophone 2):\n\nplot(\n  plot(x; xlims=(0,5)),\n  plot(y[:,2]; xlims=(0,5));\n  layout=(2,1)\n)\n\n\n\n\n\n\nAdding noise\nWe can also simulate channels with noise. For example, if we wanted white Gaussian noise with standard deviation σ = 0.1, we can specify that when loading the channel:\n\nch = BasebandReplayChannel(\"red.mat\"; noise=WhiteGaussianNoise(0.1))\ny = transmit(ch, x; start=1)\n\nplot(\n  plot(x; xlims=(0,5)),\n  plot(y[:,2]; xlims=(0,5));\n  layout=(2,1)\n)",
+    "crumbs": [
+      "<b>UnderwaterAcoustics.jl</b>",
+      "Channel replay"
     ]
   },
   {

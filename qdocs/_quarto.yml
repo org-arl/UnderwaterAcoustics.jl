@@ -19,6 +19,7 @@ website:
       - fields.qmd
       - ext.qmd
       - porting.qmd
+      - python.qmd
       - text: <b>Tutorials</b>
       - tut1.qmd
       - tut2.qmd

@@ -1,0 +1,209 @@
+---
+title: "Calling from Python"
+engine: julia
+---
+
+```{julia}
+#| echo: false
+#| output: false
+using UnderwaterAcoustics, Plots
+default(size=(600, 400))
+```
+
+## Installation
+
+While `UnderwaterAcoustics.jl` is written in Julia, it can be called from Python using [JuliaCall](https://github.com/JuliaPy/PythonCall.jl). For this, we need to install the `juliacall` package. For some of the examples below, we will also need to `numpy` and `matplotlib`, so let's install them as well:
+```bash
+pip install juliacall numpy matplotlib
+```
+
+<br>Next, we will need to install `UnderwaterAcoustics.jl` and optionally `Plots.jl`. To do this, start a Python interpreter and run the following commands:
+```python
+import juliapkg
+juliapkg.add("UnderwaterAcoustics", "0efb1f7a-1ce7-46d2-9f48-546a4c8fbb99")
+juliapkg.add("Plots", "91a5bcdd-55d7-5caf-9e0b-520d859cae80")
+```
+
+::: {.callout-tip}
+While `Plots.jl` is not necessary if you plan to use `matplotlib` for plotting, we install it here to demonstrate its use from Python. The plot recipes for `Plots.jl` that come with `UnderwaterAcoustics.jl` are very convenient and work nicely if you using `Plots.jl` from Python. If you use `matplotlib`, you will need to write your own plotting code based on the data returned from `UnderwaterAcoustics.jl`. We will show examples of both approaches below.
+:::
+
+## Getting started
+
+Now we are ready to use `UnderwaterAcoustics.jl` from Python. To load the package from Python:
+```python
+from juliacall import Main as jl
+jl.seval("using UnderwaterAcoustics")
+```
+
+<br>Let's start with a simple example similar to the one shown in [Quickstart](quickstart.qmd):
+```python
+env = jl.UnderwaterEnvironment(bathymetry=20, seabed=jl.SandyClay)
+pm = jl.PekerisRayTracer(env)
+tx = jl.AcousticSource(0.0, -5.0, 1000.0)
+rx = jl.AcousticReceiver(100.0, -10.0)
+rays = jl.arrivals(pm, tx, rx)
+```
+
+<br>We can display the ray arrivals:
+```python
+rays
+```
+```{julia}
+#| echo: false
+env = UnderwaterEnvironment(bathymetry=20, seabed=SandyClay)
+pm = PekerisRayTracer(env)
+tx = AcousticSource(0.0, -5.0, 1000.0)
+rx = AcousticReceiver(100.0, -10.0)
+rays = arrivals(pm, tx, rx)
+```
+or plot them using `Plots.jl`:
+```python
+jl.seval("using Plots")               # python doesn't support "!", so we create
+jl.seval("plot_add = plot!")          #  an alias plot_add for plot! in Julia
+
+p = jl.plot(env, xlims=(-10,110))
+jl.plot_add(tx)
+jl.plot_add(rx)
+jl.plot_add(rays)
+jl.display(p)
+```
+```{julia}
+#| echo: false
+plot(env; xlims=(-10,110))
+plot!(tx)
+plot!(rx)
+plot!(rays)
+```
+
+We can also get the acoustic field or the transmission loss:
+```python
+jl.acoustic_field(pm, tx, rx)
+```
+```{julia}
+#| echo: false
+acoustic_field(pm, tx, rx)
+```
+```python
+jl.transmission_loss(pm, tx, rx)
+```
+```{julia}
+#| echo: false
+transmission_loss(pm, tx, rx)
+```
+
+We can also create a grid of receivers and compute the acoustic field over the grid:
+```python
+rxs = jl.AcousticReceiverGrid2D(jl.range(1.0, 100, step=0.1), jl.range(-20, 0, step=0.1))
+x = jl.transmission_loss(pm, tx, rxs)
+```
+
+<br>We can display the transmission loss grid or plot it using `Plots.jl`:
+```python
+x
+```
+```{julia}
+#| echo: false
+rxs = AcousticReceiverGrid2D(range(1.0, 100; step=0.1), range(-20, 0; step=0.1))
+x = transmission_loss(pm, tx, rxs)
+```
+```python
+p = jl.plot(env, xlims=(0,100))
+jl.plot_add(rxs, x)
+jl.display(p)
+```
+```{julia}
+#| echo: false
+plot(env; xlims=(0,100))
+plot!(rxs, x)
+```
+
+## Plotting with `matplotlib`
+
+If you prefer to use `matplotlib` for plotting, you can use the data returned from `UnderwaterAcoustics.jl` to create your own plots:
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+xloss = np.flipud(np.array(x).transpose())
+nz, nx = xloss.shape
+x_axis = np.linspace(0, 100, nx)
+z_axis = np.linspace(0, -20, nz)
+plt.figure()
+mesh = plt.pcolormesh(x_axis, z_axis, xloss, shading='auto', cmap='viridis_r', vmin=0, vmax=42)
+cbar = plt.colorbar(mesh)
+cbar.set_label('Transmission loss (dB)')
+plt.xlabel('x (m)')
+plt.ylabel('z (m)')
+plt.tight_layout()
+plt.show()
+```
+
+![](matplotlib1.png)
+
+## More propagation models
+
+Using other acoustic propagation models such as Bellhop, Kraken, etc is a breeze. During installation, include the relevant Julia packages. For example, to use Bellhop or Kraken, include `AcousticToolbox.jl`:
+```python
+import juliapkg
+juliapkg.add("AcousticsToolbox", "268a15bc-5756-47d6-9bea-fa5dc21c97f8")
+```
+
+<br>To use the propagation models from `AcousticToolbox.jl`:
+```python
+from juliacall import Main as jl
+jl.seval("using UnderwaterAcoustics")
+jl.seval("using AcousticsToolbox")
+
+env = jl.UnderwaterEnvironment(bathymetry=20, seabed=jl.SandyClay)
+pm = jl.Bellhop(env)
+tx = jl.AcousticSource(0.0, -5.0, 1000.0)
+rx = jl.AcousticReceiver(100.0, -10.0)
+jl.arrivals(pm, tx, rx)
+```
+```{julia}
+#| echo: false
+using AcousticsToolbox
+env = UnderwaterEnvironment(bathymetry=20, seabed=SandyClay)
+pm = Bellhop(env)
+tx = AcousticSource(0.0, -5.0, 1000.0)
+rx = AcousticReceiver(100.0, -10.0)
+arrivals(pm, tx, rx)
+```
+
+::: {.callout-note}
+To use models like Bellhop, Kraken, etc, you will NOT need to install the FORTRAN binaries separately. They are automatically installed when you install the relevant Julia packages.
+:::
+
+## Channel modeling
+
+We can also access the channel modeling API from Python. For example, we can obtain a channel from a propagation model:
+```python
+env = jl.UnderwaterEnvironment(bathymetry=20, seabed=jl.SandyClay)
+pm = jl.PekerisRayTracer(env)
+tx = jl.AcousticSource(0.0, -5.0, 1000.0, spl=170)
+rx = jl.AcousticReceiver(100.0, -10.0)
+fs = 192000
+ch = jl.channel(pm, tx, rx, fs, noise=jl.RedGaussianNoise(0.5e6))
+```
+
+<br>We can then create a signal and pass it through the channel:
+```python
+import numpy as np
+
+x = np.sin(2 * np.pi * 10000 * np.arange(0, 0.001, 1/fs))
+y = jl.transmit(ch, x, fs=fs)  # returned signal is a Julia SampledSignal object
+y = np.array(y)                # so we convert it to a numpy array
+```
+
+<br>and plot it using `matplotlib`:
+```python
+fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+ax1.plot(x)
+ax2.plot(y[:1000])
+ax2.set_xlabel("Samples")
+plt.tight_layout()
+plt.show()
+```
+
+![](matplotlib2.png)

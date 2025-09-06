@@ -32,7 +32,7 @@ If the defaults don't suit our needs, we can customize the environment. For exam
 env = UnderwaterEnvironment(
   bathymetry = 20.0,
   seabed = SandyClay,
-  soundspeed = SampledField([1500, 1490, 1520]; z=0:-10:-20, interp=:cubic)
+  soundspeed = SampledField([1500, 1490, 1520]; z=0:-10:-20, interp=CubicSpline())
 )
 ```
 

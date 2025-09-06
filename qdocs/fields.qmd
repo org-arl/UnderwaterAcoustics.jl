@@ -105,10 +105,10 @@ let q = env.soundspeed
   plot(q)
 end
 ```
-The default interpolation method is linear, but we can use cubic interpolation by specifying `interp=:cubic`:
+The default interpolation method is linear, but we can use cubic interpolation by specifying `interp=CubicSpline()`:
 ```{julia}
 plot(SampledField([1500, 1490, 1520]; z=0:-10:-20))
-plot!(SampledField([1500, 1490, 1520]; z=0:-10:-20, interp=:cubic))
+plot!(SampledField([1500, 1490, 1520]; z=0:-10:-20, interp=CubicSpline()))
 ```
 Another example is a range-dependent bathymetry:
 ```{julia}

@@ -307,7 +307,7 @@ end
 
 @testitem "pekeris-modes-adiabatic" begin
   env = @inferred UnderwaterEnvironment(
-    bathymetry = SampledField([200, 150, 200]; x=[0, 2000, 5000], interp=:linear),
+    bathymetry = SampledField([200, 150, 200]; x=[0, 2000, 5000]),
     soundspeed = 1500,
     density = 1000,
     seabed = FluidBoundary(2000, 2000)
@@ -331,7 +331,7 @@ end
   @test all([a.v < 1500 for a ∈ arr])
   @test all([a.vₚ > 1500 for a ∈ arr])
   env = @inferred UnderwaterEnvironment(
-    bathymetry = SampledField([200, 150, 200]; x=[-5000, -2000, 0], interp=:linear),
+    bathymetry = SampledField([200, 150, 200]; x=[-5000, -2000, 0]),
     soundspeed = 1500,
     density = 1000,
     seabed = FluidBoundary(2000, 2000)

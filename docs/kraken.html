@@ -502,14 +502,14 @@ Tip
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>rx <span class="op">=</span> <span class="fu">AcousticReceiver</span>(<span class="fl">200000</span>, <span class="op">-</span><span class="fl">2500</span>)</span>
 <span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>modes <span class="op">=</span> <span class="fu">arrivals</span>(pm, tx, rx)[<span class="fl">1</span><span class="op">:</span><span class="fl">7</span>]     <span class="co"># first 7 modes</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="1">
-<pre><code>7-element Vector{UnderwaterAcoustics.ModeArrival{ComplexF64, UnderwaterAcoustics.SampledFieldZ{Interpolations.Extrapolation{ComplexF64, 1, Interpolations.GriddedInterpolation{ComplexF64, 1, Vector{ComplexF32}, Interpolations.Gridded{Interpolations.Linear{Interpolations.Throw{Interpolations.OnGrid}}}, Tuple{Vector{Float32}}}, Interpolations.Gridded{Interpolations.Linear{Interpolations.Throw{Interpolations.OnGrid}}}, Interpolations.Flat{Nothing}}, Vector{Float32}}, Union{Missing, Float64}, Float64}}:
-   mode 1: kᵣ = 0.041883 - 0.0im rad/m, v = 1499.84 m/s, vₚ = 1500.16 m/s
-   mode 2: kᵣ = 0.04187 - 0.0im rad/m, v = 1499.36 m/s, vₚ = 1500.66 m/s
-   mode 3: kᵣ = 0.041847 - 0.0im rad/m, v = 1498.56 m/s, vₚ = 1501.48 m/s
-   mode 4: kᵣ = 0.041815 - 0.0im rad/m, v = 1497.45 m/s, vₚ = 1502.63 m/s
-   mode 5: kᵣ = 0.041773 - 0.0im rad/m, v = 1496.01 m/s, vₚ = 1504.12 m/s
-   mode 6: kᵣ = 0.041723 - 0.0im rad/m, v = 1494.24 m/s, vₚ = 1505.94 m/s
-   mode 7: kᵣ = 0.041663 - 0.0im rad/m, v = 1492.15 m/s, vₚ = 1508.10 m/s</code></pre>
+<pre><code>7 element Vector{ModeArrival}:
+  mode 1: kᵣ = 0.041883 - 0.0im rad/m, v = 1499.84 m/s, vₚ = 1500.16 m/s
+  mode 2: kᵣ = 0.04187 - 0.0im rad/m, v = 1499.36 m/s, vₚ = 1500.66 m/s
+  mode 3: kᵣ = 0.041847 - 0.0im rad/m, v = 1498.56 m/s, vₚ = 1501.48 m/s
+  mode 4: kᵣ = 0.041815 - 0.0im rad/m, v = 1497.45 m/s, vₚ = 1502.63 m/s
+  mode 5: kᵣ = 0.041773 - 0.0im rad/m, v = 1496.01 m/s, vₚ = 1504.12 m/s
+  mode 6: kᵣ = 0.041723 - 0.0im rad/m, v = 1494.24 m/s, vₚ = 1505.94 m/s
+  mode 7: kᵣ = 0.041663 - 0.0im rad/m, v = 1492.15 m/s, vₚ = 1508.10 m/s</code></pre>
 </div>
 </div>
 <div id="10" class="cell" data-execution_count="1">
@@ -538,7 +538,7 @@ Tip
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Plots</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>env <span class="op">=</span> <span class="fu">UnderwaterEnvironment</span>(</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  bathymetry <span class="op">=</span> <span class="fu">SampledField</span>([<span class="fl">200</span>, <span class="fl">150</span>, <span class="fl">200</span>]; x<span class="op">=</span>[<span class="fl">0</span>, <span class="fl">2000</span>, <span class="fl">5000</span>], interp<span class="op">=:</span>linear),</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  bathymetry <span class="op">=</span> <span class="fu">SampledField</span>([<span class="fl">200</span>, <span class="fl">150</span>, <span class="fl">200</span>]; x<span class="op">=</span>[<span class="fl">0</span>, <span class="fl">2000</span>, <span class="fl">5000</span>]),</span>
 <span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  soundspeed <span class="op">=</span> <span class="fl">1500</span>,</span>
 <span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  density <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  seabed <span class="op">=</span> <span class="fu">MultilayerElasticBoundary</span>([</span>
@@ -554,14 +554,14 @@ Tip
 <span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>rx <span class="op">=</span> <span class="fu">AcousticReceiver</span>(<span class="fl">7000</span>, <span class="op">-</span><span class="fl">25</span>)</span>
 <span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>modes <span class="op">=</span> <span class="fu">arrivals</span>(pm, tx, rx)[<span class="fl">1</span><span class="op">:</span><span class="fl">7</span>]      <span class="co"># first 7 modes</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="1">
-<pre><code>7-element Vector{UnderwaterAcoustics.ModeArrival{ComplexF64, UnderwaterAcoustics.SampledFieldZ{Interpolations.Extrapolation{ComplexF64, 1, Interpolations.GriddedInterpolation{ComplexF64, 1, Vector{ComplexF32}, Interpolations.Gridded{Interpolations.Linear{Interpolations.Throw{Interpolations.OnGrid}}}, Tuple{Vector{Float32}}}, Interpolations.Gridded{Interpolations.Linear{Interpolations.Throw{Interpolations.OnGrid}}}, Interpolations.Flat{Nothing}}, Vector{Float32}}, Float64, Float64}}:
-   mode 1: kᵣ = 1.047089 - 1.0e-6im rad/m, v = 1499.83 m/s, vₚ = 1500.16 m/s
-   mode 2: kᵣ = 1.046762 - 3.0e-6im rad/m, v = 1499.30 m/s, vₚ = 1500.62 m/s
-   mode 3: kᵣ = 1.046217 - 6.0e-6im rad/m, v = 1498.42 m/s, vₚ = 1501.41 m/s
-   mode 4: kᵣ = 1.045452 - 1.0e-5im rad/m, v = 1497.19 m/s, vₚ = 1502.50 m/s
-   mode 5: kᵣ = 1.044468 - 1.6e-5im rad/m, v = 1495.60 m/s, vₚ = 1503.92 m/s
-   mode 6: kᵣ = 1.043263 - 2.2e-5im rad/m, v = 1493.65 m/s, vₚ = 1505.66 m/s
-   mode 7: kᵣ = 1.041837 - 3.1e-5im rad/m, v = 1491.37 m/s, vₚ = 1507.72 m/s</code></pre>
+<pre><code>7 element Vector{ModeArrival}:
+  mode 1: kᵣ = 1.047089 - 1.0e-6im rad/m, v = 1499.83 m/s, vₚ = 1500.16 m/s
+  mode 2: kᵣ = 1.046762 - 3.0e-6im rad/m, v = 1499.30 m/s, vₚ = 1500.62 m/s
+  mode 3: kᵣ = 1.046217 - 6.0e-6im rad/m, v = 1498.42 m/s, vₚ = 1501.41 m/s
+  mode 4: kᵣ = 1.045452 - 1.0e-5im rad/m, v = 1497.19 m/s, vₚ = 1502.50 m/s
+  mode 5: kᵣ = 1.044468 - 1.6e-5im rad/m, v = 1495.60 m/s, vₚ = 1503.92 m/s
+  mode 6: kᵣ = 1.043263 - 2.2e-5im rad/m, v = 1493.65 m/s, vₚ = 1505.66 m/s
+  mode 7: kᵣ = 1.041837 - 3.1e-5im rad/m, v = 1491.37 m/s, vₚ = 1507.72 m/s</code></pre>
 </div>
 </div>
 <div id="16" class="cell" data-execution_count="1">

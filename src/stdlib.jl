@@ -92,7 +92,7 @@ end
 """
 Rigid boundary condition.
 """
-const RigidBoundary = FluidBoundary(0.0, Inf, 0.0)
+const RigidBoundary = FluidBoundary(Inf, Inf, 0.0)
 
 """
 Pressure-release boundary condition.

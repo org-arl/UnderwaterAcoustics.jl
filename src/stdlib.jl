@@ -3,14 +3,18 @@ import SignalAnalysis: RedGaussian, signal, db2amp
 import Interpolations: interpolate, extrapolate, Gridded, Flat, Throw, Interpolations
 import Interpolations: linear_interpolation, cubic_spline_interpolation
 
-export FluidBoundary, RigidBoundary, PressureReleaseBoundary
+export FluidBoundary, RigidBoundary, PressureReleaseBoundary, MultilayerElasticBoundary
 export Rock, Pebbles, SandyGravel, VeryCoarseSand, MuddySandyGravel, CoarseSand
 export GravellyMuddySand, MediumSand, MuddyGravel, FineSand, MuddySand, VeryFineSand
 export ClayeySand, CoarseSilt, SandySilt, MediumSilt, SandyMud, FineSilt, SandyClay
-export VeryFineSilt, SiltyClay, Clay, MultilayerElasticBoundary, Linear, CubicSpline
+export VeryFineSilt, SiltyClay, Clay, ElasticMuddySandyGravel, ElasticCoarseSand
+export ElasticRock, ElasticPebbles, ElasticSandyGravel, ElasticVeryCoarseSand
+export ElasticGravellyMuddySand, ElasticMediumSand, ElasticMuddyGravel
+export ElasticFineSand, ElasticMuddySand, ElasticVeryFineSand, ElasticClayeySand
+export ElasticCoarseSilt, ElasticSandySilt
 export SeaState0, SeaState1, SeaState2, SeaState3, SeaState4, SeaState5
-export SeaState6, SeaState7, SeaState8, SeaState9, WhiteGaussianNoise
-export RedGaussianNoise, WindySurface, SampledField, ElasticBoundary
+export SeaState6, SeaState7, SeaState8, SeaState9, WhiteGaussianNoise, Linear
+export RedGaussianNoise, WindySurface, SampledField, ElasticBoundary, CubicSpline
 
 ################################################################################
 # boundary conditions
@@ -20,6 +24,9 @@ export RedGaussianNoise, WindySurface, SampledField, ElasticBoundary
 
 Create a fluid half-space boundary with density `ρ`, sound speed `c`,
 dimensionless absorption coefficient `δ`, and interfacial roughness `σ`.
+
+The absorption coefficient `δ` may also be specified in dB/m/kHz by attaching
+appropriate units to it (e.g. `13.2u"dB/m/kHz"`).
 
 # Examples
 ```julia-repl
@@ -44,8 +51,8 @@ PressureReleaseBoundary
 julia> FluidBoundary(ρ=1200.0, c=Inf)
 RigidBoundary
 
-julia> FluidBoundary(1.2u"g/cm^3", 1500u"m/s")
-FluidBoundary(ρ=1200.0, c=1500.0)
+julia> FluidBoundary(1.2u"g/cm^3", 1500u"m/s", 13.2u"dB/m/kHz")
+FluidBoundary(ρ=1200.0, c=1500.0, δ=0.362803)
 ```
 """
 struct FluidBoundary{T} <: AbstractAcousticBoundary
@@ -57,6 +64,7 @@ struct FluidBoundary{T} <: AbstractAcousticBoundary
     ρ = in_units(u"kg/m^3", ρ)
     c = in_units(u"m/s", c)
     σ = in_units(u"m", σ)
+    δ = _dac(c, δ)
     isinf(c) && return new{typeof(c)}(zero(c), c, zero(c), zero(c))
     ρ, c, δ, σ = float.(promote(ρ, c, δ, σ))
     new{typeof(ρ)}(ρ, c, δ, σ)
@@ -143,6 +151,9 @@ An `ElasticBoundary` may also be constructed from a `b::FluidBoundary` by adding
 shear wave speed `cₛ` and shear absorption coefficient `δₛ`. If `cₛ` is not
 specified, it is computed using `shearspeed(b.cₚ)`.
 
+Absorption coefficients `δₚ` and `δₛ` may also be specified in dB/m/kHz by
+attaching appropriate units to them (e.g. `13.2u"dB/m/kHz"`).
+
 # Examples
 ```julia-repl
 julia> ElasticBoundary(1200, 1500, 500)
@@ -169,8 +180,8 @@ ElasticBoundary(ρ=1200.0, cₚ=1500.0, cₛ=500.0)
 julia> ElasticBoundary(FineSand)
 ElasticBoundary(ρ=1484.373, cₚ=1691.954, cₛ=414.413, δₚ=0.01602)
 
-julia> ElasticBoundary(FineSand, 0.1)
-ElasticBoundary(ρ=1484.373, cₚ=1691.954, cₛ=414.413, δₚ=0.01602, δₛ=0.1)
+julia> ElasticBoundary(FineSand, 4.3u"dB/m/kHz")
+ElasticBoundary(ρ=1484.37, cₚ=1691.95, cₛ=414.4113571750004, δₚ=0.01602, δₛ=0.03265)
 
 julia> ElasticBoundary(FineSand, 500, 0.1)
 ElasticBoundary(ρ=1484.373, cₚ=1691.954, cₛ=500.0, δₚ=0.01602, δₛ=0.1)
@@ -188,6 +199,8 @@ struct ElasticBoundary{T} <: AbstractAcousticBoundary
     cₚ = in_units(u"m/s", cₚ)
     cₛ = in_units(u"m/s", cₛ)
     σ = in_units(u"m", σ)
+    δₚ = _dac(cₚ, δₚ)
+    δₛ = _dac(cₛ, δₛ)
     ρ, cₚ, cₛ, δₚ, δₛ, σ = float.(promote(ρ, cₚ, cₛ, δₚ, δₛ, σ))
     new{typeof(ρ)}(ρ, cₚ, cₛ, δₚ, δₛ, σ)
   end
@@ -218,6 +231,24 @@ function reflection_coef(bc::ElasticBoundary, frequency, θ, ρ, c)
   reflection_coef(θ, bc.ρ / ρ, bc.cₚ / c, bc.cₛ / c, bc.δₚ, bc.δₛ)
 end
 
+# elastic versions of seabeds from APL-UW TR 9407 (1994), IV-6 Table 2
+# shear absorption based on values recommended in Hamilton (1980)
+const ElasticRock = ElasticBoundary(Rock, 0.07u"dB/m/kHz")                          # basalt
+const ElasticPebbles = ElasticBoundary(Pebbles, 0.07u"dB/m/kHz")                    # basalt
+const ElasticSandyGravel = ElasticBoundary(SandyGravel, 13.2u"dB/m/kHz")            # diluvial sand
+const ElasticVeryCoarseSand = ElasticBoundary(VeryCoarseSand, 13.2u"dB/m/kHz")      # diluvial sand
+const ElasticMuddySandyGravel = ElasticBoundary(MuddySandyGravel, 4.8u"dB/m/kHz")   # diluvial sand & clay
+const ElasticCoarseSand = ElasticBoundary(CoarseSand, 13.2u"dB/m/kHz")              # diluvial sand
+const ElasticGravellyMuddySand = ElasticBoundary(GravellyMuddySand, 4.8u"dB/m/kHz") # diluvial sand & clay
+const ElasticMediumSand = ElasticBoundary(MediumSand, 13.2u"dB/m/kHz")              # diluvial sand
+const ElasticMuddyGravel = ElasticBoundary(MuddyGravel, 4.8u"dB/m/kHz")             # diluvial sand & clay
+const ElasticFineSand = ElasticBoundary(FineSand, 13.2u"dB/m/kHz")                  # diluvial sand
+const ElasticMuddySand = ElasticBoundary(MuddySand, 4.8u"dB/m/kHz")                 # diluvial sand & clay
+const ElasticVeryFineSand = ElasticBoundary(VeryFineSand, 13.2u"dB/m/kHz")          # diluvial sand
+const ElasticClayeySand = ElasticBoundary(ClayeySand, 4.8u"dB/m/kHz")               # diluvial sand & clay
+const ElasticCoarseSilt = ElasticBoundary(CoarseSilt, 13.4u"dB/m/kHz")              # alluvial silt
+const ElasticSandySilt = ElasticBoundary(SandySilt, 13.4u"dB/m/kHz")                # alluvial silt
+
 """
     MultilayerElasticBoundary([(h, ρ, cₚ, cₛ), ...])
     MultilayerElasticBoundary([(h, ρ, cₚ, cₛ, δₚ, δₛ), ...])
@@ -240,6 +271,9 @@ the top of the layer and the second entry being the value at the bottom.
 
 The properties of a layer may be specified by giving a `FluidBoundary` or
 `ElasticBoundary` layer instead of `ρ`, `cₚ`, `cₛ`, `δₚ`, `δₛ` and `σ`.
+
+Absorption coefficients `δₚ` and `δₛ` may also be specified in dB/m/kHz by
+attaching appropriate units to them (e.g. `13.2u"dB/m/kHz"`).
 
 # Examples
 ```julia-repl
@@ -284,11 +318,11 @@ MultilayerElasticBoundary(2 layers):
   (h = Inf, ρ = 2000.0, cₚ = 2500.0, cₛ = 500.0, δₚ = 0.0, δₛ = 0.0, σ = 0.0)
 
 julia> MultilayerElasticBoundary([
-         (5.2u"m", 1.3u"g/cm^3", 1700u"m/s", 100u"m/s", 0.1, 0.2),
+         (5.2u"m", 1.3u"g/cm^3", 1700u"m/s", 100u"m/s", 1.2u"dB/m/kHz", 2.3u"dB/m/kHz"),
          (Inf, 2u"g/cm^3", 2500u"m/s", 500u"m/s")
        ])
 MultilayerElasticBoundary(2 layers):
-  (h = 5.2, ρ = 1300.0, cₚ = 1700.0, cₛ = 100.0, δₚ = 0.1, δₛ = 0.2, σ = 0.0)
+  (h = 5.2, ρ = 1300.0, cₚ = 1700.0, cₛ = 100.0, δₚ = 0.03738, δₛ = 0.00421, σ = 0.0)
   (h = Inf, ρ = 2000.0, cₚ = 2500.0, cₛ = 500.0, δₚ = 0.0, δₛ = 0.0, σ = 0.0)
 ```
 """
@@ -313,9 +347,10 @@ struct MultilayerElasticBoundary{T} <: AbstractAcousticBoundary
         length(l) == 6 && keys(l) != (:h, :ρ, :cₚ, :cₛ, :δₚ, :δₛ) && error("Invalid named tuple definition")
         length(l) == 7 && keys(l) != (:h, :ρ, :cₚ, :cₛ, :δₚ, :δₛ, :σ) && error("Invalid named tuple definition")
       end
+      cₚ = in_units.(u"m/s", l[3])
+      cₛ = in_units.(u"m/s", l[4])
       l = (float(in_units(u"m", l[1])), in_units.(u"kg/m^3", l[2]),
-           in_units.(u"m/s", l[3]), in_units.(u"m/s", l[4]),
-           length(l) > 4 ? l[5] : 0, length(l) > 5 ? l[6] : 0,
+           cₚ, cₛ, length(l) > 4 ? _dac(cₚ, l[5]) : 0, length(l) > 5 ? _dac(cₛ, l[6]) : 0,
            length(l) > 6 ? l[7] : 0)
       T = promote_type(map(typeof, Iterators.flatten(l))...)
       l = map(l1 -> T.(l1), l)

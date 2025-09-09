@@ -81,7 +81,7 @@ const SeaState8    = WindySurface(30.6)
 const SeaState9    = WindySurface(32.9)
 ```
 ```julia
-# seabed boundary conditions
+# seabed fluid boundary conditions
 const Rock              = FluidBoundary(2557.50, 3820.00, 0.01374)
 const Pebbles           = FluidBoundary(2557.50, 2750.40, 0.01374)
 const SandyGravel       = FluidBoundary(2549.32, 2073.50, 0.01705)
@@ -104,6 +104,24 @@ const SandyClay         = FluidBoundary(1173.38, 1504.93, 0.00242)
 const VeryFineSilt      = FluidBoundary(1173.38, 1503.09, 0.00194)
 const SiltyClay         = FluidBoundary(1172.36, 1501.11, 0.00163)
 const Clay              = FluidBoundary(1171.34, 1497.44, 0.00148)
+```
+```julia
+# seabed elastic boundary conditions
+const ElasticRock              = ElasticBoundary(Rock, 0.07u"dB/m/kHz")
+const ElasticPebbles           = ElasticBoundary(Pebbles, 0.07u"dB/m/kHz")
+const ElasticSandyGravel       = ElasticBoundary(SandyGravel, 13.2u"dB/m/kHz")
+const ElasticVeryCoarseSand    = ElasticBoundary(VeryCoarseSand, 13.2u"dB/m/kHz")
+const ElasticMuddySandyGravel  = ElasticBoundary(MuddySandyGravel, 4.8u"dB/m/kHz")
+const ElasticCoarseSand        = ElasticBoundary(CoarseSand, 13.2u"dB/m/kHz")
+const ElasticGravellyMuddySand = ElasticBoundary(GravellyMuddySand, 4.8u"dB/m/kHz")
+const ElasticMediumSand        = ElasticBoundary(MediumSand, 13.2u"dB/m/kHz")
+const ElasticMuddyGravel       = ElasticBoundary(MuddyGravel, 4.8u"dB/m/kHz")
+const ElasticFineSand          = ElasticBoundary(FineSand, 13.2u"dB/m/kHz")
+const ElasticMuddySand         = ElasticBoundary(MuddySand, 4.8u"dB/m/kHz")
+const ElasticVeryFineSand      = ElasticBoundary(VeryFineSand, 13.2u"dB/m/kHz")
+const ElasticClayeySand        = ElasticBoundary(ClayeySand, 4.8u"dB/m/kHz")
+const ElasticCoarseSilt        = ElasticBoundary(CoarseSilt, 13.4u"dB/m/kHz")
+const ElasticSandySilt         = ElasticBoundary(SandySilt, 13.4u"dB/m/kHz")
 ```
 :::
 

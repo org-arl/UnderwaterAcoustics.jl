@@ -1,4 +1,4 @@
-import Unitful: ustrip, Quantity, Units, @u_str
+import Unitful: ustrip, Quantity, Units, @u_str, uconvert, dimension
 export @u_str, °, XYZ, is_constant, is_range_dependent, value
 
 ################################################################################
@@ -178,4 +178,14 @@ function tmap(f, T::Type, x::AbstractArray)
     y[i] = f(x[i])
   end
   y
+end
+
+################################################################################
+# private utilities
+
+# convert quantity x into dimensionless absorption coefficient
+# c is the wave speed in the medium
+function _dac(c, x)
+  dimension(x) == dimension(u"dB/m/kHz") || return x
+  dBperλ(ustrip(uconvert(u"dB/m/kHz", x)) * c / 1000)
 end

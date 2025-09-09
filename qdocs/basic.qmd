@@ -13,6 +13,7 @@ engine: julia
 import UnderwaterAcoustics
 
 jdoc(UnderwaterAcoustics, :soundspeed)
+jdoc(UnderwaterAcoustics, :shearspeed)
 jdoc(UnderwaterAcoustics, :absorption)
 jdoc(UnderwaterAcoustics, :water_density)
 jdoc(UnderwaterAcoustics, :dBperλ)

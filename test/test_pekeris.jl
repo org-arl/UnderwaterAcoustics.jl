@@ -224,7 +224,7 @@ end
 end
 
 @testitem "pekeris-modes-ir" begin
-  env = @inferred UnderwaterEnvironment(bathymetry=100, seabed=SandyGravel)
+  env = @inferred UnderwaterEnvironment(bathymetry=100, seabed=FluidBoundary(2.492 * 1023, 1.3370 * 1528, 0.01705))
   pm1 = @inferred PekerisModeSolver(env)
   pm2 = @inferred PekerisRayTracer(env; max_bounces=8)
   tx = @inferred AcousticSource(0, -30, 300)

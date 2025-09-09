@@ -741,8 +741,12 @@ FluidBoundary(ρ=1200.0, c=1500.0)</code></pre>
 <div class="callout-body-container">
 <div class="sourceCode" id="cb28"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ElasticBoundary</span>(ρ, cₚ, cₛ)</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ElasticBoundary</span>(ρ, cₚ, cₛ, δₚ, δₛ)</span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ElasticBoundary</span>(ρ, cₚ, cₛ, δₚ, δₛ, σ)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Create a solid half-space boundary with density <code>ρ</code>, compressional sound speed <code>cₚ</code>, shear sound speed <code>cₛ</code>, dimensionless compressional absorption coefficient <code>δₚ</code>, dimensionless shear absorption coefficient <code>δₛ</code>, and interfacial roughness <code>σ</code>. If the absorption coefficients or interfacial roughness are unspecified, they are assumed to be 0.</p>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ElasticBoundary</span>(ρ, cₚ, cₛ, δₚ, δₛ, σ)</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ElasticBoundary</span>(b<span class="op">::</span><span class="dt">FluidBoundary</span>)</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ElasticBoundary</span>(b<span class="op">::</span><span class="dt">FluidBoundary</span>, δₛ)</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="fu">ElasticBoundary</span>(b<span class="op">::</span><span class="dt">FluidBoundary</span>, cₛ, δₛ)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Create a solid half-space boundary with density <code>ρ</code>, compressional sound speed <code>cₚ</code>, shear wave speed <code>cₛ</code>, dimensionless compressional absorption coefficient <code>δₚ</code>, dimensionless shear absorption coefficient <code>δₛ</code>, and interfacial roughness <code>σ</code>. If the absorption coefficients or interfacial roughness are unspecified, they are assumed to be 0.</p>
+<p>An <code>ElasticBoundary</code> may also be constructed from a <code>b::FluidBoundary</code> by adding shear wave speed <code>cₛ</code> and shear absorption coefficient <code>δₛ</code>. If <code>cₛ</code> is not specified, it is computed using <code>shearspeed(b.cₚ)</code>.</p>
 <section id="examples-1" class="level4">
 <h4 class="anchored" data-anchor-id="examples-1">Examples</h4>
 <pre class="julia-repl"><code>julia&gt; ElasticBoundary(1200, 1500, 500)
@@ -764,7 +768,16 @@ julia&gt; ElasticBoundary(ρ=1200, cₚ=1500, cₛ=500, δₚ=0.1, δₛ=0.2, σ
 ElasticBoundary(ρ=1200.0, cₚ=1500.0, cₛ=500.0, δₚ=0.1, δₛ=0.2, σ=0.1)
 
 julia&gt; ElasticBoundary(1.2u"g/cm^3", 1500u"m/s", 500u"m/s")
-ElasticBoundary(ρ=1200.0, cₚ=1500.0, cₛ=500.0)</code></pre>
+ElasticBoundary(ρ=1200.0, cₚ=1500.0, cₛ=500.0)
+
+julia&gt; ElasticBoundary(FineSand)
+ElasticBoundary(ρ=1484.373, cₚ=1691.954, cₛ=414.413, δₚ=0.01602)
+
+julia&gt; ElasticBoundary(FineSand, 0.1)
+ElasticBoundary(ρ=1484.373, cₚ=1691.954, cₛ=414.413, δₚ=0.01602, δₛ=0.1)
+
+julia&gt; ElasticBoundary(FineSand, 500, 0.1)
+ElasticBoundary(ρ=1484.373, cₚ=1691.954, cₛ=500.0, δₚ=0.01602, δₛ=0.1)</code></pre>
 </section>
 </div>
 </div>
@@ -777,12 +790,23 @@ ElasticBoundary(ρ=1200.0, cₚ=1500.0, cₛ=500.0)</code></pre>
 <div class="callout-body-container">
 <div class="sourceCode" id="cb30"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">MultilayerElasticBoundary</span>([(h, ρ, cₚ, cₛ), <span class="op">...</span>])</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="fu">MultilayerElasticBoundary</span>([(h, ρ, cₚ, cₛ, δₚ, δₛ), <span class="op">...</span>])</span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="fu">MultilayerElasticBoundary</span>([(h, ρ, cₚ, cₛ, δₚ, δₛ, σ), <span class="op">...</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Create a multilayer solid boundary with layers defined by a vector of tuples specifying the layer thickness <code>h</code>, density <code>ρ</code>, compressional sound speed <code>cₚ</code>, shear sound speed <code>cₛ</code>, dimensionless compressional absorption coefficient <code>δₚ</code>, dimensionless shear absorption coefficient <code>δₛ</code>, and interfacial roughness <code>σ</code> for each layer. If the absorption coefficients or interfacial roughness is unspecified, they are assumed to be 0. The last entry in the vector is considered the bottom half-space and has an infinite thickness. By convention, we specify a value of <code>Inf</code> for <code>h</code> for that layer.</p>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="fu">MultilayerElasticBoundary</span>([(h, ρ, cₚ, cₛ, δₚ, δₛ, σ), <span class="op">...</span>])</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="fu">MultilayerElasticBoundary</span>([(h, b<span class="op">::</span><span class="dt">FluidBoundary</span>), <span class="op">...</span>])</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="fu">MultilayerElasticBoundary</span>([(h, b<span class="op">::</span><span class="dt">ElasticBoundary</span>), <span class="op">...</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Create a multilayer solid boundary with layers defined by a vector of tuples specifying the layer thickness <code>h</code>, density <code>ρ</code>, compressional sound speed <code>cₚ</code>, shear wave speed <code>cₛ</code>, dimensionless compressional absorption coefficient <code>δₚ</code>, dimensionless shear absorption coefficient <code>δₛ</code>, and interfacial roughness <code>σ</code> for each layer. If the absorption coefficients or interfacial roughness is unspecified, they are assumed to be 0. The last entry in the vector is considered the bottom half-space and has an infinite thickness. By convention, we specify a value of <code>Inf</code> for <code>h</code> for that layer.</p>
 <p><code>ρ</code>, <code>cₚ</code>, and <code>cₛ</code> may also be specified with linear variation within a layer by specifying the value as a 2-tuple, with the first entry being the value at the top of the layer and the second entry being the value at the bottom.</p>
+<p>The properties of a layer may be specified by giving a <code>FluidBoundary</code> or <code>ElasticBoundary</code> layer instead of <code>ρ</code>, <code>cₚ</code>, <code>cₛ</code>, <code>δₚ</code>, <code>δₛ</code> and <code>σ</code>.</p>
 <section id="examples-2" class="level4">
 <h4 class="anchored" data-anchor-id="examples-2">Examples</h4>
 <pre class="julia-repl"><code>julia&gt; MultilayerElasticBoundary([
+         (h = 5.2, FineSand),
+         (h = Inf, ρ = 2000, cₚ = 2500, cₛ = 500)
+       ])
+MultilayerElasticBoundary(2 layers):
+  (h = 5.2, ρ = 1484.373, cₚ = 1691.954, cₛ = 0.0, δₚ = 0.01602, δₛ = 0.0, σ = 0.0)
+  (h = Inf, ρ = 2000.0, cₚ = 2500.0, cₛ = 500.0, δₚ = 0.0, δₛ = 0.0, σ = 0.0)
+
+julia&gt; MultilayerElasticBoundary([
          (5.2, 1300, 1700, 100),
          (Inf, 2000, 2500, 500, 0.1, 0.2)
        ])
@@ -855,21 +879,28 @@ MultilayerElasticBoundary(2 layers):
 <span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState8    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">30.6</span>)</span>
 <span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState9    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">32.9</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="sourceCode" id="cb34"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># seabed boundary conditions</span></span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Rock         <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2557.5</span>, <span class="fl">3820.0</span>, <span class="fl">0.01374</span>)</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Pebbles      <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2557.5</span>, <span class="fl">2750.4</span>, <span class="fl">0.01374</span>)</span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SandyGravel  <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2547.8</span>, <span class="fl">2041.6</span>, <span class="fl">0.01705</span>)</span>
-<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> CoarseSand   <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2282.3</span>, <span class="fl">1911.1</span>, <span class="fl">0.01638</span>)</span>
-<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> MediumSand   <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1886.8</span>, <span class="fl">1799.5</span>, <span class="fl">0.01624</span>)</span>
-<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> FineSand     <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1483.5</span>, <span class="fl">1690.7</span>, <span class="fl">0.01602</span>)</span>
-<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> VeryFineSand <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1297.8</span>, <span class="fl">1613.4</span>, <span class="fl">0.01875</span>)</span>
-<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ClayeySand   <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1251.0</span>, <span class="fl">1581.3</span>, <span class="fl">0.02019</span>)</span>
-<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> CoarseSilt   <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1222.1</span>, <span class="fl">1553.3</span>, <span class="fl">0.02158</span>)</span>
-<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SandySilt    <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1195.0</span>, <span class="fl">1525.9</span>, <span class="fl">0.01261</span>)</span>
-<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Silt         <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1175.1</span>, <span class="fl">1508.1</span>, <span class="fl">0.00386</span>)</span>
-<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> FineSilt     <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1173.8</span>, <span class="fl">1506.3</span>, <span class="fl">0.00306</span>)</span>
-<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SandyClay    <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1172.5</span>, <span class="fl">1504.6</span>, <span class="fl">0.00242</span>)</span>
-<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SiltyClay    <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1171.2</span>, <span class="fl">1501.7</span>, <span class="fl">0.00163</span>)</span>
-<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Clay         <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1169.8</span>, <span class="fl">1498.4</span>, <span class="fl">0.00148</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Rock              <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2557.50</span>, <span class="fl">3820.00</span>, <span class="fl">0.01374</span>)</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Pebbles           <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2557.50</span>, <span class="fl">2750.40</span>, <span class="fl">0.01374</span>)</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SandyGravel       <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2549.32</span>, <span class="fl">2073.50</span>, <span class="fl">0.01705</span>)</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> VeryCoarseSand    <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2455.20</span>, <span class="fl">1996.64</span>, <span class="fl">0.01667</span>)</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> MuddySandyGravel  <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2367.22</span>, <span class="fl">1952.48</span>, <span class="fl">0.0163</span>)</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> CoarseSand        <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2282.31</span>, <span class="fl">1910.46</span>, <span class="fl">0.01638</span>)</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> GravellyMuddySand <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2200.47</span>, <span class="fl">1870.42</span>, <span class="fl">0.01645</span>)</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> MediumSand        <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1887.44</span>, <span class="fl">1800.29</span>, <span class="fl">0.01624</span>)</span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> MuddyGravel       <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1652.15</span>, <span class="fl">1741.31</span>, <span class="fl">0.0161</span>)</span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> FineSand          <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1484.37</span>, <span class="fl">1691.95</span>, <span class="fl">0.01602</span>)</span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> MuddySand         <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1369.80</span>, <span class="fl">1650.24</span>, <span class="fl">0.01728</span>)</span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> VeryFineSand      <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1297.16</span>, <span class="fl">1614.79</span>, <span class="fl">0.01875</span>)</span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ClayeySand        <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1252.15</span>, <span class="fl">1583.62</span>, <span class="fl">0.02019</span>)</span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> CoarseSilt        <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1222.49</span>, <span class="fl">1555.35</span>, <span class="fl">0.02158</span>)</span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SandySilt         <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1195.89</span>, <span class="fl">1527.85</span>, <span class="fl">0.01261</span>)</span>
+<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> MediumSilt        <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1175.43</span>, <span class="fl">1510.43</span>, <span class="fl">0.00676</span>)</span>
+<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SandyMud          <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1175.43</span>, <span class="fl">1508.59</span>, <span class="fl">0.00386</span>)</span>
+<span id="cb34-19"><a href="#cb34-19" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> FineSilt          <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1174.40</span>, <span class="fl">1506.76</span>, <span class="fl">0.00306</span>)</span>
+<span id="cb34-20"><a href="#cb34-20" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SandyClay         <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1173.38</span>, <span class="fl">1504.93</span>, <span class="fl">0.00242</span>)</span>
+<span id="cb34-21"><a href="#cb34-21" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> VeryFineSilt      <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1173.38</span>, <span class="fl">1503.09</span>, <span class="fl">0.00194</span>)</span>
+<span id="cb34-22"><a href="#cb34-22" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SiltyClay         <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1172.36</span>, <span class="fl">1501.11</span>, <span class="fl">0.00163</span>)</span>
+<span id="cb34-23"><a href="#cb34-23" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Clay              <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1171.34</span>, <span class="fl">1497.44</span>, <span class="fl">0.00148</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </div>
 </div>

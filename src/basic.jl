@@ -148,7 +148,7 @@ Compute complex reflection coefficient at a fluid-solid boundary, given:
 - angle of incidence `θ` (angle to the surface normal)
 - relative density of the reflecting medium to incidence medium `ρᵣ`
 - relative compressional sound speed of the reflecting medium to incidence medium `cᵣ`
-- relative shear sound speed of the reflecting medium to incidence medium `cᵣₛ`
+- relative shear wave speed of the reflecting medium to incidence medium `cᵣₛ`
 - dimensionless compressional absorption coefficient `δ`
 - dimensionless shear absorption coefficient `δₛ`
 

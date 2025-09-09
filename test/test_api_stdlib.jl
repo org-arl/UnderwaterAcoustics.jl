@@ -163,6 +163,7 @@ end
   @test bc == FluidBoundary(1.2u"g/cm^3", 1500u"m/s")
   @test FluidBoundary(1200, 1500, 0.1) == FluidBoundary(ρ=1200, c=1500, δ=0.1)
   @test FluidBoundary(1200, 1500, 0.1, 0.2) == FluidBoundary(ρ=1200, c=1500, δ=0.1, σ=0.2)
+  @test FluidBoundary(1200, 1500, 1.2u"dB/m/kHz").δ ≈ 0.03298 atol=1e-5
   @test PressureReleaseBoundary isa FluidBoundary
   @test RigidBoundary isa FluidBoundary
   @test sprint(show, PressureReleaseBoundary) == "PressureReleaseBoundary"
@@ -185,9 +186,17 @@ end
   @test ElasticBoundary(FluidBoundary(1200, 1560, 0.1, 0.2)) == ElasticBoundary(ρ=1200, cₚ=1560, cₛ=288.72, δₚ=0.1, σ=0.2)
   @test ElasticBoundary(FluidBoundary(1200, 1560, 0.1, 0.2), 0.3) == ElasticBoundary(ρ=1200, cₚ=1560, cₛ=288.72, δₚ=0.1, δₛ=0.3, σ=0.2)
   @test ElasticBoundary(FluidBoundary(1200, 1560, 0.1, 0.2), 500, 0.3) == ElasticBoundary(ρ=1200, cₚ=1560, cₛ=500, δₚ=0.1, δₛ=0.3, σ=0.2)
+  bc1 = ElasticBoundary(1.3u"g/cm^3", 1700u"m/s", 100u"m/s", 1.2u"dB/m/kHz", 2.3u"dB/m/kHz")
+  @test bc1.δₚ ≈ 0.03738 atol=1e-5
+  @test bc1.δₛ ≈ 0.00421 atol=1e-5
   rc1a = @inferred reflection_coef(bc, 1000.0, 0.1, 1023.0, 1540.0)
   rc2a = @inferred reflection_coef(0.1, bc.ρ/1023.0, bc.cₚ/1540.0, bc.δₚ)
   @test rc1a == rc2a
+  for sb ∈ (ElasticMuddySandyGravel, ElasticCoarseSand, ElasticRock, ElasticPebbles, ElasticSandyGravel, ElasticVeryCoarseSand,
+            ElasticGravellyMuddySand, ElasticMediumSand, ElasticMuddyGravel, ElasticFineSand, ElasticMuddySand, ElasticVeryFineSand,
+            ElasticClayeySand, ElasticCoarseSilt, ElasticSandySilt)
+    @test sb isa ElasticBoundary
+  end
   @test MultilayerElasticBoundary <: UnderwaterAcoustics.AbstractAcousticBoundary
   bc = MultilayerElasticBoundary([
     (5.2, 1300, 1700, 100, 0.1, 0.2, 0.3),
@@ -215,6 +224,11 @@ end
   @test length(bc1.layers) == 2
   @test bc1.layers[1] == (h=40, ρ=FineSand.ρ, cₚ=FineSand.c, cₛ=0.0, δₚ=FineSand.δ, δₛ=0.0, σ=FineSand.σ)
   @test bc1.layers[2] == (h=Inf, ρ=erock.ρ, cₚ=erock.cₚ, cₛ=erock.cₛ, δₚ=erock.δₚ, δₛ=erock.δₛ, σ=erock.σ)
+  bc1 = MultilayerElasticBoundary([
+    (Inf, 1.3u"g/cm^3", 1700u"m/s", 100u"m/s", 1.2u"dB/m/kHz", 2.3u"dB/m/kHz")
+  ])
+  @test bc1.layers[1].δₚ ≈ 0.03738 atol=1e-5
+  @test bc1.layers[1].δₛ ≈ 0.00421 atol=1e-5
   rc1a = @inferred reflection_coef(bc, 1000.0, 0.1, 1023.0, 1540.0)
   rc2a = @inferred reflection_coef(0.1, bc.layers[1].ρ/1023.0, bc.layers[1].cₚ/1540.0, bc.layers[1].δₚ)
   @test rc1a == rc2a

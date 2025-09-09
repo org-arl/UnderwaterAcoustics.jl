@@ -335,7 +335,7 @@ function impulse_response(pm::AbstractModePropagationModel,
   end
   nmodes = something(nmodes, max_modes)
   nmodes = min(nmodes, max_modes, length(arr))
-  mintaps = ceil(Int, (R / arr[nmodes].v - R / arr[1].v) * fs)
+  mintaps = ceil(Int, (R / arr[nmodes].v - R / arr[1].v) * fs) + 1
   N = nextfastfft(round(Int, (1 + 2 * taper) * mintaps))
   Δf = fs / N
   f = (0:N-1) .* Δf

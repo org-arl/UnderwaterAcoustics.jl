@@ -3,13 +3,14 @@ import SignalAnalysis: RedGaussian, signal, db2amp
 import Interpolations: interpolate, extrapolate, Gridded, Flat, Throw, Interpolations
 import Interpolations: linear_interpolation, cubic_spline_interpolation
 
-export FluidBoundary, RigidBoundary, PressureReleaseBoundary, Rock, Pebbles
-export SandyGravel, CoarseSand, MediumSand, FineSand, VeryFineSand, ClayeySand
-export CoarseSilt, SandySilt, Silt, FineSilt, SandyClay, SiltyClay, Clay
+export FluidBoundary, RigidBoundary, PressureReleaseBoundary
+export Rock, Pebbles, SandyGravel, VeryCoarseSand, MuddySandyGravel, CoarseSand
+export GravellyMuddySand, MediumSand, MuddyGravel, FineSand, MuddySand, VeryFineSand
+export ClayeySand, CoarseSilt, SandySilt, MediumSilt, SandyMud, FineSilt, SandyClay
+export VeryFineSilt, SiltyClay, Clay, MultilayerElasticBoundary, Linear, CubicSpline
 export SeaState0, SeaState1, SeaState2, SeaState3, SeaState4, SeaState5
 export SeaState6, SeaState7, SeaState8, SeaState9, WhiteGaussianNoise
 export RedGaussianNoise, WindySurface, SampledField, ElasticBoundary
-export MultilayerElasticBoundary, Linear, CubicSpline
 
 ################################################################################
 # boundary conditions
@@ -100,32 +101,47 @@ Pressure-release boundary condition.
 const PressureReleaseBoundary = FluidBoundary(0.0, 0.0, 0.0)
 
 # seabeds from APL-UW TR 9407 (1994), IV-6 Table 2
-const Rock = FluidBoundary(2.5 * 1023, 2.5 * 1528, 0.01374)
-const Pebbles = FluidBoundary(2.5 * 1023, 1.8 * 1528, 0.01374)
-const SandyGravel = FluidBoundary(2.492 * 1023, 1.3370 * 1528, 0.01705)
-const CoarseSand = FluidBoundary(2.231 * 1023, 1.2503 * 1528, 0.01638)
-const MediumSand = FluidBoundary(1.845 * 1023, 1.1782 * 1528, 0.01624)
-const FineSand = FluidBoundary(1.451 * 1023, 1.1073 * 1528, 0.01602)
-const VeryFineSand = FluidBoundary(1.268 * 1023, 1.0568 * 1528, 0.01875)
-const ClayeySand = FluidBoundary(1.224 * 1023, 1.0364 * 1528, 0.02019)
-const CoarseSilt = FluidBoundary(1.195 * 1023, 1.0179 * 1528, 0.02158)
-const SandySilt = FluidBoundary(1.169 * 1023, 0.9999 * 1528, 0.01261)
-const Silt = FluidBoundary(1.149 * 1023, 0.9873 * 1528, 0.00386)
-const FineSilt = FluidBoundary(1.148 * 1023, 0.9861 * 1528, 0.00306)
-const SandyClay = FluidBoundary(1.147 * 1023, 0.9849 * 1528, 0.00242)
-const SiltyClay = FluidBoundary(1.146 * 1023, 0.9824 * 1528, 0.00163)
-const Clay = FluidBoundary(1.145 * 1023, 0.98 * 1528, 0.00148)
+# ratios evaluated wrt reference ρ=1023, c=1528
+const Rock              = FluidBoundary(2557.50, 3820.00, 0.01374)
+const Pebbles           = FluidBoundary(2557.50, 2750.40, 0.01374)
+const SandyGravel       = FluidBoundary(2549.32, 2073.50, 0.01705)
+const VeryCoarseSand    = FluidBoundary(2455.20, 1996.64, 0.01667)
+const MuddySandyGravel  = FluidBoundary(2367.22, 1952.48, 0.0163)
+const CoarseSand        = FluidBoundary(2282.31, 1910.46, 0.01638)
+const GravellyMuddySand = FluidBoundary(2200.47, 1870.42, 0.01645)
+const MediumSand        = FluidBoundary(1887.44, 1800.29, 0.01624)
+const MuddyGravel       = FluidBoundary(1652.15, 1741.31, 0.0161)
+const FineSand          = FluidBoundary(1484.37, 1691.95, 0.01602)
+const MuddySand         = FluidBoundary(1369.80, 1650.24, 0.01728)
+const VeryFineSand      = FluidBoundary(1297.16, 1614.79, 0.01875)
+const ClayeySand        = FluidBoundary(1252.15, 1583.62, 0.02019)
+const CoarseSilt        = FluidBoundary(1222.49, 1555.35, 0.02158)
+const SandySilt         = FluidBoundary(1195.89, 1527.85, 0.01261)
+const MediumSilt        = FluidBoundary(1175.43, 1510.43, 0.00676)
+const SandyMud          = FluidBoundary(1175.43, 1508.59, 0.00386)
+const FineSilt          = FluidBoundary(1174.40, 1506.76, 0.00306)
+const SandyClay         = FluidBoundary(1173.38, 1504.93, 0.00242)
+const VeryFineSilt      = FluidBoundary(1173.38, 1503.09, 0.00194)
+const SiltyClay         = FluidBoundary(1172.36, 1501.11, 0.00163)
+const Clay              = FluidBoundary(1171.34, 1497.44, 0.00148)
 
 """
     ElasticBoundary(ρ, cₚ, cₛ)
     ElasticBoundary(ρ, cₚ, cₛ, δₚ, δₛ)
     ElasticBoundary(ρ, cₚ, cₛ, δₚ, δₛ, σ)
+    ElasticBoundary(b::FluidBoundary)
+    ElasticBoundary(b::FluidBoundary, δₛ)
+    ElasticBoundary(b::FluidBoundary, cₛ, δₛ)
 
 Create a solid half-space boundary with density `ρ`, compressional sound
-speed `cₚ`, shear sound speed `cₛ`, dimensionless compressional absorption
+speed `cₚ`, shear wave speed `cₛ`, dimensionless compressional absorption
 coefficient `δₚ`, dimensionless shear absorption coefficient `δₛ`, and
 interfacial roughness `σ`. If the absorption coefficients or interfacial
 roughness are unspecified, they are assumed to be 0.
+
+An `ElasticBoundary` may also be constructed from a `b::FluidBoundary` by adding
+shear wave speed `cₛ` and shear absorption coefficient `δₛ`. If `cₛ` is not
+specified, it is computed using `shearspeed(b.cₚ)`.
 
 # Examples
 ```julia-repl
@@ -149,6 +165,15 @@ ElasticBoundary(ρ=1200.0, cₚ=1500.0, cₛ=500.0, δₚ=0.1, δₛ=0.2, σ=0.1
 
 julia> ElasticBoundary(1.2u"g/cm^3", 1500u"m/s", 500u"m/s")
 ElasticBoundary(ρ=1200.0, cₚ=1500.0, cₛ=500.0)
+
+julia> ElasticBoundary(FineSand)
+ElasticBoundary(ρ=1484.373, cₚ=1691.954, cₛ=414.413, δₚ=0.01602)
+
+julia> ElasticBoundary(FineSand, 0.1)
+ElasticBoundary(ρ=1484.373, cₚ=1691.954, cₛ=414.413, δₚ=0.01602, δₛ=0.1)
+
+julia> ElasticBoundary(FineSand, 500, 0.1)
+ElasticBoundary(ρ=1484.373, cₚ=1691.954, cₛ=500.0, δₚ=0.01602, δₛ=0.1)
 ```
 """
 struct ElasticBoundary{T} <: AbstractAcousticBoundary
@@ -171,6 +196,9 @@ end
 ElasticBoundary(ρ, cₚ, cₛ) = ElasticBoundary(ρ, cₚ, cₛ, 0, 0, 0)
 ElasticBoundary(ρ, cₚ, cₛ, δₚ, δₛ) = ElasticBoundary(ρ, cₚ, cₛ, δₚ, δₛ, 0)
 ElasticBoundary(; ρ, cₚ, cₛ, δₚ=0, δₛ=0, σ=0) = ElasticBoundary(ρ, cₚ, cₛ, δₚ, δₛ, σ)
+ElasticBoundary(b::FluidBoundary) = ElasticBoundary(b.ρ, b.c, shearspeed(b.c), b.δ, 0, b.σ)
+ElasticBoundary(b::FluidBoundary, δₛ) = ElasticBoundary(b.ρ, b.c, shearspeed(b.c), b.δ, δₛ, b.σ)
+ElasticBoundary(b::FluidBoundary, cₛ, δₛ) = ElasticBoundary(b.ρ, b.c, cₛ, b.δ, δₛ, b.σ)
 
 function Base.show(io::IO, b::ElasticBoundary)
   print(io, "ElasticBoundary(ρ=$(b.ρ), cₚ=$(b.cₚ), cₛ=$(b.cₛ)")
@@ -194,10 +222,12 @@ end
     MultilayerElasticBoundary([(h, ρ, cₚ, cₛ), ...])
     MultilayerElasticBoundary([(h, ρ, cₚ, cₛ, δₚ, δₛ), ...])
     MultilayerElasticBoundary([(h, ρ, cₚ, cₛ, δₚ, δₛ, σ), ...])
+    MultilayerElasticBoundary([(h, b::FluidBoundary), ...])
+    MultilayerElasticBoundary([(h, b::ElasticBoundary), ...])
 
 Create a multilayer solid boundary with layers defined by a vector of tuples
 specifying the layer thickness `h`, density `ρ`, compressional sound speed `cₚ`,
-shear sound speed `cₛ`, dimensionless compressional absorption coefficient `δₚ`,
+shear wave speed `cₛ`, dimensionless compressional absorption coefficient `δₚ`,
 dimensionless shear absorption coefficient `δₛ`, and interfacial roughness `σ`
 for each layer. If the absorption coefficients or interfacial roughness is
 unspecified, they are assumed to be 0. The last entry in the vector is
@@ -208,8 +238,19 @@ we specify a value of `Inf` for `h` for that layer.
 by specifying the value as a 2-tuple, with the first entry being the value at
 the top of the layer and the second entry being the value at the bottom.
 
+The properties of a layer may be specified by giving a `FluidBoundary` or
+`ElasticBoundary` layer instead of `ρ`, `cₚ`, `cₛ`, `δₚ`, `δₛ` and `σ`.
+
 # Examples
 ```julia-repl
+julia> MultilayerElasticBoundary([
+         (h = 5.2, FineSand),
+         (h = Inf, ρ = 2000, cₚ = 2500, cₛ = 500)
+       ])
+MultilayerElasticBoundary(2 layers):
+  (h = 5.2, ρ = 1484.373, cₚ = 1691.954, cₛ = 0.0, δₚ = 0.01602, δₛ = 0.0, σ = 0.0)
+  (h = Inf, ρ = 2000.0, cₚ = 2500.0, cₛ = 500.0, δₚ = 0.0, δₛ = 0.0, σ = 0.0)
+
 julia> MultilayerElasticBoundary([
          (5.2, 1300, 1700, 100),
          (Inf, 2000, 2500, 500, 0.1, 0.2)
@@ -256,6 +297,15 @@ struct MultilayerElasticBoundary{T} <: AbstractAcousticBoundary
   function MultilayerElasticBoundary(layers::AbstractVector)
     isempty(layers) && error("No layers specified")
     layers = map(layers) do l
+      if length(l) == 2
+        if l[2] isa FluidBoundary
+          l = (l[1], l[2].ρ, l[2].c, 0, l[2].δ, 0, l[2].σ)
+        elseif l[2] isa ElasticBoundary
+          l = (l[1], l[2].ρ, l[2].cₚ, l[2].cₛ, l[2].δₚ, l[2].δₛ, l[2].σ)
+        else
+          error("Unknown layer type: $(typeof(l[2]))")
+        end
+      end
       4 ≤ length(l) ≤ 7 || error("Each layer should be defined by a tuple with 4-7 numbers")
       if l isa NamedTuple
         length(l) == 4 && keys(l) != (:h, :ρ, :cₚ, :cₛ) && error("Invalid named tuple definition")

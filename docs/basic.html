@@ -397,7 +397,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb2"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">absorption</span>(frequency, distance<span class="op">=</span><span class="fl">1000</span>, salinity<span class="op">=</span><span class="fl">35</span>, temperature<span class="op">=</span><span class="fl">27</span>, depth<span class="op">=</span><span class="fl">0</span>, pH<span class="op">=</span><span class="fl">8.1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">shearspeed</span>(c)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Compute shear wave speed based on compressional wave speed <code>c</code> using a regression relationship from Hamilton (1980).</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<div class="sourceCode" id="cb3"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">absorption</span>(frequency, distance<span class="op">=</span><span class="fl">1000</span>, salinity<span class="op">=</span><span class="fl">35</span>, temperature<span class="op">=</span><span class="fl">27</span>, depth<span class="op">=</span><span class="fl">0</span>, pH<span class="op">=</span><span class="fl">8.1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Compute volume acoustic absorption coefficient in water, given:</p>
 <ul>
 <li><code>frequency</code> in Hz</li>
@@ -423,7 +434,7 @@ julia&gt; α = -20log10(A)
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb4"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">water_density</span>(temperature<span class="op">=</span><span class="fl">27</span>, salinity<span class="op">=</span><span class="fl">35</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">water_density</span>(temperature<span class="op">=</span><span class="fl">27</span>, salinity<span class="op">=</span><span class="fl">35</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Compute density of water (kg/m³), given <code>temperature</code> in °C and <code>salinity</code> in ppt.</p>
 <p>Implementation based on Fofonoff (1985 - IES 80).</p>
 </div>
@@ -435,7 +446,7 @@ julia&gt; α = -20log10(A)
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dBperλ</span>(x)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dBperλ</span>(x)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Compute dimensionless absorption coefficient <code>δ</code> from dB/λ. Implementation based on APL-UW TR 9407 (1994), IV-9 equation (4).</p>
 </div>
 </div>
@@ -446,7 +457,7 @@ julia&gt; α = -20log10(A)
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb6"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">in_dBperλ</span>(δ)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">in_dBperλ</span>(δ)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Compute dB/λ from dimensionless absorption coefficient <code>δ</code>. Implementation based on APL-UW TR 9407 (1994), IV-9 equation (4).</p>
 </div>
 </div>
@@ -457,7 +468,7 @@ julia&gt; α = -20log10(A)
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb7"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">reflection_coef</span>(θ, ρᵣ, cᵣ, δ<span class="op">=</span><span class="fl">0.0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">reflection_coef</span>(θ, ρᵣ, cᵣ, δ<span class="op">=</span><span class="fl">0.0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Compute complex reflection coefficient at a fluid-fluid boundary, given:</p>
 <ul>
 <li>angle of incidence <code>θ</code> (angle to the surface normal)</li>
@@ -475,7 +486,7 @@ julia&gt; α = -20log10(A)
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb8"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">surface_reflection_coef</span>(windspeed, frequency, θ)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">surface_reflection_coef</span>(windspeed, frequency, θ)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Compute surface reflection coefficient, given:</p>
 <ul>
 <li><code>windspeed</code> in m/s</li>
@@ -492,7 +503,7 @@ julia&gt; α = -20log10(A)
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb9"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bubble_resonance</span>(radius, depth<span class="op">=</span><span class="fl">0</span>; γ<span class="op">=</span><span class="fl">1.4</span>, p₀<span class="op">=</span><span class="fl">1.013e5</span>, ρ<span class="op">=</span><span class="fl">1022.72</span>, g<span class="op">=</span><span class="fl">9.80665</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bubble_resonance</span>(radius, depth<span class="op">=</span><span class="fl">0</span>; γ<span class="op">=</span><span class="fl">1.4</span>, p₀<span class="op">=</span><span class="fl">1.013e5</span>, ρ<span class="op">=</span><span class="fl">1022.72</span>, g<span class="op">=</span><span class="fl">9.80665</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Compute resonance frequency of a freely oscillating has bubble in water, given:</p>
 <ul>
 <li>bubble <code>radius</code> in meters</li>
@@ -512,8 +523,8 @@ julia&gt; α = -20log10(A)
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb10"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">doppler</span>(speed, frequency)</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">doppler</span>(speed, frequency, soundspeed)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">doppler</span>(speed, frequency)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">doppler</span>(speed, frequency, soundspeed)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>Compute Doppler frequency, given relative speed between transmitter and receiver in m/s. <code>soundspeed</code> is the nominal sound speed in water.</p>
 </div>
 </div>

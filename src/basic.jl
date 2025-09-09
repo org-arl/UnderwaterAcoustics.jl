@@ -1,6 +1,6 @@
 import DSP: db2amp
 
-export soundspeed, absorption, water_density, doppler, bubble_resonance
+export soundspeed, absorption, water_density, doppler, bubble_resonance, shearspeed
 export reflection_coef, surface_reflection_coef, dBperλ, in_dBperλ
 
 ################################################################################
@@ -32,6 +32,25 @@ function soundspeed(temperature=27.0, salinity=35.0, depth=0.0; γ=0.0, cₐ=340
     c = 1.0/(1.0/c*√((γ*(c/cₐ)^2*m+(1.0-γ)/m)*(γ/m+(1-γ)*m)))
   end
   return c
+end
+
+"""
+    shearspeed(c)
+
+Compute shear wave speed based on compressional wave speed `c` using a regression
+relationship from Hamilton (1980).
+"""
+function shearspeed(c)
+  c < 1512 && error("Regression relationship not valid for c < 1512")
+  if c ≤ 1555
+    3.884 * c - 5757
+  elseif c ≤ 1650
+    1.137 * c - 1485
+  elseif c ≤ 2150
+    991 - 1.136 * c + 0.00047 * c^2
+  else
+    0.78 * c - 962
+  end
 end
 
 """

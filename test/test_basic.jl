@@ -14,6 +14,13 @@ end
   @test @inferred(soundspeed(; γ=1e-5, cₐ=340u"m/s")) ≈ 1402.1 atol=0.1
 end
 
+@testitem "shearspeed" begin
+  @test @inferred(shearspeed(1520)) ≈ 146.68
+  @test @inferred(shearspeed(1560)) ≈ 288.72
+  @test @inferred(shearspeed(2000)) ≈ 599.0
+  @test @inferred(shearspeed(2200)) ≈ 754.0
+end
+
 @testitem "absorption" setup=[BasicSetup] begin
   @test @inferred(in_dB(absorption(10000, 1000.0, 35.0, 15.0))) ≈ -1.0 atol=0.5
   @test @inferred(in_dB(absorption(50000))) ≈ -11.0 atol=0.5

@@ -167,7 +167,8 @@ end
   @test RigidBoundary isa FluidBoundary
   @test sprint(show, PressureReleaseBoundary) == "PressureReleaseBoundary"
   @test sprint(show, RigidBoundary) == "RigidBoundary"
-  for sb ∈ (Rock, Pebbles, SandyGravel, CoarseSand, MediumSand, FineSand, VeryFineSand, ClayeySand, CoarseSilt, SandySilt, Silt, FineSilt, SandyClay, SiltyClay, Clay)
+  for sb ∈ (Rock, Pebbles, SandyGravel, VeryCoarseSand, MuddySandyGravel, CoarseSand, GravellyMuddySand, MediumSand, MuddyGravel, FineSand,
+            MuddySand, VeryFineSand, ClayeySand, CoarseSilt, SandySilt, MediumSilt, SandyMud, FineSilt, SandyClay, VeryFineSilt, SiltyClay, Clay)
     @test sb isa FluidBoundary
     rc1 = @inferred reflection_coef(sb, 1000.0, 0.1, 1023.0, 1540.0)
     rc2 = @inferred reflection_coef(0.1, sb.ρ/1023.0, sb.c/1540.0, sb.δ)
@@ -181,6 +182,9 @@ end
   @test bc == ElasticBoundary(1.2u"g/cm^3", 1500u"m/s", 500u"m/s")
   @test ElasticBoundary(1200, 1500, 500, 0.1, 0.11) == ElasticBoundary(ρ=1200, cₚ=1500, cₛ=500, δₚ=0.1, δₛ=0.11)
   @test ElasticBoundary(1200, 1500, 500, 0.1, 0, 0.2) == ElasticBoundary(ρ=1200, cₚ=1500, cₛ=500, δₚ=0.1, σ=0.2)
+  @test ElasticBoundary(FluidBoundary(1200, 1560, 0.1, 0.2)) == ElasticBoundary(ρ=1200, cₚ=1560, cₛ=288.72, δₚ=0.1, σ=0.2)
+  @test ElasticBoundary(FluidBoundary(1200, 1560, 0.1, 0.2), 0.3) == ElasticBoundary(ρ=1200, cₚ=1560, cₛ=288.72, δₚ=0.1, δₛ=0.3, σ=0.2)
+  @test ElasticBoundary(FluidBoundary(1200, 1560, 0.1, 0.2), 500, 0.3) == ElasticBoundary(ρ=1200, cₚ=1560, cₛ=500, δₚ=0.1, δₛ=0.3, σ=0.2)
   rc1a = @inferred reflection_coef(bc, 1000.0, 0.1, 1023.0, 1540.0)
   rc2a = @inferred reflection_coef(0.1, bc.ρ/1023.0, bc.cₚ/1540.0, bc.δₚ)
   @test rc1a == rc2a
@@ -206,6 +210,11 @@ end
     (5.2u"m", 1.3u"g/cm^3", 1700u"m/s", 100u"m/s", 0.1),
     (Inf, 2u"g/cm^3", 2500u"m/s", 500u"m/s")
   ]).layers
+  erock = @inferred ElasticBoundary(Rock, 0.1)
+  bc1 = MultilayerElasticBoundary([(40, FineSand), (Inf, erock)])
+  @test length(bc1.layers) == 2
+  @test bc1.layers[1] == (h=40, ρ=FineSand.ρ, cₚ=FineSand.c, cₛ=0.0, δₚ=FineSand.δ, δₛ=0.0, σ=FineSand.σ)
+  @test bc1.layers[2] == (h=Inf, ρ=erock.ρ, cₚ=erock.cₚ, cₛ=erock.cₛ, δₚ=erock.δₚ, δₛ=erock.δₛ, σ=erock.σ)
   rc1a = @inferred reflection_coef(bc, 1000.0, 0.1, 1023.0, 1540.0)
   rc2a = @inferred reflection_coef(0.1, bc.layers[1].ρ/1023.0, bc.layers[1].cₚ/1540.0, bc.layers[1].δₚ)
   @test rc1a == rc2a

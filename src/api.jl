@@ -203,10 +203,10 @@ Superclass for all channel models.
 abstract type AbstractChannelModel end
 
 struct SampledPassbandChannel{T1,T2} <: AbstractChannelModel
-  irs::T1       # impulse responses
-  noise::T2     # noise model
-  fs::Float64   # sampling rate
-  t0::Int       # start time
+  irs::T1           # impulse responses
+  noise::T2         # noise model
+  fs::Float64       # sampling rate
+  t0s::Matrix{Int}  # start times
 end
 
 function Base.show(io::IO, ch::SampledPassbandChannel)
@@ -235,12 +235,11 @@ function channel(pm, txs, rxs, fs; noise=nothing, kwargs...)
     samples(impulse_response(pm, tx, rx, fs; abstime=true, kwargs...)) .* db2amp(spl(tx))
     for tx in vec(txs), rx in vec(rxs)
   ]
-  t0 = minimum(findfirst(x -> abs(x) > 0, ch1) for ch1 ∈ ch)
-  t0 === nothing && error("No arrivals found")
-  ch = map(ch1 -> @view(ch1[t0:end]), ch)
-  len = maximum(length.(ch))
-  ch = map(ch1 -> vcat(ch1, zeros(eltype(ch1), len - length(ch1))), ch)
-  SampledPassbandChannel(ch, noise, Float64(fs), t0)
+  t0s = [something(findfirst(x -> abs(x) > 0, ch1), length(ch1)) for ch1 ∈ ch]
+  for i ∈ eachindex(t0s)
+    ch[i] = ch[i][t0s[i]:end]
+  end
+  SampledPassbandChannel(ch, noise, Float64(fs), t0s)
 end
 
 """
@@ -275,15 +274,19 @@ function transmit(ch::SampledPassbandChannel, x; txs=:, rxs=:, abstime=false, no
   all(rx ∈ 1:M for rx ∈ rxs) || error("Invalid receiver indices ($rxs ⊄ 1:$M)")
   nchannels(x) == length(txs) || error("Mismatched number of sources (expected $(length(txs)), actual $(nchannels(x)))")
   # simulate transmission
-  t0 = abstime ? ch.t0 : 1
-  flen = size(ch.irs[1], 1)
+  min_t0 = minimum(ch.t0s[txs,rxs])
+  t0 = abstime ? 1 : min_t0
+  flen = maximum(ir -> size(ir, 1), ch.irs[txs,rxs])
   x̄ = analytic(x)
   x̄ = vcat(x̄, zeros(eltype(x̄), flen - 1, size(x̄,2)))
-  ȳ = zeros(Base.promote_eltype(x̄, ch.irs[1]), size(x̄,1) + t0 - 1, length(rxs))
-  let x̄ = x̄     # avoids boxing of x̄ and resulting type instability
+  ȳ = zeros(Base.promote_eltype(x̄, ch.irs[1]), size(x̄,1) + min_t0 - t0, length(rxs))
+  let x̄ = x̄     # avoid boxing of x̄ and resulting type instability
     Threads.@threads for i ∈ eachindex(rxs)
       for j ∈ eachindex(txs)
-        ȳ[t0:end, i] .+= filt(ch.irs[txs[j], rxs[i]], x̄[:,j])
+        # signal() to dispatch to SignalAnalysis.filt() as DSP.filt() is slow
+        y1 = samples(filt(ch.irs[txs[j], rxs[i]], signal(x̄[:,j], fs)))
+        k = ch.t0s[txs[j], rxs[i]] - t0 + 1
+        ȳ[k:k+length(y1)-1, i] .+= y1
       end
     end
   end

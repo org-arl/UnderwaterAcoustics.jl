@@ -280,11 +280,11 @@ function transmit(ch::SampledPassbandChannel, x; txs=:, rxs=:, abstime=false, no
   x̄ = analytic(x)
   x̄ = vcat(x̄, zeros(eltype(x̄), flen - 1, size(x̄,2)))
   ȳ = zeros(Base.promote_eltype(x̄, ch.irs[1]), size(x̄,1) + max_t0 - t0, length(rxs))
-  let x̄ = x̄     # avoid boxing of x̄ and resulting type instability
+  let x̄ = signal(x̄, fs)     # avoid boxing of x̄ and resulting type instability
     Threads.@threads for i ∈ eachindex(rxs)
       for j ∈ eachindex(txs)
         # signal() to dispatch to SignalAnalysis.filt() as DSP.filt() is slow
-        y1 = samples(filt(ch.irs[txs[j], rxs[i]], signal(x̄[:,j], fs)))
+        y1 = samples(filt(ch.irs[txs[j], rxs[i]], @view x̄[:,j]))
         k = ch.t0s[txs[j], rxs[i]] - t0 + 1
         ȳ[k:k+length(y1)-1, i] .+= y1
       end

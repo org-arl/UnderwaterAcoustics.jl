@@ -274,12 +274,12 @@ function transmit(ch::SampledPassbandChannel, x; txs=:, rxs=:, abstime=false, no
   all(rx ∈ 1:M for rx ∈ rxs) || error("Invalid receiver indices ($rxs ⊄ 1:$M)")
   nchannels(x) == length(txs) || error("Mismatched number of sources (expected $(length(txs)), actual $(nchannels(x)))")
   # simulate transmission
-  min_t0 = minimum(ch.t0s[txs,rxs])
+  min_t0, max_t0 = extrema(ch.t0s[txs,rxs])
   t0 = abstime ? 1 : min_t0
   flen = maximum(ir -> size(ir, 1), ch.irs[txs,rxs])
   x̄ = analytic(x)
   x̄ = vcat(x̄, zeros(eltype(x̄), flen - 1, size(x̄,2)))
-  ȳ = zeros(Base.promote_eltype(x̄, ch.irs[1]), size(x̄,1) + min_t0 - t0, length(rxs))
+  ȳ = zeros(Base.promote_eltype(x̄, ch.irs[1]), size(x̄,1) + max_t0 - t0, length(rxs))
   let x̄ = x̄     # avoid boxing of x̄ and resulting type instability
     Threads.@threads for i ∈ eachindex(rxs)
       for j ∈ eachindex(txs)

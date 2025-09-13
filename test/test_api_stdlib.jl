@@ -51,6 +51,7 @@ end
   @test startswith(sprint(show, ch), "SampledPassbandChannel")
   @test ch.fs == 192000
   @test ch.noise === nothing
+  @test size(ch.irs) == size(ch.t0s)
   x = vcat(1.0, 0.5, zeros(98))
   y1 = @inferred transmit(ch, x)
   @test length(y1) ≥ length(x)
@@ -59,6 +60,14 @@ end
   y1[1:3] .= 0
   y1[129:131] .= 0
   @test all(abs.(y1) .< 1)
+  y2 = @inferred transmit(ch, x; abstime=true)
+  @test length(y2) ≥ length(y1)
+  y2 = y2[12816:end]
+  @test all(y2[1:3] .> 1)
+  @test all(y2[129:131] .< -1)
+  y2[1:3] .= 0
+  y2[129:131] .= 0
+  @test all(abs.(y2) .< 1)
   ch = @inferred channel(pm, tx, rx, 192000; noise=RedGaussianNoise(0.5e6))
   @test ch isa UnderwaterAcoustics.SampledPassbandChannel
   @test ch.fs == 192000

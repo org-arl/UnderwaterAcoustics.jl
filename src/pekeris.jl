@@ -299,7 +299,8 @@ Several `kwargs` may be specified:
   recommended that the impulse response bandwidth be reduced to match the signal
   bandwidth to reduce computational load and improve numerical stability.
 - `nmodes` (default: `nothing` for no limit) is the maximum of modes used in
-  impulse response computation.
+  estimating the duration of the impulse response. Reducing the number of modes
+  reduces the duration of the impulse response, but may cause aliasing.
 - `threshold` (default: `-60` dB) is used to drop attenuated modes to manage
   computational load.
 - `acausal` (default: `0.02` s) controls the computation of acausal impulse

@@ -45,10 +45,10 @@ FluidBoundary(ρ=1200.0, c=1500.0)
 julia> FluidBoundary(ρ=1200, c=1500, δ=0.1, σ=0.1)
 FluidBoundary(ρ=1200.0, c=1500.0, δ=0.1, σ=0.1)
 
-julia> FluidBoundary(ρ=1200.0, c=0.0)
+julia> FluidBoundary(ρ=0.0, c=0.0)
 PressureReleaseBoundary
 
-julia> FluidBoundary(ρ=1200.0, c=Inf)
+julia> FluidBoundary(ρ=Inf, c=Inf)
 RigidBoundary
 
 julia> FluidBoundary(1.2u"g/cm^3", 1500u"m/s", 13.2u"dB/m/kHz")
@@ -65,7 +65,6 @@ struct FluidBoundary{T} <: AbstractAcousticBoundary
     c = in_units(u"m/s", c)
     σ = in_units(u"m", σ)
     δ = _dac(c, δ)
-    isinf(c) && return new{typeof(c)}(zero(c), c, zero(c), zero(c))
     ρ, c, δ, σ = float.(promote(ρ, c, δ, σ))
     new{typeof(ρ)}(ρ, c, δ, σ)
   end
@@ -76,9 +75,9 @@ FluidBoundary(ρ, c, δ) = FluidBoundary(ρ, c, δ, 0)
 FluidBoundary(; ρ, c, δ=0, σ=0) = FluidBoundary(ρ, c, δ, σ)
 
 function Base.show(io::IO, b::FluidBoundary)
-  if isinf(b.c)
+  if isinf(b.c) && isinf(b.ρ)
     print(io, "RigidBoundary")
-  elseif b.c == 0
+  elseif b.c == 0 && b.ρ == 0
     print(io, "PressureReleaseBoundary")
   else
     print(io, "FluidBoundary(ρ=$(b.ρ), c=$(b.c)")

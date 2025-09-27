@@ -461,11 +461,14 @@ window.Quarto = {
 <li><code>mesh_density</code>: number of mesh points per wavelength (default: 0, 0=auto)</li>
 <li><code>clow</code>: lower limit of phase speed (default: 1300, 0=auto)</li>
 <li><code>chigh</code>: upper limit of phase speed (default: 2500)</li>
+<li><code>rmax</code>: largest range (in m) of interest (default: Inf)</li>
 <li><code>complex_solver</code>: use KrakenC for finding modes (default: true)</li>
 <li><code>robust</code>: use robust (but slow) root finder (default: false)</li>
+<li><code>temp_dir</code>: directory for temporary files (default: system temp directory)</li>
 <li><code>debug</code>: debug mode (default: false)</li>
 </ul>
 <p>Enabling debug mode will create a temporary directory with the Kraken input and output files. This allows manual inspection of the files.</p>
+<p>The default <code>rmax</code> is set to <code>Inf</code>. With this setting, it actually uses a value 1% more than furthest receiver. Setting <code>rmax</code> to 0 asks underlying FORTRAN Kraken model to automatically choose <code>rmax</code>. While the Kraken manual suggests it, we find that this option often gives poor results and do not recommend its use.</p>
 </div>
 </div>
 </div>

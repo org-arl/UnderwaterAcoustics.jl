@@ -92,7 +92,7 @@ function impulse_response(pm::AbstractRayPropagationModel, tx::AbstractAcousticS
   # leave 1 ms guard period before and after the impulse response
   t0 = abstime ? zero(t0) : t0 - 0.001
   n = something(ntaps, ceil(Int, (tmax - t0 + 0.001) * fs) + 1)
-  signal(_arr2ir([a.t for a ∈ arr], [a.ϕ for a ∈ arr]; T, t0, fs, n), fs)
+  signal(_arr2ir([a.t for a ∈ arr], [a.ϕ for a ∈ arr]; t0, fs, n, wlen=0.002fs), fs)
 end
 
 ### helpers
@@ -102,19 +102,21 @@ _phasortype(::Type{RayArrival{T1,T2,T3,T4,T5}}) where {T1,T2,T3,T4,T5} = Complex
 # complex ForwardDiff friendly version of x^n
 _ipow(x, n::Int) = prod(x for _ ∈ 1:n)
 
-# Create an array of length n and type T with ϕs values at times ts, sampled at fs
-# and time origin t0. Times ts need not correspond to integer samples.
-function _arr2ir(ts, ϕs; T, t0, fs, n)
-  x = zeros(T, n)
-  for i ∈ eachindex(ts)
-    # allocate arrival energy to 2 nearest samples
+# Create an array of length n with ϕs values at times ts, sampled at fs
+# and time origin t0. Times ts need not correspond to integer samples. Window length
+# wlen controls the effective bandwidth for non-integer delay arrivals.
+function _arr2ir(ts, ϕs; t0, fs, n, wlen)
+  x = sum(eachindex(ts)) do i
     t = (ts[i] - t0) * fs + 1
-    t̄ = floor(Int, t)
-    α, β = sincospi(0.5 * (t - t̄))
-    t̄ ≤ n && (x[t̄] += β * ϕs[i])
-    t̄ < n && (x[t̄+1] += α * ϕs[i])
+    t̄ = (1:n) .- t
+    sinc.(t̄) .* _blackman.(t̄, wlen) * ϕs[i]
   end
-  x
+end
+
+function _blackman(i, wlen)
+  x = i / wlen
+  -0.5 ≤ x ≤ 0.5 || return 0 * x    # same as zero(x) but Zygote friendly
+  0.42 + 0.5 * cospi(2x) + 0.08 * cospi(4x)
 end
 
 function _arrival(j, pm, R, R², d1, d2, f, T, p1=missing, p2=missing)

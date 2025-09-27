@@ -55,19 +55,19 @@ end
   x = vcat(1.0, 0.5, zeros(98))
   y1 = @inferred transmit(ch, x)
   @test length(y1) ≥ length(x)
-  @test all(y1[1:3] .> 1)
-  @test all(y1[129:131] .< -1)
-  y1[1:3] .= 0
-  y1[129:131] .= 0
-  @test all(abs.(y1) .< 1)
+  @test all(y1[192:194] .> 1e4)
+  @test all(y1[320:322] .< -1e4)
+  y1[192:194] .= 0
+  y1[317:322] .= 0
+  @test all(abs.(y1) .< 1e5)
   y2 = @inferred transmit(ch, x; abstime=true)
   @test length(y2) ≥ length(y1)
-  y2 = y2[12816:end]
-  @test all(y2[1:3] .> 1)
-  @test all(y2[129:131] .< -1)
-  y2[1:3] .= 0
-  y2[129:131] .= 0
-  @test all(abs.(y2) .< 1)
+  y2 = y2[12625:end]
+  @test all(y2[192:194] .> 1e4)
+  @test all(y2[320:322] .< -1e4)
+  y2[192:194] .= 0
+  y2[317:322] .= 0
+  @test all(abs.(y2) .< 1e5)
   ch = @inferred channel(pm, tx, rx, 192000; noise=RedGaussianNoise(0.5e6))
   @test ch isa UnderwaterAcoustics.SampledPassbandChannel
   @test ch.fs == 192000
@@ -75,6 +75,27 @@ end
   y2 = @inferred transmit(ch, x)
   @test length(y2) ≥ length(x)
   @test std(y1) < std(y2)
+end
+
+@testitem "channel-scaling" begin
+  using Statistics
+  pow2db(x) = 10 * log10(x)
+  env = UnderwaterEnvironment()
+  pm = @inferred PekerisRayTracer(env; max_bounces=0)
+  tx = @inferred AcousticSource((x=0u"m", z=-5u"m"), 1u"kHz")
+  rx1 = @inferred AcousticReceiver(1u"m", -5u"m")
+  rx2 = @inferred AcousticReceiver(100u"m", -5u"m")
+  fs = 16000
+  ch = @inferred channel(pm, tx, [rx1, rx2], fs)
+  x_real = sinpi.(2 * 1000 * (0:100) ./ fs)
+  x_analytic = cispi.(2 * 1000 * (0:100) ./ fs) / sqrt(2)
+  @test std(x_real) ≈ std(x_analytic) atol=0.01
+  y_real = @inferred transmit(ch, x_real)
+  y_analytic = @inferred transmit(ch, x_analytic)
+  @test pow2db(sum(abs2, y_real[:,1]) / sum(abs2, x_real)) ≈ 0 atol=0.01
+  @test pow2db(sum(abs2, y_real[:,2]) / sum(abs2, x_real)) ≈ -40 atol=0.01
+  @test pow2db(sum(abs2, y_analytic[:,1]) / sum(abs2, x_analytic)) ≈ 0 atol=0.01
+  @test pow2db(sum(abs2, y_analytic[:,2]) / sum(abs2, x_analytic)) ≈ -40 atol=0.01
 end
 
 @testitem "src" begin

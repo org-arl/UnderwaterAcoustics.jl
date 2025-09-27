@@ -295,7 +295,7 @@ function transmit(ch::SampledPassbandChannel, x; txs=:, rxs=:, abstime=false, no
     noisy && ch.noise !== nothing && (ȳ .+= analytic(rand(ch.noise, size(ȳ); fs)))
     signal(ȳ, fs)
   else
-    y = real(ȳ)
+    y = real(ȳ) * sqrt(2)
     noisy && ch.noise !== nothing && (y .+= rand(ch.noise, size(y); fs))
     signal(y, fs)
   end

@@ -112,7 +112,7 @@ If not specified, a random start time is chosen.
 """
 function transmit(ch::BasebandReplayChannel, x; txs=:, rxs=:, abstime=false, noisy=true, fs=nothing, start=nothing)
   # TODO: add test cases for BasebandReplayChannel
-  fs = something(fs, x isa SampledSignal ? framerate(x) : ch.fs)
+  fs === nothing && x isa SampledSignal && (fs = framerate(x))
   L, M, T = size(ch.h)
   maxtime = (T - 1) / ch.fs * ch.step
   txs === (:) && (txs = 1)
@@ -123,6 +123,7 @@ function transmit(ch::BasebandReplayChannel, x; txs=:, rxs=:, abstime=false, noi
   only(txs) == 1 || error("Replay channel has only one transmitter")
   abstime && error("Replay channels do not support absolute time")
   all(rx ∈ 1:M for rx ∈ rxs) || error("Invalid receiver indices ($rxs ⊄ 1:$M)")
+  fs === nothing && error("Sampling rate must be specified")
   fs < 2 * ch.fc && error("Signal sampling rate ($fs Hz) is too low for carrier frequency ($(ch.fc) Hz)")
   input_was_analytic = isanalytic(x)
   x = analytic(signal(samples(x), fs))

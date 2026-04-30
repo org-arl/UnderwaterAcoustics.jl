@@ -63,14 +63,14 @@ function BasebandReplayChannel(filename::AbstractString; upsample=false, rxs=:, 
   # TODO: support UACR noise models
   if endswith(filename, ".mat")
     data = matread(filename)
-    all(["version", "h_hat", "theta_hat", "params"] .∈ Ref(keys(data))) || error("Bad channel file format")
+    all(["version", "h_hat", "phi_hat", "params"] .∈ Ref(keys(data))) || error("Bad channel file format")
     data["version"] == 1.0 || @warn "Unsupported channel file version"
     h = reverse(data["h_hat"]; dims=1)
     M = size(h, 2)
     rxs === (:) && (rxs = 1:M)
     ndims(rxs) == 0 && (rxs = [rxs])
     h = h[:,rxs,:]
-    θ = data["theta_hat"]
+    θ = data["phi_hat"]
     size(θ, 1) == M || error("Invalid phase estimates size")
     θ = transpose(θ[rxs,:])
     fs = data["params"]["fs_delay"]

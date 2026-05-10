@@ -189,6 +189,7 @@ struct PekerisModeSolver{T1,T2,T3,T4,T5,T6,T7,T8} <: AbstractModePropagationMode
   surface::T8       # surface properties
   ngrid::Int        # number of grid points for mode computation
   nmodes::Int       # maximum number of modes (0 for no limit)
+  cache::Dict{Float64,Vector{Float64}}    # cached solutions ω -> γ
   function PekerisModeSolver(env; ngrid=0, nmodes=0)
     is_isovelocity(env) || error("Environment must be iso-velocity")
     is_range_dependent(env) && error("Environment must be range independent")
@@ -207,7 +208,8 @@ struct PekerisModeSolver{T1,T2,T3,T4,T5,T6,T7,T8} <: AbstractModePropagationMode
     S = value(env.salinity)
     pH = value(env.pH)
     ps = (h, c, ρ, T, S, pH, env.seabed, env.surface)
-    new{typeof.(ps)...}(ps..., ngrid, nmodes)
+    cache = Dict{Float64,Vector{Float64}}()
+    new{typeof.(ps)...}(ps..., ngrid, nmodes, cache)
   end
 end
 
@@ -215,10 +217,11 @@ function Base.show(io::IO, pm::PekerisModeSolver)
   print(io, "PekerisModeSolver(h=$(pm.h))")
 end
 
-function arrivals(pm::PekerisModeSolver, tx::AbstractAcousticSource, rx::AbstractAcousticReceiver)
-  p1 = location(tx)
-  p2 = location(rx)
-  R = sqrt(abs2(p1.x - p2.x) + abs2(p1.y - p2.y))
+# receiver is not needed for mode computation
+arrivals(pm::PekerisModeSolver, tx::AbstractAcousticSource, rx) = arrivals(pm, tx)
+
+# only transmitter frequency is needed for mode computation
+function arrivals(pm::PekerisModeSolver, tx::AbstractAcousticSource)
   ω = 2π * frequency(tx)
   log_a = log(absorption(frequency(tx), 1.0, pm.S, pm.T, pm.h / 2, pm.pH))  # nominal absorption
   k₁ = ω / pm.c
@@ -237,13 +240,18 @@ function arrivals(pm::PekerisModeSolver, tx::AbstractAcousticSource, rx::Abstrac
       m = _mode(0, ω, 0.0, k₁, pm.c, pm.ρ, pm.seabed.c, pm.seabed.ρ, pm.h, log_a)
       return Vector{typeof(m)}(undef, 0)
     end
-    dk² = k₁^2 - k₂^2
-    ngrid = pm.ngrid > 0 ? pm.ngrid : 2 * ceil(Int, pm.h * k₁ / π) + 1
-    γgrid = range(0, sqrt(dk²) - sqrt(eps()); length=ngrid)
-    cost = map(γ -> _arrivals_cost(γ, (pm, dk²)), γgrid)
-    ndx = findall(i -> sign(cost[i+1]) * sign(cost[i]) < 0, 1:length(γgrid)-1)
-    0 < pm.nmodes < length(ndx) && (ndx = ndx[1:pm.nmodes])
-    γ = [solve(IntervalNonlinearProblem{false}(_arrivals_cost, (γgrid[i], γgrid[i+1]), (pm, dk²))).u for i ∈ ndx]
+    if haskey(pm.cache, ω)
+      γ = pm.cache[ω]
+    else
+      dk² = k₁^2 - k₂^2
+      ngrid = pm.ngrid > 0 ? pm.ngrid : 2 * ceil(Int, pm.h * k₁ / π) + 1
+      γgrid = range(0, sqrt(dk²) - sqrt(eps()); length=ngrid)
+      cost = map(γ -> _arrivals_cost(γ, (pm, dk²)), γgrid)
+      ndx = findall(i -> sign(cost[i+1]) * sign(cost[i]) < 0, 1:length(γgrid)-1)
+      0 < pm.nmodes < length(ndx) && (ndx = ndx[1:pm.nmodes])
+      γ = [solve(IntervalNonlinearProblem{false}(_arrivals_cost, (γgrid[i], γgrid[i+1]), (pm, dk²))).u for i ∈ ndx]
+      ω isa Real && γ isa Vector{Float64} && (pm.cache[ω] = γ)
+    end
     return _mode.(1:length(γ), ω, γ, k₁, pm.c, pm.ρ, pm.seabed.c, pm.seabed.ρ, pm.h, log_a)
   end
 end

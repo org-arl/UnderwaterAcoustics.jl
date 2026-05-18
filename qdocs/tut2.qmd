@@ -69,6 +69,7 @@ We define the probabilistic model as a [`Turing.jl`](https://github.com/TuringLa
 #| output: false
 using Turing
 using Random
+using Bijectors
 
 # depths d, frequencies f, transmission loss measurements x
 @model function geoacoustic(d, f, x)
@@ -88,7 +89,14 @@ Once we have the model defined, we can run Bayesian inference on it. We could ei
 #| output: false
 # this may take a minute or two to run...
 m = geoacoustic(data.depth, data.frequency, data.xloss)
-q,_ = vi(MersenneTwister(1), m, q_fullrank_gaussian(m), 1000)
+q_raw = vi(MersenneTwister(1), m, q_fullrank_gaussian, 1000)
+# Bijector mapping physical -> unconstrained, in the order priors are declared
+b = Stacked([
+  bijector(Uniform(1300.0, 1700.0)),
+  bijector(Uniform(750.0, 2000.0)),
+  bijector(Uniform(0.0, 0.003)),
+])
+q = transformed(q_raw.q, inverse(b))
 ```
 
 The returned `q` is a 3-dimensional posterior probability distribution over the parameters `ρ`, `c` and `δ`. We can estimate the mean of the distribution by drawing random variates and taking the sample mean:

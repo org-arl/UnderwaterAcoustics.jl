@@ -53,6 +53,7 @@ We can model this as a Bayesian inference problem using [`Turing.jl`](https://gi
 #| output: false
 using Turing
 using Random
+using Bijectors
 
 @model function pmodel(data)
   h  ~ Normal(20.0, 0.1)
@@ -64,7 +65,16 @@ using Random
 end
 
 m = pmodel(data)
-q,_ = vi(MersenneTwister(1), m, q_meanfield_gaussian(m), 10000)
+q_raw = vi(MersenneTwister(1), m, q_meanfield_gaussian, 250000)
+
+# Bijector mapping physical -> unconstrained, in the order priors are declared
+b = Stacked([
+  bijector(Normal(20.0, 0.1)),
+  bijector(Uniform(0.0, 250.0)),
+  bijector(Normal(7.0, 1.0)),
+  bijector(Uniform(0.0, 20.0)),
+])
+q = transformed(q_raw.q, inverse(b))
 
 # extract mean values of parameters h, r, d1 and d2
 μ = mean(rand(q, 10000); dims=2)

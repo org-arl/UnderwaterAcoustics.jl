@@ -89,7 +89,7 @@ Once we have the model defined, we can run Bayesian inference on it. We could ei
 #| output: false
 # this may take a minute or two to run...
 m = geoacoustic(data.depth, data.frequency, data.xloss)
-q_raw = vi(MersenneTwister(1), m, q_fullrank_gaussian, 1000)
+q_raw = vi(MersenneTwister(1), m, q_fullrank_gaussian, 10000)
 # Bijector mapping physical -> unconstrained, in the order priors are declared
 b = Stacked([
   bijector(Uniform(1300.0, 1700.0)),

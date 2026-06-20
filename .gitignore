@@ -32,3 +32,7 @@ qdocs/.gitignore
 qdocs/_freeze
 UnderwaterAcoustics.code-workspace
 tmp
+
+# Channel/noise data files and binary dumps (large; not committed)
+*.mat
+*.bin

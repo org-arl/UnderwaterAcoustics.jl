@@ -31,9 +31,9 @@ end
     BasebandReplayChannel(h, fs, fc, step=1; noise=nothing)
 
 Construct a baseband replay channel with impulse responses `h` and optional
-phase estimates `θ` (theta_hat mode). `fs` is the sampling frequency in Sa/s,
-`fc` is the carrier frequency in Hz, and `step` is the decimation rate for the
-time axis of `h`. The effective sampling frequency of the impulse responses is
+phase estimates `θ` (theta_hat, phase-only) or delay-tracking estimates `φ` (phi_hat).
+`fs` is the sampling frequency in Sa/s, `fc` is the carrier frequency in Hz, and `step` is the
+decimation rate for the time axis of `h`. The effective sampling frequency of the impulse responses is
 `fs ÷ step` impulse responses per second.
 
 An additive noise model may be optionally specified as `noise`. If specified,

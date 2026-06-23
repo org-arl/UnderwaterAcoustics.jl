@@ -65,9 +65,9 @@ function arrivals(pm::PekerisRayTracer, tx::AbstractAcousticSource, rx::Abstract
 end
 
 """
-    acoustic_field(pm::PekerisRayTracer, tx, rxs; mode=:coherent)
+    acoustic_field(pm::PekerisRayTracer, tx, rx; mode=:coherent)
 
-Compute the acoustic field at a receiver `rxs` due to a transmitter `tx` in the
+Compute the acoustic field at a receiver `rx` due to a transmitter `tx` in the
 Pekeris waveguide. The field is computed incoherently if `mode=:incoherent`.
 Otherwise, the field is computed coherently.
 """

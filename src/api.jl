@@ -446,8 +446,12 @@ abstract type AbstractAcousticReceiver end
 function Base.show(io::IO, tx::AbstractAcousticSource)
   f = frequency(tx)
   s = spl(tx)
-  p = Tuple(location(tx))
-  print(io, "TX[$f Hz, $s dB]$p")
+  p = location(tx)
+  if p === nothing
+    print(io, "TX[$f Hz, $s dB]")
+  else
+    print(io, "TX[$f Hz, $s dB]$(Tuple(p))")
+  end
 end
 
 function Base.show(io::IO, tx::AbstractAcousticReceiver)

@@ -49,7 +49,7 @@ end
 function BasebandReplayChannel(h, fs, fc, step::Int=1; noise=nothing)
   fs = in_units(u"Hz", fs)
   fc = in_units(u"Hz", fc)
-  θ = Matrix{Float64}(undef, size(h,2), 0)
+  θ = Matrix{Float64}(undef, 0, 0)
   φ = Matrix{Float64}(undef, 0, 0)
   BasebandReplayChannel(h, θ, φ, fs, fc, step; noise)
 end
@@ -178,7 +178,7 @@ function transmit(ch::BasebandReplayChannel, x; txs=:, rxs=:, abstime=false, noi
     t = range(0.0, step=1.0/ch.fs, length=nframes(ȳ))
     for (j, _) ∈ enumerate(rxs)
       drift = Float64.(φ_seg[:, j] ./(2π * ch.fc))
-      itp = extrapolate(scale(interpolate(ȳ[:, j], BSpline(Cubic(Line(OnGrid())))), t), Line())
+      itp = extrapolate(scale(interpolate(@view(ȳ[:, j]), BSpline(Cubic(Line(OnGrid())))), t), Line())
       ȳ[:, j] .= itp.(t .+ drift)
     end
   elseif size(ch.θ, 2) > 0
@@ -193,7 +193,8 @@ function transmit(ch::BasebandReplayChannel, x; txs=:, rxs=:, abstime=false, noi
   isone(ch.f_resamp) || (y = resample(y, Float64(ch.f_resamp); dims=1))
   input_was_analytic || (y = real(y))
   # normalize total mean power across receivers to the number of receivers
-  y .*= sqrt(length(rxs) * size(y,1) / sum(abs2, y))
+  p = sum(abs2, y)
+  iszero(p) || (y .*= sqrt(length(rxs) * size(y,1) / p))
   y = signal(y, fs)
   # add noise
   if noisy && ch.noise !== nothing

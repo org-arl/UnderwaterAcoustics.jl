@@ -97,3 +97,87 @@ jdoc(UnderwaterAcoustics, :transmit, 1)
 ```
 
 In some cases (e.g. channel replay techniques), a channel model may be defined without the need to derive it from a propagation model. In such a case, one may extend `UnderwaterAcoustics.jl` by directly defining the channel model.
+
+## Scatterers and shapes {#scatterers-and-shapes}
+
+Environments may contain [scatterers](scatterers.qmd) — non-penetrable objects in the water column described by a geometric shape and an acoustic boundary condition:
+```{julia}
+#| echo: false
+#| output: asis
+jdoc(UnderwaterAcoustics, :Scatterer)
+```
+Propagation models that support scattering should query `has_scatterers(env)` and consume the scatterer geometry through the shape API described below. Models that do not support scattering should reject environments with scatterers with a clear error message (all built-in models do so).
+
+### The parametric boundary map
+
+The fundamental geometric primitive of a shape is a parametric map of its closed boundary over a unit parameter domain. A new shape type (let's call it `MyShape`) extends:
+```{julia}
+#| echo: false
+#| output: asis
+jdoc(UnderwaterAcoustics, :AbstractShape)
+```
+and must define just two methods:
+```julia
+Base.ndims(shape::MyShape) = 2       # spatial dimension (2 or 3)
+boundary_point(shape::MyShape, u)    # parametric boundary position map
+```
+```{julia}
+#| echo: false
+#| output: asis
+jdoc(UnderwaterAcoustics, :boundary_point)
+```
+
+Everything else is derived automatically. In particular, boundary normals and curvatures are computed from `boundary_point()` using automatic differentiation if the shape does not provide them. A shape may provide analytic implementations for accuracy and speed:
+```{julia}
+#| echo: false
+#| output: asis
+jdoc(UnderwaterAcoustics, :normal)
+jdoc(UnderwaterAcoustics, :curvature)
+```
+
+For simple shapes, one may avoid defining a new type altogether by wrapping a parametric function:
+```{julia}
+#| echo: false
+#| output: asis
+jdoc(UnderwaterAcoustics, :ParametricCurve)
+jdoc(UnderwaterAcoustics, :ParametricSurface)
+```
+
+### Derived geometry queries
+
+The framework provides a set of derived queries with generic fallbacks based on `boundary_point()`. These are properties of the shape (not of any particular solver), so any propagation model gets them for free. A shape may override any of them with analytic implementations (as `Ellipse` does):
+```{julia}
+#| echo: false
+#| output: asis
+jdoc(UnderwaterAcoustics, :distance)
+jdoc(UnderwaterAcoustics, :boundary_projection)
+jdoc(UnderwaterAcoustics, :intersect_ray)
+jdoc(UnderwaterAcoustics, :is_inside)
+jdoc(UnderwaterAcoustics, :boundary_points)
+jdoc(UnderwaterAcoustics, :bounding_box)
+```
+
+::: {.callout-warning title="The `distance()` contract"}
+Solvers that trace curved rays are expected to find boundary interactions as root-crossings of the signed `distance()` along the ray. A custom shape that overrides `distance()` may return a conservative lower bound on the magnitude *far* from the boundary, but near the boundary the distance must be sign-exact with the correct zero level set — a globally loose bound would make a solver fire the boundary event at the wrong place, or never detect it. The generic fallback and the analytic `Ellipse` implementation satisfy this automatically.
+:::
+
+The generic fallbacks converge their inner minimizations to true stationary points, so ForwardDiff duals propagate correctly through them (by the envelope theorem) — custom shapes defined by a differentiable `boundary_point()` are fully differentiable with respect to both query positions and shape parameters.
+
+### Example: a custom shape from one function
+
+A closed curve defined by a single (differentiable) function is a fully functional shape:
+```{julia}
+using UnderwaterAcoustics
+
+# a lobed blob centered at (500, -40), with radius varying between 16 and 24 m
+blob = ParametricCurve() do u
+  r = 20 + 4 * cospi(6u)
+  (500 + r * cospi(2u), -40 + r * sinpi(2u))
+end
+
+@info is_inside(blob, (x=520, z=-40))
+@info distance(blob, (x=500, z=-70))
+@info intersect_ray(blob, (x=0, z=-40), (x=1, z=0))
+```
+Normals, curvatures, distances and ray intersections are all computed automatically from the parametric function.
+

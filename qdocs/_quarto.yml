@@ -17,6 +17,7 @@ website:
       - text: <b>Guides</b>
       - pos.qmd
       - fields.qmd
+      - scatterers.qmd
       - ext.qmd
       - porting.qmd
       - python.qmd

@@ -125,6 +125,28 @@ const ElasticSandySilt         = ElasticBoundary(SandySilt, 13.4u"dB/m/kHz")
 ```
 :::
 
+## Scatterers
+
+```{julia}
+#| echo: false
+#| output: asis
+jdoc(UnderwaterAcoustics, :Scatterer)
+jdoc(UnderwaterAcoustics, :AbstractShape)
+jdoc(UnderwaterAcoustics, :Ellipse)
+jdoc(UnderwaterAcoustics, :ParametricCurve)
+jdoc(UnderwaterAcoustics, :ParametricSurface)
+jdoc(UnderwaterAcoustics, :boundary_point)
+jdoc(UnderwaterAcoustics, :normal)
+jdoc(UnderwaterAcoustics, :curvature)
+jdoc(UnderwaterAcoustics, :distance)
+jdoc(UnderwaterAcoustics, :boundary_projection)
+jdoc(UnderwaterAcoustics, :intersect_ray)
+jdoc(UnderwaterAcoustics, :is_inside)
+jdoc(UnderwaterAcoustics, :boundary_points)
+jdoc(UnderwaterAcoustics, :bounding_box)
+jdoc(UnderwaterAcoustics, :has_scatterers)
+```
+
 ## Sources and receivers
 
 ```{julia}

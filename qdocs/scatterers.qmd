@@ -1,0 +1,71 @@
+---
+title: "Scatterers"
+engine: julia
+---
+
+{{< include jdoc.snippet >}}
+
+```{julia}
+#| echo: false
+#| output: false
+using UnderwaterAcoustics
+using Plots
+default(size=(600, 400))
+```
+
+## Objects in the water column
+
+Most of the environmental description in `UnderwaterAcoustics.jl` deals with a stratified ocean bounded by the sea surface and the seabed. Sometimes we also wish to model discrete objects in the water column — a submerged target, a fish school, a bubble cloud, etc. Such objects are described as **scatterers**: non-penetrable objects with a geometric shape and an acoustic boundary condition on their surface.
+
+A scatterer is created from a shape and a boundary condition:
+```{julia}
+sc = Scatterer(Ellipse(500.0, -40.0, 20.0, 8.0; θ=30u"°"))
+```
+The default boundary condition is a `RigidBoundary` (sound-hard object). Other boundary conditions may be specified, e.g. a `PressureReleaseBoundary` for a sound-soft object such as a bubble cloud:
+```{julia}
+Scatterer(Ellipse(500.0, -40.0, 20.0, 8.0), PressureReleaseBoundary)
+```
+
+The only shape currently shipped with `UnderwaterAcoustics.jl` is a 2-D `Ellipse` in the x–z plane, but arbitrary shapes may be defined by a parametric function of the boundary (see [custom shapes](#custom-shapes) below), and 3-D shapes (e.g. ellipsoids) are expected to be added in the future.
+
+Scatterers are part of the environmental description:
+```{julia}
+env = UnderwaterEnvironment(bathymetry=100.0, scatterers=sc)
+```
+The `scatterers` keyword accepts a single scatterer, or a tuple/vector of scatterers. We can visualize the environment with the scatterer:
+```{julia}
+plot(env; xlims=(0, 1000))
+```
+
+::: {.callout-warning title="Model support"}
+The built-in propagation models (`PekerisRayTracer`, `PekerisModeSolver`) do **not** support scattering, and refuse to work with environments containing scatterers. The scatterer description and its geometry API are intended for use by propagation models in other packages that compute scattering.
+
+Models that support scatterers are expected to apply the boundary condition of the scatterer under a local tangent-plane (Kirchhoff) approximation, i.e., apply the reflection coefficient of the boundary using the local surface normal at each interaction point. This approximation is valid when the local radius of curvature of the scatterer is much larger than the acoustic wavelength.
+:::
+
+## Geometry queries
+
+Shapes support a set of geometric queries that propagation models (or users) may use:
+```{julia}
+shape = Ellipse(500.0, -40.0, 20.0, 8.0; θ=30u"°")
+@info boundary_point(shape, 0.25)              # point on the boundary at parameter u ∈ [0,1]
+@info normal(shape, 0.25)                      # unit outward normal at parameter u
+@info curvature(shape, 0.25)                   # signed curvature at parameter u
+@info distance(shape, (x=500, z=-70))          # signed distance (negative inside)
+@info is_inside(shape, (x=500, z=-40))         # is a position inside the shape?
+@info intersect_ray(shape, (x=0, z=-40), (x=1, z=0))  # nearest ray-boundary intersection
+@info bounding_box(shape)                      # axis-aligned bounding box
+```
+`boundary_projection()` finds the boundary point nearest to a given position, and returns it together with the local normal, curvature and signed distance. `boundary_points()` samples the boundary, e.g. for plotting.
+
+All shape geometry is differentiable: gradients propagate through shape parameters and query positions with automatic differentiation (e.g. `ForwardDiff`), enabling optimization and inversion of scatterer location, size and orientation.
+
+## Custom shapes {#custom-shapes}
+
+Arbitrary 2-D shapes may be defined by a single parametric function tracing the closed boundary counter-clockwise in the x–z plane as `u` sweeps `[0, 1]`:
+```{julia}
+# a circle of radius 10 m centered at (500, -40)
+circle = ParametricCurve(u -> (500 + 10 * cospi(2u), -40 + 10 * sinpi(2u)))
+@info distance(circle, (x=500, z=-60))
+```
+Normals, curvatures and all derived queries are automatically computed from the parametric function using automatic differentiation. 3-D shapes may similarly be defined with `ParametricSurface`. See the [extending documentation](ext.qmd#scatterers-and-shapes) for details on the shape API, including how to define new shape types with analytic geometry.

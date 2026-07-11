@@ -27,6 +27,7 @@ struct PekerisRayTracer{T1,T2,T3,T4,T5,T6,T7,T8} <: AbstractRayPropagationModel
   max_bounces::Int  # maximum number of bounces
   function PekerisRayTracer(env; max_bounces=3)
     max_bounces ≥ 0 || error("Maximum number of bounces cannot be negative")
+    has_scatterers(env) && error("PekerisRayTracer does not support scatterers")
     is_isovelocity(env) || error("Environment must be iso-velocity")
     is_range_dependent(env) && error("Environment must be range independent")
     is_constant(env.temperature) || error("Temperature must be constant")
@@ -191,6 +192,7 @@ struct PekerisModeSolver{T1,T2,T3,T4,T5,T6,T7,T8} <: AbstractModePropagationMode
   nmodes::Int       # maximum number of modes (0 for no limit)
   cache::Dict{Float64,Vector{Float64}}    # cached solutions ω -> γ
   function PekerisModeSolver(env; ngrid=0, nmodes=0)
+    has_scatterers(env) && error("PekerisModeSolver does not support scatterers")
     is_isovelocity(env) || error("Environment must be iso-velocity")
     is_range_dependent(env) && error("Environment must be range independent")
     is_constant(env.temperature) || error("Temperature must be constant")

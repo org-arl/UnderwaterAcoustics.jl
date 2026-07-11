@@ -6,6 +6,7 @@ using UnderwaterAcoustics
 import UnderwaterAcoustics: AbstractAcousticSource, AbstractAcousticReceiver, RayArrival, value
 import UnderwaterAcoustics: SampledFieldZ, SampledFieldX, SampledFieldXZ, SampledFieldXY, ModeArrival
 import UnderwaterAcoustics: BasebandReplayChannel, DepthDependent, PositionDependent
+import UnderwaterAcoustics: Scatterer, boundary_points
 import DSP: amp2db
 
 @recipe function plot(env::UnderwaterEnvironment)
@@ -26,6 +27,16 @@ import DSP: amp2db
     seriestype := :path
     linecolor := :brown
     xrange, [-value(z2, (x, 0.0)) for x ∈ xrange]
+  end
+  for s ∈ env.scatterers
+    ndims(s.shape) == 2 || continue
+    pts = boundary_points(s.shape; n=64)
+    @series begin
+      seriestype := :shape
+      linecolor := :black
+      fillcolor := :gray
+      [p.x for p ∈ pts], [p.z for p ∈ pts]
+    end
   end
 end
 

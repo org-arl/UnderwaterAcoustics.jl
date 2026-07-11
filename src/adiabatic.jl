@@ -24,6 +24,7 @@ struct AdiabaticExt{T1,T2,T3} <: AbstractModePropagationModel
   dz::Float64
   reciprocal::Bool
   function AdiabaticExt(model::Type{<:AbstractModePropagationModel}, env; dx=0.0, dz=0.0, reciprocal=false, kwargs...)
+    has_scatterers(env) && error("AdiabaticExt does not support scatterers")
     new{typeof(env),typeof(kwargs),model}(env, kwargs, dx, dz, reciprocal)
   end
 end

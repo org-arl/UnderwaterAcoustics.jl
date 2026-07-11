@@ -12,6 +12,7 @@ include("stdlib.jl")
 include("scatterers.jl")
 include("pekeris.jl")
 include("adiabatic.jl")
+include("reframe.jl")
 include("replay.jl")
 
 end # module

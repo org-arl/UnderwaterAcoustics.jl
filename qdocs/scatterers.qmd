@@ -15,7 +15,7 @@ default(size=(600, 400))
 
 ## Objects in the water column
 
-Most of the environmental description in `UnderwaterAcoustics.jl` deals with a stratified ocean bounded by the sea surface and the seabed. Sometimes we also wish to model discrete objects in the water column — a submerged target, a fish school, a bubble cloud, etc. Such objects are described as **scatterers**: non-penetrable objects with a geometric shape and an acoustic boundary condition on their surface.
+Most of the environmental description in `UnderwaterAcoustics.jl` deals with a stratified ocean bounded by the sea surface and the seabed. Sometimes we also wish to model discrete objects in the water column — a submerged target, a fish school, a bubble cloud, etc. Such objects are described as **scatterers**: objects with a geometric shape and an acoustic boundary condition on their surface. The environment only describes the geometry and the surface property — how a scatterer interacts with the sound field (including whether it is treated as impenetrable) is up to each propagation model.
 
 A scatterer is created from a shape and a boundary condition:
 ```{julia}
@@ -34,11 +34,11 @@ env = UnderwaterEnvironment(bathymetry=100.0, scatterers=sc)
 ```
 The `scatterers` keyword accepts a single scatterer, or a tuple/vector of scatterers. We can visualize the environment with the scatterer:
 ```{julia}
-plot(env; xlims=(0, 1000))
+plot(env; xlims=(0, 1000), size=(600, 250), dpi=100)
 ```
 
 ::: {.callout-warning title="Model support"}
-The built-in propagation models (`PekerisRayTracer`, `PekerisModeSolver`) do **not** support scattering, and refuse to work with environments containing scatterers. The scatterer description and its geometry API are intended for use by propagation models in other packages that compute scattering.
+The built-in propagation models (`PekerisRayTracer`, `PekerisModeSolver`) do **not** support scattering, and refuse to work with environments containing scatterers. The scatterer description and its geometry API are intended for use by propagation models in other packages that compute scattering, e.g. [`RaySolver`](raysolver.qmd) from `AcousticRayTracers.jl`.
 
 Models that support scatterers are expected to apply the boundary condition of the scatterer under a local tangent-plane (Kirchhoff) approximation, i.e., apply the reflection coefficient of the boundary using the local surface normal at each interaction point. This approximation is valid when the local radius of curvature of the scatterer is much larger than the acoustic wavelength.
 :::

@@ -100,7 +100,7 @@ In some cases (e.g. channel replay techniques), a channel model may be defined w
 
 ## Scatterers and shapes {#scatterers-and-shapes}
 
-Environments may contain [scatterers](scatterers.qmd) — non-penetrable objects in the water column described by a geometric shape and an acoustic boundary condition:
+Environments may contain [scatterers](scatterers.qmd) — objects in the water column described by a geometric shape and an acoustic boundary condition:
 ```{julia}
 #| echo: false
 #| output: asis

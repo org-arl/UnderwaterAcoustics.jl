@@ -523,10 +523,12 @@ abstract type AbstractScatterer end
     Scatterer(shape, boundary)
 
 Create a scatterer with the given `shape` and acoustic `boundary` condition.
-A scatterer is a non-penetrable object in the water column, described by its
-geometry (an [`AbstractShape`](@ref)) and the acoustic property of its surface
-(an `AbstractAcousticBoundary`, e.g. `RigidBoundary` for a sound-hard object
-or `PressureReleaseBoundary` for a sound-soft object such as a bubble cloud).
+A scatterer is an object in the water column, described by its geometry (an
+[`AbstractShape`](@ref)) and the acoustic property of its surface (an
+`AbstractAcousticBoundary`, e.g. `RigidBoundary` for a sound-hard object or
+`PressureReleaseBoundary` for a sound-soft object such as a bubble cloud).
+How the boundary condition is applied — including whether the object is
+treated as impenetrable — is determined by the propagation model.
 
 Propagation models that support scatterers are expected to apply the boundary
 condition under a local tangent-plane (Kirchhoff) approximation: the reflection

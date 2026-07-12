@@ -148,7 +148,7 @@ The scatterer implementation is **experimental**, and has the following limitati
 - **Grazing incidence**: the beam-spreading curvature correction diverges at grazing incidence, and is skipped for grazing angles below $\sin θ_g = 10^{-3}$. The correction is verified against an analytic (mirror equation) benchmark from normal incidence down to $\sin θ_g ≈ 0.93$; between these it follows the standard analytic form but is not independently benchmarked.
 - **2½D semantics**: a 2D scatterer with cylindrical out-of-plane spreading models a target extended in the cross-range ($y$) direction, not a compact 3D body — a real sphere's target strength is not reproduced.
 - **Eigenray search resolution**: echoes off small scatterers subtend narrow launch-angle windows, and the default `nbeams` heuristic may miss them. Increase `nbeams` (a few thousand) when scatterer echoes matter. Transmission loss fields computed over a receiver grid do not suffer from this.
-- **Modeling domain**: rays exiting the domain ($x < 0$ or $x > \texttt{rmax}$) are assumed to never return, so anything reflective outside the domain is invisible to the model.
+- **Modeling domain**: rays exiting the domain ($x < \texttt{rmin}$ or $x > \texttt{rmax}$) are assumed to never return, so anything reflective outside the domain is invisible to the model. Since `rmax` defaults to the query range and `rmin` to 0, features behind the receivers or to the left of the transmitter are only seen if the domain is explicitly extended to include them.
 
 ## Notes
 

@@ -1,5 +1,6 @@
 import Unitful: ustrip, Quantity, Units, @u_str, uconvert, dimension
-export @u_str, °, XYZ, is_constant, is_range_dependent, value
+import ForwardDiff
+export @u_str, °, XYZ, is_constant, is_range_dependent, value, ∂
 
 ################################################################################
 # unit conversion utilities, with default units if none are specified
@@ -130,6 +131,49 @@ value(q, pos) = q
 value(q::DepthDependent, pos) = q(xyz(pos))
 value(q) = value(q, nothing)
 value(q::DepthDependent) = error("Position not specified")
+
+# coordinate access/replacement helpers for derivative computation
+_coord(p::XYZ, i::Symbol) = getproperty(p, i)
+_setcoord(p::XYZ, i::Symbol, w) =
+  i === :x ? (x=w, y=p.y, z=p.z) :
+  i === :y ? (x=p.x, y=w, z=p.z) :
+  i === :z ? (x=p.x, y=p.y, z=w) :
+  throw(ArgumentError("Unknown coordinate: $i"))
+
+"""
+    ∂(q, pos, i)
+    ∂(q, pos, i, j)
+
+Get the first derivative `∂q/∂i` or second derivative `∂²q/∂i∂j` of the varying
+quantity `q` at the given position `pos`, where `i` and `j` are coordinate names
+(`:x`, `:y` or `:z`). `pos` may be specified as a `(x, y, z)` tuple, a `(x, z)`
+tuple, or a `z` value.
+
+If a field does not provide analytic derivatives, they are derived from
+`value()` using automatic differentiation. Fields whose interpolation makes
+derivatives ill-defined at some points (e.g. knots of a piecewise-linear
+interpolation) may define derivatives there using the surrounding context
+(e.g. mean of the adjacent segment slopes).
+
+# Examples
+```julia-repl
+∂(q, -10, :z)          # ∂q/∂z of a depth-dependent quantity at z=-10
+∂(q, (1000,-10), :x)   # ∂q/∂x of a position-dependent quantity at x=1000, z=-10
+∂(q, -10, :z, :z)      # ∂²q/∂z² at z=-10
+```
+"""
+∂(q, pos, i::Symbol) = zero(value(q, pos))
+∂(q, pos, i::Symbol, j::Symbol) = zero(value(q, pos))
+
+function ∂(q::DepthDependent, pos, i::Symbol)
+  p = xyz(pos)
+  ForwardDiff.derivative(w -> value(q, _setcoord(p, i, w)), _coord(p, i))
+end
+
+function ∂(q::DepthDependent, pos, i::Symbol, j::Symbol)
+  p = xyz(pos)
+  ForwardDiff.derivative(w -> ∂(q, _setcoord(p, j, w), i), _coord(p, j))
+end
 
 """
     minimum(q)

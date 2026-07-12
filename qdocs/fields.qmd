@@ -34,6 +34,14 @@ To get the value of a field at a given position, we use the `value` function:
 jdoc(UnderwaterAcoustics, :value)
 ```
 
+Some propagation models (e.g. ray tracers) also require spatial derivatives of a field. These can be obtained using the `∂` function:
+
+```{julia}
+#| echo: false
+#| output: asis
+jdoc(UnderwaterAcoustics, :∂)
+```
+
 We can also check if a field is constant or range-dependent:
 ```{julia}
 #| echo: false

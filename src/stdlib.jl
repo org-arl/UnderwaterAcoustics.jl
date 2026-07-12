@@ -542,6 +542,47 @@ end
 (v::SampledFieldXY)(pos::XYZ) = v.f(pos.x, pos.y)
 (v::SampledFieldXYZ)(pos::XYZ) = v.f(pos.x, pos.y, pos.z)
 
+# analytic derivatives for linearly interpolated 1-D fields; within a segment
+# the derivative is the segment slope, at interior knots it is defined as the
+# mean of the adjacent segment slopes (consistent with central finite
+# differences), at the end knots it is the one-sided interior slope, and
+# outside the sampled domain it is zero (consistent with `Flat()` extrapolation)
+function _linear∂(f, knots, x)
+  ks = issorted(knots) ? knots : sort(knots)
+  n = length(ks)
+  T = typeof(f(first(ks)) / one(first(ks)))
+  (x < first(ks) || x > last(ks) || n < 2) && return zero(T)
+  slope(k) = (f(ks[k+1]) - f(ks[k])) / (ks[k+1] - ks[k])
+  k = searchsortedlast(ks, x)
+  x == ks[k] || return slope(k)::T
+  k == 1 && return slope(1)::T
+  k == n && return slope(n - 1)::T
+  T((slope(k - 1) + slope(k)) / 2)
+end
+
+# the coordinate is stripped of dual numbers since the slope is piecewise
+# constant (zero derivative w.r.t. position almost everywhere), but the field
+# values retain any dual numbers they carry
+_undual(x) = x
+_undual(x::ForwardDiff.Dual) = _undual(ForwardDiff.value(x))
+
+function ∂(v::SampledFieldZ, pos, i::Symbol)
+  v.interp === Linear() || return invoke(∂, Tuple{DepthDependent,Any,Symbol}, v, pos, i)
+  i === :z || return zero(value(v, pos) / one(xyz(pos).z))
+  _linear∂(v.f, v.zrange, _undual(xyz(pos).z))
+end
+
+function ∂(v::SampledFieldX, pos, i::Symbol)
+  v.interp === Linear() || return invoke(∂, Tuple{DepthDependent,Any,Symbol}, v, pos, i)
+  i === :x || return zero(value(v, pos) / one(xyz(pos).x))
+  _linear∂(v.f, v.xrange, _undual(xyz(pos).x))
+end
+
+function ∂(v::Union{SampledFieldZ,SampledFieldX}, pos, i::Symbol, j::Symbol)
+  v.interp === Linear() || return invoke(∂, Tuple{DepthDependent,Any,Symbol,Symbol}, v, pos, i, j)
+  zero(value(v, pos) / one(xyz(pos).z)^2)
+end
+
 Base.show(io::IO, v::SampledFieldZ) = print(io, "SampledField(z-varying, $(length(v.zrange)) samples)")
 Base.show(io::IO, v::SampledFieldX) = print(io, "SampledField(x-varying, $(length(v.xrange)) samples)")
 Base.show(io::IO, v::SampledFieldXZ) = print(io, "SampledField(xz-varying, $(length(v.xrange))×$(length(v.zrange)) samples)")

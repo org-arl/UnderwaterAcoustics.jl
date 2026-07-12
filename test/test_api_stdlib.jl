@@ -338,6 +338,55 @@ end
   @test @inferred(value(fld, (x=1.0, y=1.0, z=1.0))) == 2.0
 end
 
+@testitem "∂" begin
+  using ForwardDiff
+  using FiniteDifferences
+  # constants have zero derivatives
+  @test @inferred(∂(1500.0, (0.0, 0.0, -10.0), :z)) == 0.0
+  @test @inferred(∂(1500.0, (0.0, 0.0, -10.0), :z, :z)) == 0.0
+  # linearly interpolated z-field: interior slopes, knot mean, end knots, flat outside
+  fld = SampledField([1500.0, 1520.0, 1510.0]; z=[0.0, -10.0, -30.0])
+  @test ∂(fld, -5.0, :z) ≈ -2.0
+  @test ∂(fld, -20.0, :z) ≈ 0.5
+  @test ∂(fld, -10.0, :z) ≈ (-2.0 + 0.5) / 2    # interior knot → mean of adjacent slopes
+  @test ∂(fld, 0.0, :z) ≈ -2.0                  # end knot → one-sided interior slope
+  @test ∂(fld, -30.0, :z) ≈ 0.5
+  @test ∂(fld, 5.0, :z) == 0.0                  # outside → flat extrapolation
+  @test ∂(fld, -40.0, :z) == 0.0
+  @test ∂(fld, -5.0, :x) == 0.0
+  @test ∂(fld, -5.0, :z, :z) == 0.0             # piecewise linear
+  @test ∂(fld, -10.0, :z, :z) == 0.0
+  # linearly interpolated x-field
+  fld = SampledField([200.0, 150.0, 200.0]; x=[0.0, 2000.0, 5000.0])
+  @test ∂(fld, (1000.0, 0.0, 0.0), :x) ≈ -0.025
+  @test ∂(fld, (3000.0, 0.0, 0.0), :x) ≈ 1/60
+  @test ∂(fld, (2000.0, 0.0, 0.0), :x) ≈ (-0.025 + 1/60) / 2
+  @test ∂(fld, (1000.0, 0.0, 0.0), :z) == 0.0
+  @test ∂(fld, (1000.0, 0.0, 0.0), :x, :x) == 0.0
+  # cubic spline z-field: generic AD fallback vs finite differences
+  fld = SampledField([1500.0, 1520.0, 1510.0, 1500.0]; z=0.0:-10.0:-30.0, interp=CubicSpline())
+  fdm1 = central_fdm(5, 1)
+  fdm2 = central_fdm(5, 2)
+  for z ∈ (-4.0, -15.0, -22.0)
+    @test ∂(fld, z, :z) ≈ fdm1(w -> value(fld, w), z) atol=1e-6
+    @test ∂(fld, z, :z, :z) ≈ fdm2(w -> value(fld, w), z) atol=1e-4
+  end
+  # generic AD fallback for a custom field matches the hand derivative
+  struct QuadraticSSP <: UnderwaterAcoustics.DepthDependent end
+  (::QuadraticSSP)(pos::XYZ) = 1500.0 + 0.1 * pos.z^2
+  ssp = QuadraticSSP()
+  @test ∂(ssp, -10.0, :z) ≈ -2.0
+  @test ∂(ssp, -10.0, :z, :z) ≈ 0.2
+  @test ∂(ssp, (5.0, 0.0, -10.0), :x) == 0.0
+  # dual-safety: outer AD over ∂ runs at and off knots
+  fld = SampledField([1500.0, 1520.0, 1510.0]; z=[0.0, -10.0, -30.0])
+  @test ForwardDiff.derivative(w -> ∂(fld, w, :z), -5.0) == 0.0
+  @test ForwardDiff.derivative(w -> ∂(fld, w, :z), -10.0) == 0.0
+  # derivatives w.r.t. field parameters flow through the analytic path
+  g = ForwardDiff.gradient(v -> ∂(SampledField(v; z=[0.0, -10.0, -30.0]), -5.0, :z), [1500.0, 1520.0, 1510.0])
+  @test g ≈ [1/10, -1/10, 0.0]
+end
+
 @testitem "noise" begin
   @test WhiteGaussianNoise <: UnderwaterAcoustics.AbstractNoiseModel
   @test RedGaussianNoise <: UnderwaterAcoustics.AbstractNoiseModel

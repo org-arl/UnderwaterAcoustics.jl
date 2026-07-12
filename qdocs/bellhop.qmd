@@ -67,7 +67,7 @@ plot!(env; xlims=(0,1000), linewidth=3)
 
 ## Notes
 
-The Fortran Bellhop propagation model requires that the transmitter is located at $(x=0, y=0)$ and all receivers are located in the right half-plane (i.e., $x>0$ and $y=0$). While this limitation can be worked around in the wrapper by a coordinate transformation, automatic transformation is not yet implemented.
+The Fortran Bellhop propagation model requires that the transmitter is located at $(x=0, y=0)$ and all receivers are located in the right half-plane (i.e., $x>0$ and $y=0$). This limitation can be worked around by wrapping the model with [`Reframe2D`](api.qmd), which automatically transforms 2D scenarios specified in world coordinates into the coordinate system required by the model (see the [quickstart guide](quickstart.qmd#scenarios-in-world-coordinates) for an example).
 
 Additionally, this wrapper does not yet support all the features of the original Fortran model. In particular, it does NOT support:
 

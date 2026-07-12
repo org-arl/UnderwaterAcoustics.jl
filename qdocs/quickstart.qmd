@@ -128,6 +128,18 @@ plot(env; xlims=(0,100))
 plot!(rxs, x)
 ```
 
+### Scenarios in world coordinates
+
+Many 2D propagation models (including the `PekerisRayTracer`) require scenarios to be specified in a canonical coordinate system, with the source at `(0, 0, z)` and receivers in the x-z plane with `x ≥ 0`. If our scenario is 2D but expressed in world coordinates, we can wrap the model with `Reframe2D` to automatically transform the scenario into the coordinate system required by the model, and results back to our coordinate system:
+```{julia}
+pm = Reframe2D(PekerisRayTracer, env)
+tx = AcousticSource((x=100.0, y=-50.0, z=-5.0), 1000.0)
+rx = AcousticReceiver((x=500.0, y=250.0, z=-10.0))
+transmission_loss(pm, tx, rx)
+```
+
+The wrapper checks that the scenario is 2D (all receivers within a tolerance `atol` of the vertical plane containing the source and the farthest receiver), translates and rotates the source, receivers, and environment into the model's canonical coordinate system, and transforms results (e.g. eigenray paths) back to the original coordinates.
+
 ## Channel modeling
 
 ### Simulating a transmission

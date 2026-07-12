@@ -1,0 +1,96 @@
+---
+title: "BellhopJL"
+engine: julia
+---
+
+{{< include jdoc.snippet >}}
+
+| <span> | <span> |
+|---|---|
+| **Model** | `AcousticRayTracers.BellhopJL` |
+| **Description** | Native Julia port of the [Bellhop ray/beam tracer](https://oalib-acoustics.org/models-and-software/rays/) |
+| **Language** | Julia |
+| **Advantages** | Differentiable (forward mode), no file I/O, drop-in alternative to `AcousticsToolbox.Bellhop` |
+| **Limitations** | 2D only, no 3D or range-dependent sound speed support |
+| **Differentiability** | `ForwardDiff` |
+
+: {tbl-colwidths="[25,75]"}
+
+```{julia}
+#| echo: false
+#| output: asis
+import AcousticRayTracers
+jdoc(AcousticRayTracers, :BellhopJL)
+```
+
+`BellhopJL` is a native Julia port of the 2D Bellhop Gaussian beam / ray tracer,
+following the [A-New-BellHope](https://github.com/A-New-BellHope/bellhop) bug-fixed
+mirror of Bellhop 2022_4. It implements Bellhop's exact stepping algorithm, boundary
+reflections, and geometric hat/Gaussian beam influence in Cartesian coordinates, and
+reads environments directly from `UnderwaterAcoustics.jl` (no env/shd/arr file I/O).
+Since the port is pure Julia, it is compatible with automatic differentiation (AD)
+tools such as `ForwardDiff` (prefer `beam_type=:gaussian` for optimization work, as
+hat beams have kinks at beam edges).
+
+A good overview of the Bellhop model can be found at:
+
+- O. C. Rodríguez, "General description of the BELLHOP ray tracing program (June 2008 release)", Technical report, v1.0, Universidade do Algarve, 2008 [(pdf)](http://oalib.hlsresearch.com/Rays/GeneralDescription.pdf).
+
+## Example
+
+```{julia}
+#| echo: false
+#| output: false
+using Plots
+default(size=(600, 400))
+```
+
+```{julia}
+using UnderwaterAcoustics
+using AcousticRayTracers
+using Plots
+
+env = UnderwaterEnvironment(
+  bathymetry = SampledField([200, 150]; x=[0, 1000], interp=Linear()),
+  soundspeed = SampledField([1500, 1480, 1495, 1510, 1520]; z=0:-50:-200, interp=CubicSpline()),
+  seabed = SandyClay
+)
+pm = BellhopJL(env)
+
+tx = AcousticSource(0, -50, 300)
+rx = AcousticReceiver(1000, -100)
+rays = arrivals(pm, tx, rx)
+
+plot(env; xlims=(-10, 1010))
+plot!(tx)
+plot!(rx)
+plot!(rays)
+```
+
+```{julia}
+rxs = AcousticReceiverGrid2D(1:1000, -200:0)
+x = transmission_loss(pm, tx, rxs; mode=:coherent)
+
+plot(rxs, x; crange=70)
+plot!(env; xlims=(0,1000), linewidth=3)
+```
+
+## Notes
+
+The `BellhopJL` propagation model requires that the transmitter is located at
+$(x=0, y=0)$ and all receivers are located in the right half-plane (i.e., $x>0$
+and $y=0$).
+
+Like the Fortran wrapper, the port implements the subset of Bellhop features
+reachable through the `UnderwaterAcoustics.jl` API. It does NOT support:
+
+- 3D environments (i.e., Bellhop 3D)
+- Range-dependent sound speed
+- Directional or line sources
+- Cerveny (Cartesian or ray-centered) and simple Gaussian bundle beams
+
+**Licensing:** unlike the rest of `AcousticRayTracers.jl` (MIT), the `BellhopJL`
+solver (`src/bellhopjl/`) is a derivative work of the GPL-licensed Bellhop
+(© 1983–2022 Michael B. Porter; A-New-BellHope changes © 2021–2023 The Regents of
+the University of California) and is licensed under GPL-3.0-or-later. Distribution
+of the combined `AcousticRayTracers.jl` package is therefore subject to GPL terms.

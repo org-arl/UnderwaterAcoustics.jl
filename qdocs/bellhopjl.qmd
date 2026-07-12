@@ -24,8 +24,10 @@ jdoc(AcousticsToolbox, :BellhopJL)
 ```
 
 `BellhopJL` is a native Julia port of the 2D Bellhop Gaussian beam / ray tracer,
-following the [A-New-BellHope](https://github.com/A-New-BellHope/bellhop) bug-fixed
-mirror of Bellhop 2022_4. It implements Bellhop's exact stepping algorithm, boundary
+based on the [A-New-BellHope](https://github.com/A-New-BellHope/bellhop) bug-fixed
+mirror of Bellhop 2022_4 and updated with the relevant corrections from the OALIB
+2024_12_25 release (full provenance and deviations are documented in the package's
+[`PORTING_NOTES.md`](https://github.com/org-arl/AcousticsToolbox.jl/blob/master/src/bellhopjl/PORTING_NOTES.md)). It implements Bellhop's exact stepping algorithm, boundary
 reflections, and geometric hat/Gaussian beam influence in Cartesian coordinates, and
 reads environments directly from `UnderwaterAcoustics.jl` (no env/shd/arr file I/O).
 Since the port is pure Julia, it is compatible with automatic differentiation (AD)
@@ -89,10 +91,6 @@ reachable through the `UnderwaterAcoustics.jl` API. It does NOT support:
 - Directional or line sources
 - Cerveny (Cartesian or ray-centered) and simple Gaussian bundle beams
 
-**Licensing:** unlike the rest of `AcousticsToolbox.jl` (MIT), the `BellhopJL`
-solver (`src/bellhopjl/`) is a derivative work of the GPL-licensed Bellhop
-(© 1983–2022 Michael B. Porter; A-New-BellHope changes © 2021–2023 The Regents of
-the University of California) and is licensed under GPL-3.0-or-later. Distribution
-of the combined `AcousticsToolbox.jl` package is therefore subject to GPL terms (note
-that the package in any case downloads and runs the GPL OALIB Fortran binaries via
-`AcousticsToolbox_jll`).
+**Licensing:** the `BellhopJL` solver is GPL-3.0-or-later (a derivative work of
+Bellhop), unlike the rest of `AcousticsToolbox.jl` (MIT) — see the package's
+[licensing notes](https://github.com/org-arl/AcousticsToolbox.jl#licensing) for details.

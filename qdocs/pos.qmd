@@ -39,7 +39,7 @@ using UnderwaterAcoustics
 The last two forms are only available in functions that accept no other positional arguments (other than position), and therefore do not cause any confusion as to the meaning of positional arguments.
 
 ::: {.callout-note}
-Many 2D propagation models require scenarios to be specified in a canonical coordinate system, with the source at `(0, 0, z)` and receivers in the x-z plane. If your scenario is 2D but not expressed in the canonical coordinate system, you can wrap the model with [`Reframe2D`](api.qmd) to automatically transform the scenario into the coordinate system required by the model, and results back to your coordinate system.
+Many 2D propagation models require scenarios to be specified in a canonical coordinate system, with the source at `(0, 0, z)` and receivers in the x-z plane. If your scenario is 2D but not expressed in the canonical coordinate system, you can wrap the model with [`Reframe2D`](api.qmd) to automatically transform the scenario into the coordinate system required by the model, and results back to your coordinate system (see the [quickstart guide](quickstart.qmd#scenarios-in-world-coordinates) for an example).
 :::
 
 ## Units

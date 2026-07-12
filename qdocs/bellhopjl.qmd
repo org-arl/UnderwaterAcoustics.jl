@@ -81,7 +81,11 @@ plot!(env; xlims=(0,1000), linewidth=3)
 
 The `BellhopJL` propagation model requires that the transmitter is located at
 $(x=0, y=0)$ and all receivers are located in the right half-plane (i.e., $x>0$
-and $y=0$).
+and $y=0$). This limitation can be worked around by wrapping the model with
+[`Reframe2D`](api.qmd), which automatically transforms 2D scenarios specified
+in world coordinates into the coordinate system required by the model (see the
+[quickstart guide](quickstart.qmd#scenarios-in-world-coordinates) for an
+example).
 
 Like the Fortran wrapper, the port implements the subset of Bellhop features
 reachable through the `UnderwaterAcoustics.jl` API. It does NOT support:

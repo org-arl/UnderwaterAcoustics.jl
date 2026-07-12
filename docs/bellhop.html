@@ -521,7 +521,7 @@ window.Quarto = {
 </section>
 <section id="notes" class="level2">
 <h2 class="anchored" data-anchor-id="notes">Notes</h2>
-<p>The Fortran Bellhop propagation model requires that the transmitter is located at <span class="math inline">\((x=0, y=0)\)</span> and all receivers are located in the right half-plane (i.e., <span class="math inline">\(x&gt;0\)</span> and <span class="math inline">\(y=0\)</span>). While this limitation can be worked around in the wrapper by a coordinate transformation, automatic transformation is not yet implemented.</p>
+<p>The Fortran Bellhop propagation model requires that the transmitter is located at <span class="math inline">\((x=0, y=0)\)</span> and all receivers are located in the right half-plane (i.e., <span class="math inline">\(x&gt;0\)</span> and <span class="math inline">\(y=0\)</span>). This limitation can be worked around by wrapping the model with <a href="./api.html"><code>Reframe2D</code></a>, which automatically transforms 2D scenarios specified in world coordinates into the coordinate system required by the model (see the <a href="./quickstart.html#scenarios-in-world-coordinates">quickstart guide</a> for an example).</p>
 <p>Additionally, this wrapper does not yet support all the features of the original Fortran model. In particular, it does NOT support:</p>
 <ul>
 <li>3D environments (i.e., Bellhop 3D)</li>

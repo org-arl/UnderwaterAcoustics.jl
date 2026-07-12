@@ -37,11 +37,11 @@ website:
       - pekeris-modes.qmd
       - text: <b>AcousticsToolbox.jl</b>
       - bellhop.qmd
+      - bellhopjl.qmd
       - kraken.qmd
       - orca.qmd
       - text: <b>AcousticRayTracers.jl</b>
       - raysolver.qmd
-      - bellhopjl.qmd
     - text: "---"
     - section: <b>Notes</b>
       contents:

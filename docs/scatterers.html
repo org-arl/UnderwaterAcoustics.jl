@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>modes – UnderwaterAcoustics.jl</title>
+<title>Scatterers – UnderwaterAcoustics.jl</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -20,30 +20,45 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for citations */
-div.csl-bib-body { }
-div.csl-entry {
-  clear: both;
-  margin-bottom: 0em;
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
 }
-.hanging-indent div.csl-entry {
-  margin-left:2em;
-  text-indent:-2em;
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
-div.csl-left-margin {
-  min-width:2em;
-  float:left;
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-div.csl-right-inline {
-  margin-left:2em;
-  padding-left:1em;
-}
-div.csl-indent {
-  margin-left: 2em;
-}</style>
+</style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="site_libs/quarto-nav/quarto-nav.js"></script>
 <script src="site_libs/quarto-nav/headroom.min.js"></script>
 <script src="site_libs/clipboard/clipboard.min.js"></script>
 <script src="site_libs/quarto-search/autocomplete.umd.js"></script>
@@ -88,36 +103,10 @@ div.csl-indent {
     "search-label": "Search"
   }
 }</script>
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
 
-  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
-<script type="text/javascript">
-const typesetMath = (el) => {
-  if (window.MathJax) {
-    // MathJax Typeset
-    window.MathJax.typeset([el]);
-  } else if (window.katex) {
-    // KaTeX Render
-    var mathElements = el.getElementsByClassName("math");
-    var macros = [];
-    for (var i = 0; i < mathElements.length; i++) {
-      var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
-        window.katex.render(texText.data, mathElements[i], {
-          displayMode: mathElements[i].classList.contains('display'),
-          throwOnError: false,
-          macros: macros,
-          fleqn: false
-        });
-      }
-    }
-  }
-}
-window.Quarto = {
-  typesetMath
-};
-</script>
 
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -143,7 +132,7 @@ window.Quarto = {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./modes.html"><b>Notes</b></a></li><li class="breadcrumb-item"><a href="./modes.html">On modal models</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html"><b>UnderwaterAcoustics.jl</b></a></li><li class="breadcrumb-item"><a href="./scatterers.html">Scatterers</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
     </div>
@@ -202,7 +191,7 @@ window.Quarto = {
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./scatterers.html" class="sidebar-item-text sidebar-link">
+  <a href="./scatterers.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">Scatterers</span></a>
   </div>
 </li>
@@ -343,7 +332,7 @@ window.Quarto = {
       <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./modes.html" class="sidebar-item-text sidebar-link active">
+  <a href="./modes.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">On modal models</span></a>
   </div>
 </li>
@@ -377,199 +366,140 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#on-modal-models" id="toc-on-modal-models" class="nav-link active" data-scroll-target="#on-modal-models">On modal models</a>
-  <ul class="collapse">
-  <li><a href="#introduction" id="toc-introduction" class="nav-link" data-scroll-target="#introduction">Introduction</a></li>
-  <li><a href="#theory" id="toc-theory" class="nav-link" data-scroll-target="#theory">Theory</a>
-  <ul class="collapse">
-  <li><a href="#basic-formulation" id="toc-basic-formulation" class="nav-link" data-scroll-target="#basic-formulation">Basic formulation</a></li>
-  <li><a href="#sediment-boundary-conditions" id="toc-sediment-boundary-conditions" class="nav-link" data-scroll-target="#sediment-boundary-conditions">Sediment boundary conditions</a></li>
-  <li><a href="#sound-speed-profile" id="toc-sound-speed-profile" class="nav-link" data-scroll-target="#sound-speed-profile">Sound speed profile</a></li>
-  <li><a href="#group-velocity" id="toc-group-velocity" class="nav-link" data-scroll-target="#group-velocity">Group velocity</a></li>
-  <li><a href="#range-dependence" id="toc-range-dependence" class="nav-link" data-scroll-target="#range-dependence">Range dependence</a></li>
-  </ul></li>
-  </ul></li>
+  <li><a href="#objects-in-the-water-column" id="toc-objects-in-the-water-column" class="nav-link active" data-scroll-target="#objects-in-the-water-column">Objects in the water column</a></li>
+  <li><a href="#geometry-queries" id="toc-geometry-queries" class="nav-link" data-scroll-target="#geometry-queries">Geometry queries</a></li>
+  <li><a href="#custom-shapes" id="toc-custom-shapes" class="nav-link" data-scroll-target="#custom-shapes">Custom shapes</a></li>
   </ul>
 </nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./modes.html"><b>Notes</b></a></li><li class="breadcrumb-item"><a href="./modes.html">On modal models</a></li></ol></nav></header>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html"><b>UnderwaterAcoustics.jl</b></a></li><li class="breadcrumb-item"><a href="./scatterers.html">Scatterers</a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Scatterers</h1>
+</div>
 
 
 
+<div class="quarto-title-meta">
 
-<section id="on-modal-models" class="level1">
-<h1>On modal models</h1>
-<section id="introduction" class="level2">
-<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
-<p>Modal acoustic propagation models decompose the acoustic field into a sum of normal modes, each of which propagates independently through the waveguide. In its basic form, the model assumes a range-independent environment, where the sound speed, density, and seabed properties are constant with respect to range. The environment can be complicated in depth though, modeling variation of sound speed and density with depth, as well as multilayered elastic seabeds supporting shear waves and frequency-dependent absorption. Extensions to these models (e.g., adiabatic modes, coupled modes, etc.) can deal with range-dependent environments by modeling the interaction between modes at different ranges. Modal models are narrowband and computationally most suited to low frequency modeling. At high frequencies, the number of modes required to accurately represent the acoustic field increases significantly, leading to higher computational costs and potential numerical challenges.</p>
-</section>
-<section id="theory" class="level2">
-<h2 class="anchored" data-anchor-id="theory">Theory</h2>
-<section id="basic-formulation" class="level3">
-<h3 class="anchored" data-anchor-id="basic-formulation">Basic formulation</h3>
-<p>Consider a waveguide with the top boundary at <span class="math inline">\(z=0\)</span> and the bottom boundary at <span class="math inline">\(z=-D\)</span>. To keep things simple, we first consider a homogenous seabed modeled as a bottom halfspace below <span class="math inline">\(z=-D\)</span>, and air as a top halfspace above <span class="math inline">\(z=0\)</span>. The acoustic pressure field in the waveguide due to a source of frequency <span class="math inline">\(f\)</span> located at <span class="math inline">\((r=0, z=z_s)\)</span> can be modeled as: <span class="math display">\[
-p(r,z,t) \propto \sum_{m=1}^{\infty} \psi_m(z_s)\psi_m(z)H_0(k_{rm}r)e^{i\omega t},
-\]</span> where <span class="math inline">\(\omega = 2\pi f\)</span> and <span class="math inline">\(H_0(\cdot)\)</span> is the Hankel function. The function <span class="math inline">\(\psi_m(z)\)</span> is a modal function that describes the vertical structure of the acoustic field in the waveguide, and <span class="math inline">\(k_{rm}\)</span> is the radial wavenumber for mode <span class="math inline">\(m\)</span>. Each mode is normalized such that: <span class="math display">\[
-\int_{-D}^{0} \psi^2_m(z) \; dz = 1.
-\]</span> We select a scaling factor to ensure transmission loss agrees with the convention used in <span class="citation" data-cites="coa2011">(<a href="#ref-coa2011" role="doc-biblioref">Jensen et al. 2011, sec. 5.2.1</a>)</span>. Further, suppressing the time variability and replacing the Hankel function <span class="math inline">\(H_0(\cdot)\)</span> by its asymptotic approximation, we can write the pressure field as: <span class="math display">\[
-p(r,z) \approx \sqrt\frac{2\pi}{r}e^{-i\pi/4}\sum_{m=1}^{\infty} \psi_m(z_s)\psi_m(z)\frac{e^{-ik_{rm}r}}{\sqrt{k_{rm}}},
-\]</span> where <span class="math inline">\(k_0\)</span> is the wavenumber at the source.</p>
-<p>The radial wavenumber <span class="math inline">\(k_{rm}\)</span> and the shape of the mode <span class="math inline">\(\psi_m(z)\)</span> are obtained by solving the following Sturm-Liouville eigenvalue problem with boundary conditions determined by the top and bottom halfspace properties: <span class="math display">\[
-\rho(z)\frac{d}{dz}\left[\frac{1}{\rho(z)}\psi^\prime_m(z)\right] + \left[\frac{\omega^2}{c^2(z)}-k_{rm}^2\right]\psi_m(z) = 0,
-\]</span> where <span class="math inline">\(\psi^\prime_m \equiv d\psi_m/dz\)</span>.</p>
-<p>Since the acoustic impedance of air is much lower than that of water, the boundary condition at the air-water interface can be simplified to a pressure release boundary, i.e., <span class="math inline">\(\psi_m(0) = 0\)</span>. The boundary conditions at the water-sediment interface depend on the sediment properties.</p>
-</section>
-<section id="sediment-boundary-conditions" class="level3">
-<h3 class="anchored" data-anchor-id="sediment-boundary-conditions">Sediment boundary conditions</h3>
-<section id="hard-boundary" class="level4">
-<h4 class="anchored" data-anchor-id="hard-boundary">Hard boundary</h4>
-<p>For a hard boundary at the sediment interface, we impose a no-penetration condition, which leads to the following boundary condition: <span class="math display">\[
-\psi^\prime_m(-D) = 0.
-\]</span> In case of an isovelocity channel with constant sound speed <span class="math inline">\(c(z) = c\)</span> and density <span class="math inline">\(\rho(z) = \rho\)</span>, the problem simplifies significantly and has an analytical solution<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>: <span class="math display">\[
-\psi_m(z) = \sqrt\frac{2}{D}\sin(-k_{zm}z),
-\]</span> where the vertical wavenumber <span class="math inline">\(k_{zm}\)</span> is given by: <span class="math display">\[
-k_{zm} = \left(m - \frac{1}{2}\right)\frac{\pi}{D},
-\]</span> and the radial wavenumber <span class="math inline">\(k_{rm}\)</span> is given by: <span class="math display">\[
-k_{rm} = \sqrt{\frac{\omega^2}{c^2}-k_{zm}^2}.
-\]</span> When <span class="math inline">\(k_{zm} \le \omega/c\)</span>, <span class="math inline">\(k_{rm}\)</span> is real and corresponds to propagating modes. When <span class="math inline">\(k_{zm} &gt; \omega/c\)</span>, <span class="math inline">\(k_{rm}\)</span> becomes imaginary, indicating evanescent modes that decay with range.</p>
-<div class="callout callout-style-default callout-note callout-titled">
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="objects-in-the-water-column" class="level2">
+<h2 class="anchored" data-anchor-id="objects-in-the-water-column">Objects in the water column</h2>
+<p>Most of the environmental description in <code>UnderwaterAcoustics.jl</code> deals with a stratified ocean bounded by the sea surface and the seabed. Sometimes we also wish to model discrete objects in the water column — a submerged target, a fish school, a bubble cloud, etc. Such objects are described as <strong>scatterers</strong>: objects with a geometric shape and an acoustic boundary condition on their surface. The environment only describes the geometry and the surface property — how a scatterer interacts with the sound field (including whether it is treated as impenetrable) is up to each propagation model.</p>
+<p>A scatterer is created from a shape and a boundary condition:</p>
+<div id="6" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>sc <span class="op">=</span> <span class="fu">Scatterer</span>(<span class="fu">Ellipse</span>(<span class="fl">500.0</span>, <span class="op">-</span><span class="fl">40.0</span>, <span class="fl">20.0</span>, <span class="fl">8.0</span>; θ<span class="op">=</span><span class="fl">30</span>u<span class="st">"°"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="1">
+<pre><code>Scatterer(Ellipse(x=500.0, z=-40.0, a=20.0, b=8.0, θ=0.5235987755982988), RigidBoundary)</code></pre>
+</div>
+</div>
+<p>The default boundary condition is a <code>RigidBoundary</code> (sound-hard object). Other boundary conditions may be specified, e.g.&nbsp;a <code>PressureReleaseBoundary</code> for a sound-soft object such as a bubble cloud:</p>
+<div id="8" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Scatterer</span>(<span class="fu">Ellipse</span>(<span class="fl">500.0</span>, <span class="op">-</span><span class="fl">40.0</span>, <span class="fl">20.0</span>, <span class="fl">8.0</span>), PressureReleaseBoundary)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="1">
+<pre><code>Scatterer(Ellipse(x=500.0, z=-40.0, a=20.0, b=8.0), PressureReleaseBoundary)</code></pre>
+</div>
+</div>
+<p>The only shape currently shipped with <code>UnderwaterAcoustics.jl</code> is a 2-D <code>Ellipse</code> in the x–z plane, but arbitrary shapes may be defined by a parametric function of the boundary (see <a href="#custom-shapes">custom shapes</a> below), and 3-D shapes (e.g.&nbsp;ellipsoids) are expected to be added in the future.</p>
+<p>Scatterers are part of the environmental description:</p>
+<div id="10" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>env <span class="op">=</span> <span class="fu">UnderwaterEnvironment</span>(bathymetry<span class="op">=</span><span class="fl">100.0</span>, scatterers<span class="op">=</span>sc)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="1">
+<pre><code>UnderwaterEnvironment(
+  bathymetry = 100.0, 
+  altimetry = 0.0, 
+  temperature = 27.0, 
+  salinity = 35.0, 
+  pH = 8.1, 
+  soundspeed = 1538.9235842, 
+  density = 1022.7198310217424, 
+  seabed = RigidBoundary, 
+  surface = PressureReleaseBoundary, 
+  scatterers = (Scatterer(Ellipse(x=500.0, z=-40.0, a=20.0, b=8.0, θ=0.5235987755982988), RigidBoundary)), 
+)</code></pre>
+</div>
+</div>
+<p>The <code>scatterers</code> keyword accepts a single scatterer, or a tuple/vector of scatterers. We can visualize the environment with the scatterer:</p>
+<div id="12" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(env; xlims<span class="op">=</span>(<span class="fl">0</span>, <span class="fl">1000</span>), size<span class="op">=</span>(<span class="fl">600</span>, <span class="fl">250</span>), dpi<span class="op">=</span><span class="fl">100</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="1">
+<img src="data:image/png;base64,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">
+</div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled" title="Model support">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-Note
+<span class="screen-reader-only">Warning</span>Model support
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The <code>PekerisModeSolver</code> does not compute evanescent modes, as they do not contribute significantly to the acoustic field at long ranges. However, it returns wavenumbers with an imaginary component to account for frequency-dependent absorption in the water.</p>
+<p>The built-in propagation models (<code>PekerisRayTracer</code>, <code>PekerisModeSolver</code>) do <strong>not</strong> support scattering, and refuse to work with environments containing scatterers. The scatterer description and its geometry API are intended for use by propagation models in other packages that compute scattering, e.g.&nbsp;<a href="./raysolver.html"><code>RaySolver</code></a> from <code>AcousticRayTracers.jl</code>.</p>
+<p>Models that support scatterers are expected to apply the boundary condition of the scatterer under a local tangent-plane (Kirchhoff) approximation, i.e., apply the reflection coefficient of the boundary using the local surface normal at each interaction point. This approximation is valid when the local radius of curvature of the scatterer is much larger than the acoustic wavelength.</p>
 </div>
 </div>
 </section>
-<section id="soft-boundary" class="level4">
-<h4 class="anchored" data-anchor-id="soft-boundary">Soft boundary</h4>
-<p>At long ranges, many seabeds behave like soft boundaries, and we can impose a pressure release condition at the sediment interface: <span class="math inline">\(\psi_m(-D) = 0\)</span>. The analytical solution to the modal problem is then the same as the hard boundary case, except: <span class="math display">\[
-k_{zm} = \frac{m\pi}{D}.
-\]</span></p>
+<section id="geometry-queries" class="level2">
+<h2 class="anchored" data-anchor-id="geometry-queries">Geometry queries</h2>
+<p>Shapes support a set of geometric queries that propagation models (or users) may use:</p>
+<div id="14" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>shape <span class="op">=</span> <span class="fu">Ellipse</span>(<span class="fl">500.0</span>, <span class="op">-</span><span class="fl">40.0</span>, <span class="fl">20.0</span>, <span class="fl">8.0</span>; θ<span class="op">=</span><span class="fl">30</span>u<span class="st">"°"</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="pp">@info</span> <span class="fu">boundary_point</span>(shape, <span class="fl">0.25</span>)              <span class="co"># point on the boundary at parameter u ∈ [0,1]</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="pp">@info</span> <span class="fu">normal</span>(shape, <span class="fl">0.25</span>)                      <span class="co"># unit outward normal at parameter u</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="pp">@info</span> <span class="fu">curvature</span>(shape, <span class="fl">0.25</span>)                   <span class="co"># signed curvature at parameter u</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="pp">@info</span> <span class="fu">distance</span>(shape, (x<span class="op">=</span><span class="fl">500</span>, z<span class="op">=-</span><span class="fl">70</span>))          <span class="co"># signed distance (negative inside)</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="pp">@info</span> <span class="fu">is_inside</span>(shape, (x<span class="op">=</span><span class="fl">500</span>, z<span class="op">=-</span><span class="fl">40</span>))         <span class="co"># is a position inside the shape?</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="pp">@info</span> <span class="fu">intersect_ray</span>(shape, (x<span class="op">=</span><span class="fl">0</span>, z<span class="op">=-</span><span class="fl">40</span>), (x<span class="op">=</span><span class="fl">1</span>, z<span class="op">=</span><span class="fl">0</span>))  <span class="co"># nearest ray-boundary intersection</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="pp">@info</span> <span class="fu">bounding_box</span>(shape)                      <span class="co"># axis-aligned bounding box</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<div class="ansi-escaped-output">
+<pre><span class="ansi-cyan-fg ansi-bold">[ </span><span class="ansi-cyan-fg ansi-bold">Info: </span>(x = 496.0, y = 0.0, z = -33.07179676972449)
+<span class="ansi-cyan-fg ansi-bold">[ </span><span class="ansi-cyan-fg ansi-bold">Info: </span>(x = -0.4999999999999999, y = 0.0, z = 0.8660254037844387)
+<span class="ansi-cyan-fg ansi-bold">[ </span><span class="ansi-cyan-fg ansi-bold">Info: </span>0.02
+<span class="ansi-cyan-fg ansi-bold">[ </span><span class="ansi-cyan-fg ansi-bold">Info: </span>19.6921763136567
+<span class="ansi-cyan-fg ansi-bold">[ </span><span class="ansi-cyan-fg ansi-bold">Info: </span>true
+<span class="ansi-cyan-fg ansi-bold">[ </span><span class="ansi-cyan-fg ansi-bold">Info: </span>(t = 486.8480810155714, u = 0.34643056653874554, point = (x = 486.8480810155714, y = 0.0, z = -40.000000000000036), normal = (x = -0.7131225936548233, y = 0.0, z = 0.7010393472687663), curvature = 0.03222700885730057)
+<span class="ansi-cyan-fg ansi-bold">[ </span><span class="ansi-cyan-fg ansi-bold">Info: </span>(min = (x = 482.2236111653688, y = 0.0, z = -52.16552506059644), max = (x = 517.7763888346312, y = 0.0, z = -27.834474939403563))
+</pre>
+</div>
+</div>
+</div>
+<p><code>boundary_projection()</code> finds the boundary point nearest to a given position, and returns it together with the local normal, curvature and signed distance. <code>boundary_points()</code> samples the boundary, e.g.&nbsp;for plotting.</p>
+<p>All shape geometry is differentiable: gradients propagate through shape parameters and query positions with automatic differentiation (e.g.&nbsp;<code>ForwardDiff</code>), enabling optimization and inversion of scatterer location, size and orientation.</p>
 </section>
-<section id="fluid-halfspace" class="level4">
-<h4 class="anchored" data-anchor-id="fluid-halfspace">Fluid halfspace</h4>
-<p>In the case of a fluid halfspace (e.g., water overlying a sediment layer that does not support shear waves), the sediment boundary conditions is: <span class="math display">\[
-\rho_b\psi^\prime_m(-D) + \rho\sqrt{k_{rm}^2 - \left(\frac{\omega}{c_b}\right)^2}\psi_m(-D) = 0,
-\]</span> where <span class="math inline">\(\rho_b\)</span> is the density of the sediment and <span class="math inline">\(c_b\)</span> is the sound speed in the sediment. The modal function for this case is the same as the hard boundary case, but an analytical expression for <span class="math inline">\(k_{zm}\)</span> is not available. Instead, <span class="math inline">\(k_{zm}\)</span> is obtained numerically by solving the above boundary condition equation.</p>
-<p>Fluid halfspace absorption can be modeled using a complex sound speed. However, this adds complexity to the root finding process as a complex domain numerical root finder becomes necessary.</p>
-<div class="callout callout-style-default callout-note callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Note
+<section id="custom-shapes" class="level2">
+<h2 class="anchored" data-anchor-id="custom-shapes">Custom shapes</h2>
+<p>Arbitrary 2-D shapes may be defined by a single parametric function tracing the closed boundary counter-clockwise in the x–z plane as <code>u</code> sweeps <code>[0, 1]</code>:</p>
+<div id="16" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># a circle of radius 10 m centered at (500, -40)</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>circle <span class="op">=</span> <span class="fu">ParametricCurve</span>(u <span class="op">-&gt;</span> (<span class="fl">500</span> <span class="op">+</span> <span class="fl">10</span> <span class="op">*</span> <span class="fu">cospi</span>(<span class="fl">2</span>u), <span class="op">-</span><span class="fl">40</span> <span class="op">+</span> <span class="fl">10</span> <span class="op">*</span> <span class="fu">sinpi</span>(<span class="fl">2</span>u)))</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="pp">@info</span> <span class="fu">distance</span>(circle, (x<span class="op">=</span><span class="fl">500</span>, z<span class="op">=-</span><span class="fl">60</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<div class="ansi-escaped-output">
+<pre><span class="ansi-cyan-fg ansi-bold">[ </span><span class="ansi-cyan-fg ansi-bold">Info: </span>10.0
+</pre>
 </div>
 </div>
-<div class="callout-body-container callout-body">
-<p>The <code>PekerisModeSolver</code> does not support fluid halfspace absorption and ignores the <code>δ</code> parameter in the seabed definition. The <code>Kraken</code> model supports absorption in the fluid halfspaces.</p>
 </div>
-</div>
-</section>
-<section id="acousto-elastic-halfspace" class="level4">
-<h4 class="anchored" data-anchor-id="acousto-elastic-halfspace">Acousto-elastic halfspace</h4>
-<div class="callout callout-style-default callout-caution callout-titled" title="Work in progress">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Caution</span>Work in progress
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>TODO</p>
-</div>
-</div>
-<div class="callout callout-style-default callout-note callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Note
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>The <code>PekerisModeSolver</code> currently does not support acousto-elastic halfspaces. The <code>Kraken</code> model supports acousto-elastic halfspaces.</p>
-</div>
-</div>
-</section>
-<section id="multilayered-sediment" class="level4">
-<h4 class="anchored" data-anchor-id="multilayered-sediment">Multilayered sediment</h4>
-<p>The treatment for multilayered sediment uses the same boundary conditions as the single-layer cases, but the boundary conditions are applied at each interface between layers. The formulation is not detailed here, but the approach is fairly straightforward in formulating a numerical recipe.</p>
-<div class="callout callout-style-default callout-note callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Note
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>The <code>PekerisModeSolver</code> does not support multilayered sediment seabed. The <code>Kraken</code> model supports multilayered sediment.</p>
-</div>
-</div>
-</section>
-</section>
-<section id="sound-speed-profile" class="level3">
-<h3 class="anchored" data-anchor-id="sound-speed-profile">Sound speed profile</h3>
-<p>Solving the modal equation with a depth-dependent sound speed requires a numerical solver, as no analytical solution exists in a general case. The approach is straightforward in principle.</p>
-<div class="callout callout-style-default callout-note callout-titled">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-Note
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>The <code>PekerisModeSolver</code> only supports iso-velocity environments. The <code>Kraken</code> model supports arbitrary sound speed profiles.</p>
-</div>
-</div>
-</section>
-<section id="group-velocity" class="level3">
-<h3 class="anchored" data-anchor-id="group-velocity">Group velocity</h3>
-<p>The group velocity of the modes can be obtained from the dispersion relation. For a given mode <span class="math inline">\(m\)</span>, the group velocity is defined as: <span class="math display">\[
-v_g(m) = \frac{d\omega}{dk_{rm}}.
-\]</span></p>
-</section>
-<section id="range-dependence" class="level3">
-<h3 class="anchored" data-anchor-id="range-dependence">Range dependence</h3>
-<p>Several approaches exist to extending the modal models for range dependent environments. In all the approaches, we compute the mode shapes and wavenumbers at discrete ranges from the source to the receiver, taking into account the varying environmental parameters. In order to compute the acoustic field, the modes excitation at the source is first estimated, and the modal excitation is propagated to the next range bin. The procedure continues iteratively, updating the modal excitation at each step until we reach the intended receiver range. The acoustic field at that range is then computed using the mode excitation at that range. The different approaches differ in how the modal excitation is transferred from one range bin to the next.</p>
-<section id="adiabatic-modes" class="level4">
-<h4 class="anchored" data-anchor-id="adiabatic-modes">Adiabatic modes</h4>
-<p>The simplest approach to transferring excitation from one range bin to the next is to assume that the excitation of a mode remains confined to the same mode in the next bin. Using this approach, we get a simple expression for the acoustic field: <span class="math display">\[
-p(r,z) \approx \sqrt{2\pi}e^{-i\pi/4}\sum_{m=1}^{\infty} \psi_m(0,z_s)\psi_m(r,z)\frac{e^{-i\int_0^r k_{rm}dr}}{\sqrt{\int_0^r k_{rm}dr}}.
-\]</span></p>
-
+<p>Normals, curvatures and all derived queries are automatically computed from the parametric function using automatic differentiation. 3-D shapes may similarly be defined with <code>ParametricSurface</code>. See the <a href="./ext.html#scatterers-and-shapes">extending documentation</a> for details on the shape API, including how to define new shape types with analytic geometry.</p>
 
 
 </section>
-</section>
-</section>
-</section>
 
-
-<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
-<div id="ref-coa2011" class="csl-entry" role="listitem">
-Jensen, Finn B, William A Kuperman, Michael B Porter, Henrik Schmidt, and Alexandra Tolstoy. 2011. <em>Computational Ocean Acoustics</em>. Springer.
-</div>
-</div></section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
-
-<ol>
-<li id="fn1"><p>While <span class="math inline">\(\sin(k_{zm}z)\)</span> could also be a solution, we choose <span class="math inline">\(\sin(-k_{zm}z)\)</span> to get modal functions consistent with literature that uses <span class="math inline">\(z\)</span> as depth (positive downwards).<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-</ol>
-</section></div></main> <!-- /main -->
+</main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
     const icon = "";

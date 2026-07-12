@@ -12,3 +12,11 @@ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
 UnderwaterAcoustics = "0efb1f7a-1ce7-46d2-9f48-546a4c8fbb99"
+
+[sources]
+UnderwaterAcoustics = { path = ".." }
+AcousticRayTracers = { url = "https://github.com/org-arl/AcousticRayTracers.jl", rev = "feat-scatterers" }
+AcousticsToolbox = { url = "https://github.com/org-arl/AcousticsToolbox.jl", rev = "compat-uwa-0.8" }
+
+[compat]
+Turing = "0.44.3 - 0.46"

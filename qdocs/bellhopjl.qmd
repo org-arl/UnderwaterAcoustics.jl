@@ -7,7 +7,7 @@ engine: julia
 
 | <span> | <span> |
 |---|---|
-| **Model** | `AcousticRayTracers.BellhopJL` |
+| **Model** | `AcousticsToolbox.BellhopJL` |
 | **Description** | Native Julia port of the [Bellhop ray/beam tracer](https://oalib-acoustics.org/models-and-software/rays/) |
 | **Language** | Julia |
 | **Advantages** | Differentiable (forward mode), no file I/O, drop-in alternative to `AcousticsToolbox.Bellhop` |
@@ -19,8 +19,8 @@ engine: julia
 ```{julia}
 #| echo: false
 #| output: asis
-import AcousticRayTracers
-jdoc(AcousticRayTracers, :BellhopJL)
+import AcousticsToolbox
+jdoc(AcousticsToolbox, :BellhopJL)
 ```
 
 `BellhopJL` is a native Julia port of the 2D Bellhop Gaussian beam / ray tracer,
@@ -47,7 +47,7 @@ default(size=(600, 400))
 
 ```{julia}
 using UnderwaterAcoustics
-using AcousticRayTracers
+using AcousticsToolbox
 using Plots
 
 env = UnderwaterEnvironment(
@@ -89,8 +89,10 @@ reachable through the `UnderwaterAcoustics.jl` API. It does NOT support:
 - Directional or line sources
 - Cerveny (Cartesian or ray-centered) and simple Gaussian bundle beams
 
-**Licensing:** unlike the rest of `AcousticRayTracers.jl` (MIT), the `BellhopJL`
+**Licensing:** unlike the rest of `AcousticsToolbox.jl` (MIT), the `BellhopJL`
 solver (`src/bellhopjl/`) is a derivative work of the GPL-licensed Bellhop
 (© 1983–2022 Michael B. Porter; A-New-BellHope changes © 2021–2023 The Regents of
 the University of California) and is licensed under GPL-3.0-or-later. Distribution
-of the combined `AcousticRayTracers.jl` package is therefore subject to GPL terms.
+of the combined `AcousticsToolbox.jl` package is therefore subject to GPL terms (note
+that the package in any case downloads and runs the GPL OALIB Fortran binaries via
+`AcousticsToolbox_jll`).

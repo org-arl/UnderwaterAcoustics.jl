@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.7.32">
+<meta name="generator" content="quarto-1.8.26">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -67,14 +67,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <meta name="quarto:offset" content="./">
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-db9c1fc9c9354ba2befa15aa8e1c58b9.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-c0d8b526fa222858bf56437ad6d5e615.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -187,6 +188,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./scatterers.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Scatterers</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./ext.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text">Adding new models</span></a>
   </div>
@@ -283,6 +290,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./bellhopjl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">BellhopJL</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./kraken.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Kraken</span></a>
   </div>
@@ -352,6 +365,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#propagation-models" id="toc-propagation-models" class="nav-link active" data-scroll-target="#propagation-models">Propagation models</a></li>
   <li><a href="#channel-model" id="toc-channel-model" class="nav-link" data-scroll-target="#channel-model">Channel model</a></li>
+  <li><a href="#scatterers-and-shapes" id="toc-scatterers-and-shapes" class="nav-link" data-scroll-target="#scatterers-and-shapes">Scatterers and shapes</a>
+  <ul class="collapse">
+  <li><a href="#the-parametric-boundary-map" id="toc-the-parametric-boundary-map" class="nav-link" data-scroll-target="#the-parametric-boundary-map">The parametric boundary map</a></li>
+  <li><a href="#derived-geometry-queries" id="toc-derived-geometry-queries" class="nav-link" data-scroll-target="#derived-geometry-queries">Derived geometry queries</a></li>
+  <li><a href="#example-a-custom-shape-from-one-function" id="toc-example-a-custom-shape-from-one-function" class="nav-link" data-scroll-target="#example-a-custom-shape-from-one-function">Example: a custom shape from one function</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
@@ -387,7 +406,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb1"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>AbstractPropagationModel</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>AbstractPropagationModel</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Superclass for all propagation models.</p>
 </div>
 </div>
@@ -398,7 +417,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb2"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>AbstractRayPropagationModel</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>AbstractRayPropagationModel</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Superclass for all ray propagation models.</p>
 </div>
 </div>
@@ -409,18 +428,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb3"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>AbstractModePropagationModel</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>AbstractModePropagationModel</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Superclass for all mode propagation models.</p>
 </div>
 </div>
 </div>
 <p>The constructor for <code>MyPropagationModel</code> usually will take in an environmental description and optionally, keyword options that control the model:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">MyPropagationModel</span>(env<span class="op">::</span><span class="dt">UnderwaterEnvironment</span>; kwargs<span class="op">...</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">MyPropagationModel</span>(env<span class="op">::</span><span class="dt">UnderwaterEnvironment</span>; kwargs<span class="op">...</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>However, for data-driven models, the constructor might take in data or partial environmental information and data:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">MyPropagationModel</span>(data; kwargs<span class="op">...</span>)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">MyPropagationModel</span>(env, data; kwargs<span class="op">...</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">MyPropagationModel</span>(data; kwargs<span class="op">...</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">MyPropagationModel</span>(env, data; kwargs<span class="op">...</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The following methods should be defined for <code>MyPropagationModel</code>:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>acoustic_field</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>acoustic_field</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>The acoustic field is represented by complex numbers with amplitude that is related to the source level (<code>spl</code>) and transmission loss, and angle that is related to the acoustic phase at the source frequency.</p>
 <div class="callout callout-style-default callout-tip callout-titled" title="Additional options">
 <div class="callout-header d-flex align-content-center">
@@ -428,7 +447,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon"></i>
 </div>
 <div class="callout-title-container flex-fill">
-Additional options
+<span class="screen-reader-only">Tip</span>Additional options
 </div>
 </div>
 <div class="callout-body-container callout-body">
@@ -442,7 +461,7 @@ Additional options
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb7"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">transmission_loss</span>(pm, tx, rxs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>transmission_loss(pm, tx, rxs)</code></pre>
 <p>Compute the transmission loss from the source <code>tx</code> to the receivers <code>rxs</code> using propagation model <code>pm</code>. If <code>rxs</code> denotes a single receiver, the result is a scalar. If <code>rxs</code> is an <code>AbstractArray</code>, the result is an array of transmission losses (in dB) with the same shape as <code>rxs</code>.</p>
 </div>
 </div>
@@ -455,7 +474,7 @@ Additional options
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb8"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">arrivals</span>(pm, tx, rx; paths<span class="op">=</span><span class="cn">true</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>arrivals(pm, tx, rx; paths=true)</code></pre>
 <p>Compute the arrivals at the receiver <code>rx</code> due to the source <code>tx</code> using propagation model <code>pm</code>. Returns an array of arrivals.</p>
 <p>For ray models, eigenray paths are typically included in the arrivals. However, if they are not needed, one may set <code>paths=false</code> to allow the propagation model to avoid computing them.</p>
 </div>
@@ -468,7 +487,7 @@ Additional options
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb9"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>AbstractAcousticArrival</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>AbstractAcousticArrival</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Superclass for all acoustic arrivals.</p>
 </div>
 </div>
@@ -480,7 +499,7 @@ Additional options
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb10"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>RayArrival</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>RayArrival</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Type representing a single acoustic ray arrival.</p>
 <p>Properties:</p>
 <ul>
@@ -502,7 +521,7 @@ Additional options
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb11"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>ModeArrival</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>ModeArrival</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Type representing a single acoustic mode arrival.</p>
 <p>Properties:</p>
 <ul>
@@ -523,16 +542,16 @@ Additional options
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb12"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">impulse_response</span>(pm, tx, rx, fs; abstime<span class="op">=</span><span class="cn">false</span>, ntaps<span class="op">=</span><span class="cn">nothing</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>impulse_response(pm, tx, rx, fs; abstime=false, ntaps=nothing)</code></pre>
 <p>Compute the impulse response at the receiver <code>rx</code> due to the source <code>tx</code> using propagation model <code>pm</code> at the given sampling frequency <code>fs</code>. If <code>abstime</code> is <code>true</code>, the result is in absolute time from the start of transmission. Otherwise, the result is relative to the earliest arrival time of the signal at the receiver (possibly with some guard period to accommodate acausal response). <code>ntaps</code> specifies the number of taps in the impulse response. If not specified, the number of taps is chosen automatically based on the arrival times.</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">impulse_response</span>(pm<span class="op">::</span><span class="dt">AbstractModePropagationModel</span>, tx, rx, fs; kwargs<span class="op">...</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>impulse_response(pm::AbstractModePropagationModel, tx, rx, fs; kwargs...)</code></pre>
 <p>Compute the impulse response at the receiver <code>rx</code> due to the source <code>tx</code> using propagation model <code>pm</code> at the given sampling frequency <code>fs</code>.</p>
 <p>Several <code>kwargs</code> may be specified:</p>
 <ul>
 <li>If <code>abstime</code> is <code>true</code> (default: <code>false</code>), the result is in absolute time from the start of transmission. Otherwise, the result is relative to the earliest arrival time of the signal at the receiver (with some guard period to accommodate acausal response).</li>
 <li><code>ntaps</code> (default: <code>nothing</code> for automatic) specifies the number of taps in the impulse response.</li>
 <li><code>fmin</code> and <code>fmax</code> specifies the bandwidth of interest (default: <code>0</code> to <code>fs/2</code>). If the impulse response is used to convolve with bandlimited signals, it is recommended that the impulse response bandwidth be reduced to match the signal bandwidth to reduce computational load and improve numerical stability.</li>
-<li><code>nmodes</code> (default: <code>nothing</code> for no limit) is the maximum of modes used in impulse response computation.</li>
+<li><code>nmodes</code> (default: <code>nothing</code> for no limit) is the maximum of modes used in estimating the duration of the impulse response. Reducing the number of modes reduces the duration of the impulse response, but may cause aliasing.</li>
 <li><code>threshold</code> (default: <code>-60</code> dB) is used to drop attenuated modes to manage computational load.</li>
 <li><code>acausal</code> (default: <code>0.02</code> s) controls the computation of acausal impulse response (before the estimated time of arrival of first mode).</li>
 <li><code>taper</code> (default: <code>0.1</code>) applies a tukey window to the impulse response to limit it to the estimated delay spread.</li>
@@ -552,7 +571,7 @@ Additional options
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb14"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">channel</span>(pm, txs, rxs, fs; noise<span class="op">=</span><span class="cn">nothing</span>, kwargs<span class="op">...</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>channel(pm, txs, rxs, fs; noise=nothing, kwargs...)</code></pre>
 <p>Compute a channel model from the sources <code>txs</code> to the receivers <code>rxs</code> using propagation model <code>pm</code>. The result is a channel model with the same number of input channels as the number of sources and output channels as the number of receivers. The channel model accepts signals sampled at rate <code>fs</code> and returns signals sampled at the same rate.</p>
 <p>An additive noise model may be optionally specified as <code>noise</code>. If specified, it is used to corrupt the received signals.</p>
 <p>Propagation model specific keyword arguments <code>kwargs</code> supported by <code>impulse_response()</code> can be passed through when generating a channel.</p>
@@ -566,7 +585,7 @@ Additional options
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb15"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>AbstractChannelModel</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>AbstractChannelModel</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Superclass for all channel models.</p>
 </div>
 </div>
@@ -578,7 +597,7 @@ Additional options
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb16"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">transmit</span>(ch, x; txs<span class="op">=:</span>, rxs<span class="op">=:</span>, abstime<span class="op">=</span><span class="cn">false</span>, noisy<span class="op">=</span><span class="cn">true</span>, fs<span class="op">=</span><span class="cn">nothing</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>transmit(ch, x; txs=:, rxs=:, abstime=false, noisy=true, fs=nothing)</code></pre>
 <p>Simulate the transmission of passband signal <code>x</code> through the channel model <code>ch</code>. If <code>txs</code> is specified, it specifies the indices of the sources active in the simulation. The number of sources must match the number of channels in the input signal. If <code>rxs</code> is specified, it specifies the indices of the receivers active in the simulation. Returns the received signal at the specified (or all) receivers.</p>
 <p><code>fs</code> specifies the sampling rate of the input signal. The output signal is sampled at the same rate. If <code>fs</code> is not specified but <code>x</code> is a <code>SampledSignal</code>, the sampling rate of <code>x</code> is used. Otherwise, the signal is assumed to be sampled at the channel’s sampling rate.</p>
 <p>If <code>abstime</code> is <code>true</code>, the returned signals begin at the start of transmission. Otherwise, the result is relative to the earliest arrival time of the signal at any receiver. If <code>noisy</code> is <code>true</code> and the channel has a noise model associated with it, the received signal is corrupted by additive noise.</p>
@@ -586,8 +605,256 @@ Additional options
 </div>
 </div>
 <p>In some cases (e.g.&nbsp;channel replay techniques), a channel model may be defined without the need to derive it from a propagation model. In such a case, one may extend <code>UnderwaterAcoustics.jl</code> by directly defining the channel model.</p>
+</section>
+<section id="scatterers-and-shapes" class="level2">
+<h2 class="anchored" data-anchor-id="scatterers-and-shapes">Scatterers and shapes</h2>
+<p>Environments may contain <a href="./scatterers.html">scatterers</a> — objects in the water column described by a geometric shape and an acoustic boundary condition:</p>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>Scatterer(shape; boundary=RigidBoundary)
+Scatterer(shape, boundary)</code></pre>
+<p>Create a scatterer with the given <code>shape</code> and acoustic <code>boundary</code> condition. A scatterer is an object in the water column, described by its geometry (an <a href="@ref"><code>AbstractShape</code></a>) and the acoustic property of its surface (an <code>AbstractAcousticBoundary</code>, e.g.&nbsp;<code>RigidBoundary</code> for a sound-hard object or <code>PressureReleaseBoundary</code> for a sound-soft object such as a bubble cloud). How the boundary condition is applied — including whether the object is treated as impenetrable — is determined by the propagation model.</p>
+<p>Propagation models that support scatterers are expected to apply the boundary condition under a local tangent-plane (Kirchhoff) approximation: the reflection coefficient of the boundary is applied using the local surface normal at each interaction point. This approximation is valid when the local radius of curvature of the scatterer is much larger than the acoustic wavelength.</p>
+<section id="examples" class="level4">
+<h4 class="anchored" data-anchor-id="examples">Examples</h4>
+<pre class="julia-repl"><code>julia&gt; Scatterer(Ellipse(500.0, -40.0, 20.0, 8.0))
+Scatterer(Ellipse(x=500.0, z=-40.0, a=20.0, b=8.0), RigidBoundary)
+
+julia&gt; Scatterer(Ellipse(500.0, -40.0, 20.0, 8.0), PressureReleaseBoundary)
+Scatterer(Ellipse(x=500.0, z=-40.0, a=20.0, b=8.0), PressureReleaseBoundary)</code></pre>
+</section>
+</div>
+</div>
+</div>
+<p>Propagation models that support scattering should query <code>has_scatterers(env)</code> and consume the scatterer geometry through the shape API described below. Models that do not support scattering should reject environments with scatterers with a clear error message (all built-in models do so).</p>
+<section id="the-parametric-boundary-map" class="level3">
+<h3 class="anchored" data-anchor-id="the-parametric-boundary-map">The parametric boundary map</h3>
+<p>The fundamental geometric primitive of a shape is a parametric map of its closed boundary over a unit parameter domain. A new shape type (let’s call it <code>MyShape</code>) extends:</p>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>AbstractShape</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Superclass for all scatterer shapes.</p>
+<p>A shape describes the geometry of a closed object through a parametric map of its boundary over a unit parameter domain. The boundary of a 2-D shape is a curve parametrized by <code>u ∈ [0,1]</code>, and the boundary of a 3-D shape is a surface parametrized by <code>(u, v) ∈ [0,1]²</code>. A concrete shape must define:</p>
+<ul>
+<li><code>Base.ndims(shape)</code> — spatial dimension of the shape (2 or 3)</li>
+<li><code>boundary_point(shape, u...)</code> — parametric boundary position map</li>
+</ul>
+<p>Optionally, a shape may provide analytic <code>normal()</code> and <code>curvature()</code> methods; if absent, they are automatically derived from <code>boundary_point()</code> using automatic differentiation. A shape may also override the derived queries <code>distance()</code>, <code>boundary_projection()</code>, <code>intersect_ray()</code>, <code>is_inside()</code>, <code>boundary_points()</code>, <code>bounding_box()</code> and <code>location()</code> with analytic implementations for speed and accuracy.</p>
+</div>
+</div>
+</div>
+<p>and must define just two methods:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="bu">Base</span>.<span class="fu">ndims</span>(shape<span class="op">::</span><span class="dt">MyShape</span>) <span class="op">=</span> <span class="fl">2</span>       <span class="co"># spatial dimension (2 or 3)</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">boundary_point</span>(shape<span class="op">::</span><span class="dt">MyShape</span>, u)    <span class="co"># parametric boundary position map</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>boundary_point(shape, u)
+boundary_point(shape, u, v)</code></pre>
+<p>Get the position on the boundary of <code>shape</code> at the given boundary parameters. The boundary of a 2-D shape is parametrized by a single parameter <code>u ∈ [0,1]</code>, and the boundary of a 3-D shape by two parameters <code>(u, v) ∈ [0,1]²</code>. The parametric map must trace the full closed boundary as the parameters sweep the unit domain, with <code>u = 0</code> and <code>u = 1</code> mapping to the same point. The position is returned as an <code>XYZ</code> named tuple with coordinates in meters.</p>
+<p>2-D shapes lie in the x–z plane (<code>y = 0</code>), with <code>z</code> negative downward. The boundary of a 2-D shape must be traversed counter-clockwise (with <code>x</code> rightward and <code>z</code> upward) as <code>u</code> increases, so that automatically derived normals point outward. Similarly, the parametrization of a 3-D shape must be right-handed (<code>∂p/∂u × ∂p/∂v</code> pointing outward).</p>
+</div>
+</div>
+</div>
+<p>Everything else is derived automatically. In particular, boundary normals and curvatures are computed from <code>boundary_point()</code> using automatic differentiation if the shape does not provide them. A shape may provide analytic implementations for accuracy and speed:</p>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>normal(shape, u)
+normal(shape, u, v)</code></pre>
+<p>Get the unit outward normal to the boundary of <code>shape</code> at the given boundary parameters, as an <code>XYZ</code> named tuple. If a shape does not provide an analytic normal, it is derived from <code>boundary_point()</code> using automatic differentiation.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>curvature(shape, u)
+curvature(shape, u, v)</code></pre>
+<p>Get the signed curvature (in 1/m) of the boundary of a 2-D <code>shape</code> at boundary parameter <code>u</code>. The curvature is positive where the boundary curves toward the interior of the shape (convex), and negative where it curves away (concave). If a shape does not provide an analytic curvature, it is derived from <code>boundary_point()</code> using automatic differentiation.</p>
+<p>The return convention for the curvature of 3-D shapes is not yet settled, and <code>missing</code> is returned for 3-D shapes that do not provide a curvature.</p>
+</div>
+</div>
+</div>
+<p>For simple shapes, one may avoid defining a new type altogether by wrapping a parametric function:</p>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>ParametricCurve(f)</code></pre>
+<p>Wrap a function <code>f(u)</code> as a 2-D shape. The function must map a boundary parameter <code>u ∈ [0,1]</code> to a position on the boundary of the shape, tracing a closed curve counter-clockwise in the x–z plane (with <code>x</code> rightward and <code>z</code> upward) as <code>u</code> increases, so that automatically derived normals point outward. The position may be given in any form accepted by <code>xyz()</code> (e.g.&nbsp;an <code>(x, z)</code> tuple or an <code>XYZ</code> named tuple). The function must be differentiable if normals, curvatures or the generic derived queries are used.</p>
+<section id="examples-1" class="level4">
+<h4 class="anchored" data-anchor-id="examples-1">Examples</h4>
+<pre class="julia-repl"><code>julia&gt; circle = ParametricCurve(u -&gt; (10 * cospi(2u), -40 + 10 * sinpi(2u)));
+
+julia&gt; boundary_point(circle, 0.25)
+(x = 0.0, y = 0.0, z = -30.0)</code></pre>
+</section>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>ParametricSurface(f)</code></pre>
+<p>Wrap a function <code>f(u, v)</code> as a 3-D shape. The function must map boundary parameters <code>(u, v) ∈ [0,1]²</code> to a position on the boundary of the shape, covering the full closed surface with a right-handed parametrization (<code>∂p/∂u × ∂p/∂v</code> pointing outward), so that automatically derived normals point outward. The position may be given in any form accepted by <code>xyz()</code>. The function must be differentiable if normals are used.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="derived-geometry-queries" class="level3">
+<h3 class="anchored" data-anchor-id="derived-geometry-queries">Derived geometry queries</h3>
+<p>The framework provides a set of derived queries with generic fallbacks based on <code>boundary_point()</code>. These are properties of the shape (not of any particular solver), so any propagation model gets them for free. A shape may override any of them with analytic implementations (as <code>Ellipse</code> does):</p>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>distance(p1, p2)</code></pre>
+<p>Compute distance between two positions.</p>
+<pre class="juliajulia"><code>distance(shape, pos)</code></pre>
+<p>Get the signed distance (in meters) from position <code>pos</code> to the boundary of <code>shape</code>. The distance is negative if <code>pos</code> is inside the shape, positive if outside, and zero on the boundary. The magnitude is the Euclidean distance to the nearest boundary point. A shape may return a conservative lower bound on the magnitude far away from the boundary, but the distance must be exact (with the correct sign and zero level set) near the boundary.</p>
+<p>For 2-D shapes, the distance is computed in the x–z plane, ignoring the <code>y</code> coordinate of <code>pos</code>.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>boundary_projection(shape, pos)</code></pre>
+<p>Project position <code>pos</code> onto the boundary of <code>shape</code>, i.e., find the boundary point nearest to <code>pos</code>. Returns a named tuple with fields:</p>
+<ul>
+<li><code>u</code>: boundary parameter(s) of the nearest boundary point</li>
+<li><code>point</code>: position of the nearest boundary point</li>
+<li><code>normal</code>: unit outward normal at that point</li>
+<li><code>curvature</code>: curvature at that point</li>
+<li><code>distance</code>: signed distance from <code>pos</code> to the boundary (negative inside)</li>
+</ul>
+<p>For 2-D shapes, the projection is computed in the x–z plane, ignoring the <code>y</code> coordinate of <code>pos</code>.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>intersect_ray(shape, origin, dir)</code></pre>
+<p>Find the nearest intersection of the ray <code>origin + t * dir</code> (for <code>t ≥ 0</code>) with the boundary of <code>shape</code>. Returns <code>nothing</code> if the ray does not intersect the boundary, and otherwise a named tuple with fields:</p>
+<ul>
+<li><code>t</code>: ray parameter at the intersection (distance along the ray in units of the length of <code>dir</code>)</li>
+<li><code>u</code>: boundary parameter(s) of the intersection point</li>
+<li><code>point</code>: position of the intersection point</li>
+<li><code>normal</code>: unit outward normal at the intersection point</li>
+<li><code>curvature</code>: curvature at the intersection point</li>
+</ul>
+<p>For 2-D shapes, the intersection is computed in the x–z plane, ignoring the <code>y</code> coordinates of <code>origin</code> and <code>dir</code>.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>is_inside(shape, pos)</code></pre>
+<p>Return <code>true</code> if position <code>pos</code> is strictly inside <code>shape</code>, and <code>false</code> otherwise. For 2-D shapes, the test is performed in the x–z plane, ignoring the <code>y</code> coordinate of <code>pos</code>.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>boundary_points(shape; n=128)</code></pre>
+<p>Sample points on the boundary of <code>shape</code>, e.g.&nbsp;for plotting. For 2-D shapes, <code>n+1</code> points tracing the closed boundary are returned (with the first and last point coinciding). For 3-D shapes, points sampled on an <code>(n+1) × (n+1)</code> grid over the parameter domain are returned.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>bounding_box(shape)</code></pre>
+<p>Get an axis-aligned bounding box of <code>shape</code>, as a named tuple <code>(min, max)</code> of positions. The generic implementation estimates the box from sampled boundary points, and may slightly underestimate the extent of the shape.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled" title="The `distance()` contract">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>The <code>distance()</code> contract
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Solvers that trace curved rays are expected to find boundary interactions as root-crossings of the signed <code>distance()</code> along the ray. A custom shape that overrides <code>distance()</code> may return a conservative lower bound on the magnitude <em>far</em> from the boundary, but near the boundary the distance must be sign-exact with the correct zero level set — a globally loose bound would make a solver fire the boundary event at the wrong place, or never detect it. The generic fallback and the analytic <code>Ellipse</code> implementation satisfy this automatically.</p>
+</div>
+</div>
+<p>The generic fallbacks converge their inner minimizations to true stationary points, so ForwardDiff duals propagate correctly through them (by the envelope theorem) — custom shapes defined by a differentiable <code>boundary_point()</code> are fully differentiable with respect to both query positions and shape parameters.</p>
+</section>
+<section id="example-a-custom-shape-from-one-function" class="level3">
+<h3 class="anchored" data-anchor-id="example-a-custom-shape-from-one-function">Example: a custom shape from one function</h3>
+<p>A closed curve defined by a single (differentiable) function is a fully functional shape:</p>
+<div id="34" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">UnderwaterAcoustics</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="co"># a lobed blob centered at (500, -40), with radius varying between 16 and 24 m</span></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>blob <span class="op">=</span> <span class="fu">ParametricCurve</span>() <span class="cf">do</span> u</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>  r <span class="op">=</span> <span class="fl">20</span> <span class="op">+</span> <span class="fl">4</span> <span class="op">*</span> <span class="fu">cospi</span>(<span class="fl">6</span>u)</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>  (<span class="fl">500</span> <span class="op">+</span> r <span class="op">*</span> <span class="fu">cospi</span>(<span class="fl">2</span>u), <span class="op">-</span><span class="fl">40</span> <span class="op">+</span> r <span class="op">*</span> <span class="fu">sinpi</span>(<span class="fl">2</span>u))</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a><span class="cf">end</span></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a><span class="pp">@info</span> <span class="fu">is_inside</span>(blob, (x<span class="op">=</span><span class="fl">520</span>, z<span class="op">=-</span><span class="fl">40</span>))</span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a><span class="pp">@info</span> <span class="fu">distance</span>(blob, (x<span class="op">=</span><span class="fl">500</span>, z<span class="op">=-</span><span class="fl">70</span>))</span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a><span class="pp">@info</span> <span class="fu">intersect_ray</span>(blob, (x<span class="op">=</span><span class="fl">0</span>, z<span class="op">=-</span><span class="fl">40</span>), (x<span class="op">=</span><span class="fl">1</span>, z<span class="op">=</span><span class="fl">0</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<div class="ansi-escaped-output">
+<pre><span class="ansi-cyan-fg ansi-bold">[ </span><span class="ansi-cyan-fg ansi-bold">Info: </span>true
+<span class="ansi-cyan-fg ansi-bold">[ </span><span class="ansi-cyan-fg ansi-bold">Info: </span>9.095787053632662
+<span class="ansi-cyan-fg ansi-bold">[ </span><span class="ansi-cyan-fg ansi-bold">Info: </span>(t = 484.0, u = 0.5, point = (x = 484.0, y = 0.0, z = -40.0), normal = (x = -1.0, y = 0.0, z = -0.0), curvature = -0.078125)
+</pre>
+</div>
+</div>
+</div>
+<p>Normals, curvatures, distances and ray intersections are all computed automatically from the parametric function.</p>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->
@@ -642,13 +909,14 @@ Additional options
       e.clearSelection();
     }
     const getTextToCopy = function(trigger) {
-        const codeEl = trigger.previousElementSibling.cloneNode(true);
-        for (const childEl of codeEl.children) {
-          if (isCodeAnnotation(childEl)) {
-            childEl.remove();
-          }
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
         }
-        return codeEl.innerText;
+      }
+      return codeEl.innerText;
     }
     const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
       text: getTextToCopy

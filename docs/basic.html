@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.7.32">
+<meta name="generator" content="quarto-1.8.26">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -20,41 +20,6 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for syntax highlighting */
-html { -webkit-text-size-adjust: 100%; }
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-}
 </style>
 
 
@@ -67,14 +32,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <meta name="quarto:offset" content="./">
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-db9c1fc9c9354ba2befa15aa8e1c58b9.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-c0d8b526fa222858bf56437ad6d5e615.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -187,6 +153,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./scatterers.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Scatterers</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./ext.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Adding new models</span></a>
   </div>
@@ -279,6 +251,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <div class="sidebar-item-container"> 
   <a href="./bellhop.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Bellhop</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./bellhopjl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">BellhopJL</span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -377,7 +355,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb1"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">soundspeed</span>(temperature<span class="op">=</span><span class="fl">27</span>, salinity<span class="op">=</span><span class="fl">35</span>, depth<span class="op">=</span><span class="fl">0</span>; γ<span class="op">=</span><span class="fl">0</span>, cₐ<span class="op">=</span><span class="fl">340</span>, ρᵣ<span class="op">=</span><span class="fl">1000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>soundspeed(temperature=27, salinity=35, depth=0; γ=0, cₐ=340, ρᵣ=1000)</code></pre>
 <p>Compute sound speed in water in m/s, given:</p>
 <ul>
 <li>water <code>temperature</code> in °C</li>
@@ -397,7 +375,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb2"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">shearspeed</span>(c)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>shearspeed(c)</code></pre>
 <p>Compute shear wave speed based on compressional wave speed <code>c</code> using a regression relationship from Hamilton (1980).</p>
 </div>
 </div>
@@ -408,7 +386,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb3"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">absorption</span>(frequency, distance<span class="op">=</span><span class="fl">1000</span>, salinity<span class="op">=</span><span class="fl">35</span>, temperature<span class="op">=</span><span class="fl">27</span>, depth<span class="op">=</span><span class="fl">0</span>, pH<span class="op">=</span><span class="fl">8.1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>absorption(frequency, distance=1000, salinity=35, temperature=27, depth=0, pH=8.1)</code></pre>
 <p>Compute volume acoustic absorption coefficient in water, given:</p>
 <ul>
 <li><code>frequency</code> in Hz</li>
@@ -434,7 +412,7 @@ julia&gt; α = -20log10(A)
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">water_density</span>(temperature<span class="op">=</span><span class="fl">27</span>, salinity<span class="op">=</span><span class="fl">35</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>water_density(temperature=27, salinity=35)</code></pre>
 <p>Compute density of water (kg/m³), given <code>temperature</code> in °C and <code>salinity</code> in ppt.</p>
 <p>Implementation based on Fofonoff (1985 - IES 80).</p>
 </div>
@@ -446,7 +424,7 @@ julia&gt; α = -20log10(A)
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb6"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dBperλ</span>(x)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>dBperλ(x)</code></pre>
 <p>Compute dimensionless absorption coefficient <code>δ</code> from dB/λ. Implementation based on APL-UW TR 9407 (1994), IV-9 equation (4).</p>
 </div>
 </div>
@@ -457,7 +435,7 @@ julia&gt; α = -20log10(A)
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb7"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">in_dBperλ</span>(δ)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>in_dBperλ(δ)</code></pre>
 <p>Compute dB/λ from dimensionless absorption coefficient <code>δ</code>. Implementation based on APL-UW TR 9407 (1994), IV-9 equation (4).</p>
 </div>
 </div>
@@ -468,7 +446,7 @@ julia&gt; α = -20log10(A)
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb8"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">reflection_coef</span>(θ, ρᵣ, cᵣ, δ<span class="op">=</span><span class="fl">0.0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>reflection_coef(θ, ρᵣ, cᵣ, δ=0.0)</code></pre>
 <p>Compute complex reflection coefficient at a fluid-fluid boundary, given:</p>
 <ul>
 <li>angle of incidence <code>θ</code> (angle to the surface normal)</li>
@@ -486,7 +464,7 @@ julia&gt; α = -20log10(A)
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb9"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">surface_reflection_coef</span>(windspeed, frequency, θ)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>surface_reflection_coef(windspeed, frequency, θ)</code></pre>
 <p>Compute surface reflection coefficient, given:</p>
 <ul>
 <li><code>windspeed</code> in m/s</li>
@@ -503,7 +481,7 @@ julia&gt; α = -20log10(A)
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb10"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bubble_resonance</span>(radius, depth<span class="op">=</span><span class="fl">0</span>; γ<span class="op">=</span><span class="fl">1.4</span>, p₀<span class="op">=</span><span class="fl">1.013e5</span>, ρ<span class="op">=</span><span class="fl">1022.72</span>, g<span class="op">=</span><span class="fl">9.80665</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>bubble_resonance(radius, depth=0; γ=1.4, p₀=1.013e5, ρ=1022.72, g=9.80665)</code></pre>
 <p>Compute resonance frequency of a freely oscillating has bubble in water, given:</p>
 <ul>
 <li>bubble <code>radius</code> in meters</li>
@@ -523,8 +501,8 @@ julia&gt; α = -20log10(A)
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb11"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">doppler</span>(speed, frequency)</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">doppler</span>(speed, frequency, soundspeed)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>doppler(speed, frequency)
+doppler(speed, frequency, soundspeed)</code></pre>
 <p>Compute Doppler frequency, given relative speed between transmitter and receiver in m/s. <code>soundspeed</code> is the nominal sound speed in water.</p>
 </div>
 </div>
@@ -584,13 +562,14 @@ julia&gt; α = -20log10(A)
       e.clearSelection();
     }
     const getTextToCopy = function(trigger) {
-        const codeEl = trigger.previousElementSibling.cloneNode(true);
-        for (const childEl of codeEl.children) {
-          if (isCodeAnnotation(childEl)) {
-            childEl.remove();
-          }
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
         }
-        return codeEl.innerText;
+      }
+      return codeEl.innerText;
     }
     const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
       text: getTextToCopy

@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.7.32">
+<meta name="generator" content="quarto-1.8.26">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -67,14 +67,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <meta name="quarto:offset" content="./">
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-db9c1fc9c9354ba2befa15aa8e1c58b9.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-c0d8b526fa222858bf56437ad6d5e615.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -187,6 +188,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./scatterers.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Scatterers</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./ext.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Adding new models</span></a>
   </div>
@@ -283,6 +290,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
+  <a href="./bellhopjl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">BellhopJL</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
   <a href="./kraken.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text">Kraken</span></a>
   </div>
@@ -354,6 +367,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#propagation-models" id="toc-propagation-models" class="nav-link" data-scroll-target="#propagation-models">Propagation models</a></li>
   <li><a href="#channel-models-and-simulation" id="toc-channel-models-and-simulation" class="nav-link" data-scroll-target="#channel-models-and-simulation">Channel models and simulation</a></li>
   <li><a href="#boundary-conditions" id="toc-boundary-conditions" class="nav-link" data-scroll-target="#boundary-conditions">Boundary conditions</a></li>
+  <li><a href="#scatterers" id="toc-scatterers" class="nav-link" data-scroll-target="#scatterers">Scatterers</a></li>
   <li><a href="#sources-and-receivers" id="toc-sources-and-receivers" class="nav-link" data-scroll-target="#sources-and-receivers">Sources and receivers</a></li>
   <li><a href="#noise-models" id="toc-noise-models" class="nav-link" data-scroll-target="#noise-models">Noise models</a></li>
   </ul>
@@ -390,7 +404,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb1"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">UnderwaterEnvironment</span>(; kwargs<span class="op">...</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>UnderwaterEnvironment(; kwargs...)</code></pre>
 <p>Create a generic underwater environment with the given parameters. The following parameters are supported:</p>
 <ul>
 <li><code>bathymetry</code> = bathymetry model</li>
@@ -402,6 +416,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><code>density</code> = density model</li>
 <li><code>seabed</code> = seabed sediment model</li>
 <li><code>surface</code> = surface model</li>
+<li><code>scatterers</code> = scatterer, or tuple/vector of scatterers, in the water column</li>
 </ul>
 <p>All parameters are optional and have default values.</p>
 </div>
@@ -413,7 +428,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb2"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">is_range_dependent</span>(env)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>is_range_dependent(env)</code></pre>
 <p>Return <code>true</code> if any quantity (e.g.&nbsp;sound speed, bathymetry, etc) in the environment <code>env</code> depends on the horizontal location, and <code>false</code> otherwise.</p>
 </div>
 </div>
@@ -424,7 +439,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb3"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">is_isovelocity</span>(env)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>is_isovelocity(env)</code></pre>
 <p>Return <code>true</code> if the sound speed in the environment <code>env</code> is a constant.</p>
 </div>
 </div>
@@ -435,7 +450,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb4"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">env_type</span>(env)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>env_type(env)</code></pre>
 <p>Return the base number type for the environment. Typically, this is a <code>Float64</code>, but could differ if the environment was constructed using other number types.</p>
 </div>
 </div>
@@ -449,8 +464,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">models</span>()</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">models</span>(mtype<span class="op">::</span><span class="dt">Type{&lt;:AbstractPropagationModel}</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>models()
+models(mtype::Type{&lt;:AbstractPropagationModel})</code></pre>
 <p>Return a list of all available propagation models. If <code>mtype</code> is specified, return only models of that type.</p>
 </div>
 </div>
@@ -461,7 +476,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb6"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">PekerisRayTracer</span>(env; max_bounces<span class="op">=</span><span class="fl">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>PekerisRayTracer(env; max_bounces=3)</code></pre>
 <p>A fast differentiable ray tracer that only supports iso-velocity constant depth environments. <code>max_bounces</code> is the number of surface/bottom bounces to consider in the ray tracing.</p>
 </div>
 </div>
@@ -472,7 +487,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb7"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">PekerisModeSolver</span>(env; ngrid<span class="op">=</span><span class="fl">0</span>, nmodes<span class="op">=</span><span class="fl">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>PekerisModeSolver(env; ngrid=0, nmodes=0)</code></pre>
 <p>A fast differentiable mode propagation model that only supports iso-velocity constant depth environments.</p>
 <p><code>ngrid</code> is the number of grid points to use for modal root finding for fluid bottom environments. If <code>ngrid</code> is too small, the mode solver may miss some modes. If <code>ngrid</code> is too large, the mode solver may take a long time to converge. The default value of <code>ngrid</code> of 0 will use a heuristic to automatically determine the number of grid points to use.</p>
 <p><code>nmodes</code> controls the maximum number of modes computed. Setting <code>nmodes</code> to 0 causes all propagating modes to be computed.</p>
@@ -485,10 +500,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb8"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">AdiabaticExt</span>(model, env; dx<span class="op">=</span><span class="fl">0.0</span>, dz<span class="op">=</span><span class="fl">0.0</span>, reciprocal<span class="op">=</span><span class="cn">false</span>, kwargs<span class="op">...</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>AdiabaticExt(model, env; dx=0.0, dz=0.0, reciprocal=false, kwargs...)</code></pre>
 <p>A 2D adiabatic mode propagation model based on a range-independent modal propagation <code>model</code>. The adiabatic mode model supports range-dependent bathymetry. Any <code>kwargs</code> passed in are transferred to the underlying <code>model</code>.</p>
 <p><code>dx</code> is the step size in the range direction for integration. <code>dz</code> is the mesh size in the depth direction to compute modes. If <code>dx</code> and/or <code>dz</code> is set to zero, it is automatically determined (~10 points per wavelength).</p>
 <p>Adiabatic mode models are usually not reciprocal, i.e., exchanging a source and receiver changes the answer. This is because the bathymetry is assumed to have azimuthal symmetry around the source. In <code>reciprocal</code> mode, the adiabatic computation is modified to ensure reciprocity, but azimuthal symmetry is lost.</p>
+<p>If the underlying <code>model</code> is differentiable, <code>AdiabaticExt</code> supports forward-mode automatic differentiation (e.g.&nbsp;ForwardDiff). Reverse-mode automatic differentiation is currently not supported.</p>
 </div>
 </div>
 </div>
@@ -498,7 +514,33 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb9"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>RayArrival</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>Reframe2D(model, env; atol=0.1, kwargs...)</code></pre>
+<p>Wrap a 2D propagation <code>model</code> so that scenarios may be specified in world coordinates rather than the model’s canonical coordinate system. Any <code>kwargs</code> passed in are transferred to the underlying <code>model</code> when it is constructed.</p>
+<p>Many 2D propagation models require the source to be located at <code>(0, 0, z)</code> and all receivers to lie in the x-z plane with <code>x ≥ 0</code>. The wrapper automatically translates and rotates (about the z-axis) the source, receivers, and environment (bathymetry, altimetry, sound speed profile, etc) into the coordinate system required by the model, and transforms results (e.g.&nbsp;eigenray paths) back to the original coordinates.</p>
+<p>A scenario is considered 2D if all receivers lie within a horizontal distance <code>atol</code> (in meters) of the vertical plane containing the source and the farthest receiver. Receivers within <code>atol</code> of the plane are projected onto it. A single receiver anywhere is always a valid 2D scenario. If the scenario is already in canonical coordinates, the wrapper passes it through unchanged.</p>
+<p>The transformed environment is only guaranteed to match the original environment on the vertical plane containing the source and receivers.</p>
+<p>Scatterers in the water column are transformed along with the environment. Since 2-D scatterer shapes lie in the x-z plane, scenarios with 2-D scatterers are considered 2D only if the propagation plane coincides with the x-z plane (i.e.&nbsp;the scenario is at most translated along the x-axis); 3-D scatterer shapes support any scenario orientation.</p>
+<section id="examples" class="level4">
+<h4 class="anchored" data-anchor-id="examples">Examples</h4>
+<pre class="julia-repl"><code>julia&gt; pm = Reframe2D(PekerisRayTracer, UnderwaterEnvironment(bathymetry=20.0))
+Reframe2D(PekerisRayTracer)
+
+julia&gt; tx = AcousticSource((x=100.0, y=-50.0, z=-5.0), 1000.0);
+
+julia&gt; rx = AcousticReceiver((x=500.0, y=250.0, z=-10.0));
+
+julia&gt; transmission_loss(pm, tx, rx)</code></pre>
+</section>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>RayArrival</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Type representing a single acoustic ray arrival.</p>
 <p>Properties:</p>
 <ul>
@@ -520,7 +562,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb10"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>ModeArrival</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>ModeArrival</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Type representing a single acoustic mode arrival.</p>
 <p>Properties:</p>
 <ul>
@@ -540,7 +582,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb11"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">arrivals</span>(pm, tx, rx; paths<span class="op">=</span><span class="cn">true</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>arrivals(pm, tx, rx; paths=true)</code></pre>
 <p>Compute the arrivals at the receiver <code>rx</code> due to the source <code>tx</code> using propagation model <code>pm</code>. Returns an array of arrivals.</p>
 <p>For ray models, eigenray paths are typically included in the arrivals. However, if they are not needed, one may set <code>paths=false</code> to allow the propagation model to avoid computing them.</p>
 </div>
@@ -552,11 +594,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb12"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">acoustic_field</span>(pm, tx, rxs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>acoustic_field(pm, tx, rxs)</code></pre>
 <p>Compute the acoustic field at the receivers <code>rxs</code> due to the source <code>tx</code> using propagation model <code>pm</code>. If <code>rxs</code> denotes a single receiver, the result is a complex scalar. If <code>rxs</code> is an <code>AbstractArray</code>, the result is an array of complex numbers with the same shape as <code>rxs</code>. The amplitude of the field is related to the transmission loss, and the angle is related to the acoustic phase at the source frequency.</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">acoustic_field</span>(pm<span class="op">::</span><span class="dt">PekerisRayTracer</span>, tx, rxs; mode<span class="op">=:</span>coherent)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>Compute the acoustic field at a receiver <code>rxs</code> due to a transmitter <code>tx</code> in the Pekeris waveguide. The field is computed incoherently if <code>mode=:incoherent</code>. Otherwise, the field is computed coherently.</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">acoustic_field</span>(pm<span class="op">::</span><span class="dt">PekerisModeSolver</span>, tx, rxs; mode<span class="op">=:</span>coherent)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>acoustic_field(pm::PekerisRayTracer, tx, rx; mode=:coherent)</code></pre>
+<p>Compute the acoustic field at a receiver <code>rx</code> due to a transmitter <code>tx</code> in the Pekeris waveguide. The field is computed incoherently if <code>mode=:incoherent</code>. Otherwise, the field is computed coherently.</p>
+<pre class="juliajulia"><code>acoustic_field(pm::PekerisModeSolver, tx, rxs; mode=:coherent)</code></pre>
 <p>Compute the acoustic field at a receiver <code>rxs</code> due to a transmitter <code>tx</code> in the Pekeris waveguide. The field can be computed incoherently if <code>mode=:incoherent</code>. Otherwise, the field is computed coherently.</p>
 </div>
 </div>
@@ -567,7 +609,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb15"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">transmission_loss</span>(pm, tx, rxs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>transmission_loss(pm, tx, rxs)</code></pre>
 <p>Compute the transmission loss from the source <code>tx</code> to the receivers <code>rxs</code> using propagation model <code>pm</code>. If <code>rxs</code> denotes a single receiver, the result is a scalar. If <code>rxs</code> is an <code>AbstractArray</code>, the result is an array of transmission losses (in dB) with the same shape as <code>rxs</code>.</p>
 </div>
 </div>
@@ -578,16 +620,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb16"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">impulse_response</span>(pm, tx, rx, fs; abstime<span class="op">=</span><span class="cn">false</span>, ntaps<span class="op">=</span><span class="cn">nothing</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>impulse_response(pm, tx, rx, fs; abstime=false, ntaps=nothing)</code></pre>
 <p>Compute the impulse response at the receiver <code>rx</code> due to the source <code>tx</code> using propagation model <code>pm</code> at the given sampling frequency <code>fs</code>. If <code>abstime</code> is <code>true</code>, the result is in absolute time from the start of transmission. Otherwise, the result is relative to the earliest arrival time of the signal at the receiver (possibly with some guard period to accommodate acausal response). <code>ntaps</code> specifies the number of taps in the impulse response. If not specified, the number of taps is chosen automatically based on the arrival times.</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">impulse_response</span>(pm<span class="op">::</span><span class="dt">AbstractModePropagationModel</span>, tx, rx, fs; kwargs<span class="op">...</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>impulse_response(pm::AbstractModePropagationModel, tx, rx, fs; kwargs...)</code></pre>
 <p>Compute the impulse response at the receiver <code>rx</code> due to the source <code>tx</code> using propagation model <code>pm</code> at the given sampling frequency <code>fs</code>.</p>
 <p>Several <code>kwargs</code> may be specified:</p>
 <ul>
 <li>If <code>abstime</code> is <code>true</code> (default: <code>false</code>), the result is in absolute time from the start of transmission. Otherwise, the result is relative to the earliest arrival time of the signal at the receiver (with some guard period to accommodate acausal response).</li>
 <li><code>ntaps</code> (default: <code>nothing</code> for automatic) specifies the number of taps in the impulse response.</li>
 <li><code>fmin</code> and <code>fmax</code> specifies the bandwidth of interest (default: <code>0</code> to <code>fs/2</code>). If the impulse response is used to convolve with bandlimited signals, it is recommended that the impulse response bandwidth be reduced to match the signal bandwidth to reduce computational load and improve numerical stability.</li>
-<li><code>nmodes</code> (default: <code>nothing</code> for no limit) is the maximum of modes used in impulse response computation.</li>
+<li><code>nmodes</code> (default: <code>nothing</code> for no limit) is the maximum of modes used in estimating the duration of the impulse response. Reducing the number of modes reduces the duration of the impulse response, but may cause aliasing.</li>
 <li><code>threshold</code> (default: <code>-60</code> dB) is used to drop attenuated modes to manage computational load.</li>
 <li><code>acausal</code> (default: <code>0.02</code> s) controls the computation of acausal impulse response (before the estimated time of arrival of first mode).</li>
 <li><code>taper</code> (default: <code>0.1</code>) applies a tukey window to the impulse response to limit it to the estimated delay spread.</li>
@@ -605,7 +647,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb18"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">channel</span>(pm, txs, rxs, fs; noise<span class="op">=</span><span class="cn">nothing</span>, kwargs<span class="op">...</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>channel(pm, txs, rxs, fs; noise=nothing, kwargs...)</code></pre>
 <p>Compute a channel model from the sources <code>txs</code> to the receivers <code>rxs</code> using propagation model <code>pm</code>. The result is a channel model with the same number of input channels as the number of sources and output channels as the number of receivers. The channel model accepts signals sampled at rate <code>fs</code> and returns signals sampled at the same rate.</p>
 <p>An additive noise model may be optionally specified as <code>noise</code>. If specified, it is used to corrupt the received signals.</p>
 <p>Propagation model specific keyword arguments <code>kwargs</code> supported by <code>impulse_response()</code> can be passed through when generating a channel.</p>
@@ -618,11 +660,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb19"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">BasebandReplayChannel</span>(h, θ, fs, fc, step<span class="op">=</span><span class="fl">1</span>; noise<span class="op">=</span><span class="cn">nothing</span>)</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">BasebandReplayChannel</span>(h, fs, fc, step<span class="op">=</span><span class="fl">1</span>; noise<span class="op">=</span><span class="cn">nothing</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>BasebandReplayChannel(h, θ, fs, fc, step=1; noise=nothing)
+BasebandReplayChannel(h, fs, fc, step=1; noise=nothing)</code></pre>
 <p>Construct a baseband replay channel with impulse responses <code>h</code> and phase estimates <code>θ</code>. The phase estimates are optional. <code>fs</code> is the sampling frequency in Sa/s, <code>fc</code> is the carrier frequency in Hz, and <code>step</code> is the decimation rate for the time axis of <code>h</code>. The effective sampling frequency of the impulse responses is <code>fs ÷ step</code> impulse responses per second.</p>
 <p>An additive noise model may be optionally specified as <code>noise</code>. If specified, it is used to corrupt the received signals.</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">BasebandReplayChannel</span>(filename; upsample<span class="op">=</span><span class="cn">false</span>, rxs<span class="op">=:</span>, noise<span class="op">=</span><span class="cn">nothing</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>BasebandReplayChannel(filename; upsample=false, rxs=:, noise=nothing)</code></pre>
 <p>Load a baseband replay channel from a file.</p>
 <p>If <code>upsample</code> is <code>true</code>, the impulse responses are upsampled to the delay axis sampling rate. This makes applying the channel faster but requires more memory. <code>rxs</code> controls which receivers to load from the file. By default, all receivers are loaded.</p>
 <p>An additive noise model may be optionally specified as <code>noise</code>. If specified, it is used to corrupt the received signals.</p>
@@ -639,11 +681,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb21"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">transmit</span>(ch, x; txs<span class="op">=:</span>, rxs<span class="op">=:</span>, abstime<span class="op">=</span><span class="cn">false</span>, noisy<span class="op">=</span><span class="cn">true</span>, fs<span class="op">=</span><span class="cn">nothing</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>transmit(ch, x; txs=:, rxs=:, abstime=false, noisy=true, fs=nothing)</code></pre>
 <p>Simulate the transmission of passband signal <code>x</code> through the channel model <code>ch</code>. If <code>txs</code> is specified, it specifies the indices of the sources active in the simulation. The number of sources must match the number of channels in the input signal. If <code>rxs</code> is specified, it specifies the indices of the receivers active in the simulation. Returns the received signal at the specified (or all) receivers.</p>
 <p><code>fs</code> specifies the sampling rate of the input signal. The output signal is sampled at the same rate. If <code>fs</code> is not specified but <code>x</code> is a <code>SampledSignal</code>, the sampling rate of <code>x</code> is used. Otherwise, the signal is assumed to be sampled at the channel’s sampling rate.</p>
 <p>If <code>abstime</code> is <code>true</code>, the returned signals begin at the start of transmission. Otherwise, the result is relative to the earliest arrival time of the signal at any receiver. If <code>noisy</code> is <code>true</code> and the channel has a noise model associated with it, the received signal is corrupted by additive noise.</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">transmit</span>(ch<span class="op">::</span><span class="dt">BasebandReplayChannel</span>, x; rxs<span class="op">=:</span>, abstime<span class="op">=</span><span class="cn">false</span>, noisy<span class="op">=</span><span class="cn">true</span>, fs<span class="op">=</span><span class="cn">nothing</span>, start<span class="op">=</span><span class="cn">nothing</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>transmit(ch::BasebandReplayChannel, x; rxs=:, abstime=false, noisy=true, fs=nothing, start=nothing)</code></pre>
 <p>Simulate the transmission of passband signal <code>x</code> through the channel model <code>ch</code>. If <code>txs</code> is specified, it specifies the indices of the sources active in the simulation. The number of sources must match the number of channels in the input signal. If <code>rxs</code> is specified, it specifies the indices of the receivers active in the simulation. Returns the received signal at the specified (or all) receivers.</p>
 <p><code>fs</code> specifies the sampling rate of the input signal. The output signal is sampled at the same rate. If <code>fs</code> is not specified but <code>x</code> is a <code>SampledSignal</code>, the sampling rate of <code>x</code> is used. Otherwise, the signal is assumed to be sampled at the channel’s sampling rate.</p>
 <p>If <code>abstime</code> is <code>true</code>, the returned signals begin at the start of transmission. Otherwise, the result is relative to the earliest arrival time of the signal at any receiver. If <code>noisy</code> is <code>true</code> and the channel has a noise model associated with it, the received signal is corrupted by additive noise.</p>
@@ -660,7 +702,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb23"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">reflection_coef</span>(θ, ρᵣ, cᵣ, cᵣₛ, δ, δₛ)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>reflection_coef(θ, ρᵣ, cᵣ, cᵣₛ, δ, δₛ)</code></pre>
 <p>Compute complex reflection coefficient at a fluid-solid boundary, given:</p>
 <ul>
 <li>angle of incidence <code>θ</code> (angle to the surface normal)</li>
@@ -680,7 +722,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb24"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>PressureReleaseBoundary</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb26"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>PressureReleaseBoundary</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Pressure-release boundary condition.</p>
 </div>
 </div>
@@ -691,7 +733,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb25"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>RigidBoundary</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb27"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>RigidBoundary</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Rigid boundary condition.</p>
 </div>
 </div>
@@ -702,11 +744,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb26"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">FluidBoundary</span>(ρ, c, δ<span class="op">=</span><span class="fl">0</span>, σ<span class="op">=</span><span class="fl">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>FluidBoundary(ρ, c, δ=0, σ=0)</code></pre>
 <p>Create a fluid half-space boundary with density <code>ρ</code>, sound speed <code>c</code>, dimensionless absorption coefficient <code>δ</code>, and interfacial roughness <code>σ</code>.</p>
 <p>The absorption coefficient <code>δ</code> may also be specified in dB/m/kHz by attaching appropriate units to it (e.g.&nbsp;<code>13.2u"dB/m/kHz"</code>).</p>
-<section id="examples" class="level4">
-<h4 class="anchored" data-anchor-id="examples">Examples</h4>
+<section id="examples-1" class="level4">
+<h4 class="anchored" data-anchor-id="examples-1">Examples</h4>
 <pre class="julia-repl"><code>julia&gt; FluidBoundary(1200, 1500)
 FluidBoundary(ρ=1200.0, c=1500.0)
 
@@ -722,10 +764,10 @@ FluidBoundary(ρ=1200.0, c=1500.0)
 julia&gt; FluidBoundary(ρ=1200, c=1500, δ=0.1, σ=0.1)
 FluidBoundary(ρ=1200.0, c=1500.0, δ=0.1, σ=0.1)
 
-julia&gt; FluidBoundary(ρ=1200.0, c=0.0)
+julia&gt; FluidBoundary(ρ=0.0, c=0.0)
 PressureReleaseBoundary
 
-julia&gt; FluidBoundary(ρ=1200.0, c=Inf)
+julia&gt; FluidBoundary(ρ=Inf, c=Inf)
 RigidBoundary
 
 julia&gt; FluidBoundary(1.2u"g/cm^3", 1500u"m/s", 13.2u"dB/m/kHz")
@@ -740,17 +782,17 @@ FluidBoundary(ρ=1200.0, c=1500.0, δ=0.362803)</code></pre>
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb28"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ElasticBoundary</span>(ρ, cₚ, cₛ)</span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ElasticBoundary</span>(ρ, cₚ, cₛ, δₚ, δₛ)</span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ElasticBoundary</span>(ρ, cₚ, cₛ, δₚ, δₛ, σ)</span>
-<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ElasticBoundary</span>(b<span class="op">::</span><span class="dt">FluidBoundary</span>)</span>
-<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ElasticBoundary</span>(b<span class="op">::</span><span class="dt">FluidBoundary</span>, δₛ)</span>
-<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="fu">ElasticBoundary</span>(b<span class="op">::</span><span class="dt">FluidBoundary</span>, cₛ, δₛ)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>ElasticBoundary(ρ, cₚ, cₛ)
+ElasticBoundary(ρ, cₚ, cₛ, δₚ, δₛ)
+ElasticBoundary(ρ, cₚ, cₛ, δₚ, δₛ, σ)
+ElasticBoundary(b::FluidBoundary)
+ElasticBoundary(b::FluidBoundary, δₛ)
+ElasticBoundary(b::FluidBoundary, cₛ, δₛ)</code></pre>
 <p>Create a solid half-space boundary with density <code>ρ</code>, compressional sound speed <code>cₚ</code>, shear wave speed <code>cₛ</code>, dimensionless compressional absorption coefficient <code>δₚ</code>, dimensionless shear absorption coefficient <code>δₛ</code>, and interfacial roughness <code>σ</code>. If the absorption coefficients or interfacial roughness are unspecified, they are assumed to be 0.</p>
 <p>An <code>ElasticBoundary</code> may also be constructed from a <code>b::FluidBoundary</code> by adding shear wave speed <code>cₛ</code> and shear absorption coefficient <code>δₛ</code>. If <code>cₛ</code> is not specified, it is computed using <code>shearspeed(b.cₚ)</code>.</p>
 <p>Absorption coefficients <code>δₚ</code> and <code>δₛ</code> may also be specified in dB/m/kHz by attaching appropriate units to them (e.g.&nbsp;<code>13.2u"dB/m/kHz"</code>).</p>
-<section id="examples-1" class="level4">
-<h4 class="anchored" data-anchor-id="examples-1">Examples</h4>
+<section id="examples-2" class="level4">
+<h4 class="anchored" data-anchor-id="examples-2">Examples</h4>
 <pre class="julia-repl"><code>julia&gt; ElasticBoundary(1200, 1500, 500)
 ElasticBoundary(ρ=1200.0, cₚ=1500.0, cₛ=500.0)
 
@@ -790,17 +832,17 @@ ElasticBoundary(ρ=1484.373, cₚ=1691.954, cₛ=500.0, δₚ=0.01602, δₛ=0.1
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb30"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">MultilayerElasticBoundary</span>([(h, ρ, cₚ, cₛ), <span class="op">...</span>])</span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="fu">MultilayerElasticBoundary</span>([(h, ρ, cₚ, cₛ, δₚ, δₛ), <span class="op">...</span>])</span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="fu">MultilayerElasticBoundary</span>([(h, ρ, cₚ, cₛ, δₚ, δₛ, σ), <span class="op">...</span>])</span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="fu">MultilayerElasticBoundary</span>([(h, b<span class="op">::</span><span class="dt">FluidBoundary</span>), <span class="op">...</span>])</span>
-<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="fu">MultilayerElasticBoundary</span>([(h, b<span class="op">::</span><span class="dt">ElasticBoundary</span>), <span class="op">...</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>MultilayerElasticBoundary([(h, ρ, cₚ, cₛ), ...])
+MultilayerElasticBoundary([(h, ρ, cₚ, cₛ, δₚ, δₛ), ...])
+MultilayerElasticBoundary([(h, ρ, cₚ, cₛ, δₚ, δₛ, σ), ...])
+MultilayerElasticBoundary([(h, b::FluidBoundary), ...])
+MultilayerElasticBoundary([(h, b::ElasticBoundary), ...])</code></pre>
 <p>Create a multilayer solid boundary with layers defined by a vector of tuples specifying the layer thickness <code>h</code>, density <code>ρ</code>, compressional sound speed <code>cₚ</code>, shear wave speed <code>cₛ</code>, dimensionless compressional absorption coefficient <code>δₚ</code>, dimensionless shear absorption coefficient <code>δₛ</code>, and interfacial roughness <code>σ</code> for each layer. If the absorption coefficients or interfacial roughness is unspecified, they are assumed to be 0. The last entry in the vector is considered the bottom half-space and has an infinite thickness. By convention, we specify a value of <code>Inf</code> for <code>h</code> for that layer.</p>
 <p><code>ρ</code>, <code>cₚ</code>, and <code>cₛ</code> may also be specified with linear variation within a layer by specifying the value as a 2-tuple, with the first entry being the value at the top of the layer and the second entry being the value at the bottom.</p>
 <p>The properties of a layer may be specified by giving a <code>FluidBoundary</code> or <code>ElasticBoundary</code> layer instead of <code>ρ</code>, <code>cₚ</code>, <code>cₛ</code>, <code>δₚ</code>, <code>δₛ</code> and <code>σ</code>.</p>
 <p>Absorption coefficients <code>δₚ</code> and <code>δₛ</code> may also be specified in dB/m/kHz by attaching appropriate units to them (e.g.&nbsp;<code>13.2u"dB/m/kHz"</code>).</p>
-<section id="examples-2" class="level4">
-<h4 class="anchored" data-anchor-id="examples-2">Examples</h4>
+<section id="examples-3" class="level4">
+<h4 class="anchored" data-anchor-id="examples-3">Examples</h4>
 <pre class="julia-repl"><code>julia&gt; MultilayerElasticBoundary([
          (h = 5.2, FineSand),
          (h = Inf, ρ = 2000, cₚ = 2500, cₛ = 500)
@@ -858,7 +900,7 @@ MultilayerElasticBoundary(2 layers):
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb32"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">WindySurface</span>(windspeed)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>WindySurface(windspeed)</code></pre>
 <p>Reflection model for a water surface affected by wind. <code>windspeed</code> is given in m/s.</p>
 </div>
 </div>
@@ -870,56 +912,280 @@ MultilayerElasticBoundary(2 layers):
 </div>
 <div class="callout-body-container">
 <p>Pre-defined boundary conditions based on APL-UW Technical Report 9407:</p>
-<div class="sourceCode" id="cb33"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># sea surface boundary conditions</span></span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState0    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">0.8</span>)</span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState1    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">2.6</span>)</span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState2    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">4.4</span>)</span>
-<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState3    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">6.9</span>)</span>
-<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState4    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">9.8</span>)</span>
-<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState5    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">12.6</span>)</span>
-<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState6    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">19.3</span>)</span>
-<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState7    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">26.5</span>)</span>
-<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState8    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">30.6</span>)</span>
-<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState9    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">32.9</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="sourceCode" id="cb34"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># seabed fluid boundary conditions</span></span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Rock              <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2557.50</span>, <span class="fl">3820.00</span>, <span class="fl">0.01374</span>)</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Pebbles           <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2557.50</span>, <span class="fl">2750.40</span>, <span class="fl">0.01374</span>)</span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SandyGravel       <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2549.32</span>, <span class="fl">2073.50</span>, <span class="fl">0.01705</span>)</span>
-<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> VeryCoarseSand    <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2455.20</span>, <span class="fl">1996.64</span>, <span class="fl">0.01667</span>)</span>
-<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> MuddySandyGravel  <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2367.22</span>, <span class="fl">1952.48</span>, <span class="fl">0.0163</span>)</span>
-<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> CoarseSand        <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2282.31</span>, <span class="fl">1910.46</span>, <span class="fl">0.01638</span>)</span>
-<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> GravellyMuddySand <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2200.47</span>, <span class="fl">1870.42</span>, <span class="fl">0.01645</span>)</span>
-<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> MediumSand        <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1887.44</span>, <span class="fl">1800.29</span>, <span class="fl">0.01624</span>)</span>
-<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> MuddyGravel       <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1652.15</span>, <span class="fl">1741.31</span>, <span class="fl">0.0161</span>)</span>
-<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> FineSand          <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1484.37</span>, <span class="fl">1691.95</span>, <span class="fl">0.01602</span>)</span>
-<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> MuddySand         <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1369.80</span>, <span class="fl">1650.24</span>, <span class="fl">0.01728</span>)</span>
-<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> VeryFineSand      <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1297.16</span>, <span class="fl">1614.79</span>, <span class="fl">0.01875</span>)</span>
-<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ClayeySand        <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1252.15</span>, <span class="fl">1583.62</span>, <span class="fl">0.02019</span>)</span>
-<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> CoarseSilt        <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1222.49</span>, <span class="fl">1555.35</span>, <span class="fl">0.02158</span>)</span>
-<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SandySilt         <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1195.89</span>, <span class="fl">1527.85</span>, <span class="fl">0.01261</span>)</span>
-<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> MediumSilt        <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1175.43</span>, <span class="fl">1510.43</span>, <span class="fl">0.00676</span>)</span>
-<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SandyMud          <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1175.43</span>, <span class="fl">1508.59</span>, <span class="fl">0.00386</span>)</span>
-<span id="cb34-19"><a href="#cb34-19" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> FineSilt          <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1174.40</span>, <span class="fl">1506.76</span>, <span class="fl">0.00306</span>)</span>
-<span id="cb34-20"><a href="#cb34-20" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SandyClay         <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1173.38</span>, <span class="fl">1504.93</span>, <span class="fl">0.00242</span>)</span>
-<span id="cb34-21"><a href="#cb34-21" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> VeryFineSilt      <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1173.38</span>, <span class="fl">1503.09</span>, <span class="fl">0.00194</span>)</span>
-<span id="cb34-22"><a href="#cb34-22" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SiltyClay         <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1172.36</span>, <span class="fl">1501.11</span>, <span class="fl">0.00163</span>)</span>
-<span id="cb34-23"><a href="#cb34-23" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Clay              <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1171.34</span>, <span class="fl">1497.44</span>, <span class="fl">0.00148</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="sourceCode" id="cb35"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># seabed elastic boundary conditions</span></span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticRock              <span class="op">=</span> <span class="fu">ElasticBoundary</span>(Rock, <span class="fl">0.07</span>u<span class="st">"dB/m/kHz"</span>)</span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticPebbles           <span class="op">=</span> <span class="fu">ElasticBoundary</span>(Pebbles, <span class="fl">0.07</span>u<span class="st">"dB/m/kHz"</span>)</span>
-<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticSandyGravel       <span class="op">=</span> <span class="fu">ElasticBoundary</span>(SandyGravel, <span class="fl">13.2</span>u<span class="st">"dB/m/kHz"</span>)</span>
-<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticVeryCoarseSand    <span class="op">=</span> <span class="fu">ElasticBoundary</span>(VeryCoarseSand, <span class="fl">13.2</span>u<span class="st">"dB/m/kHz"</span>)</span>
-<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticMuddySandyGravel  <span class="op">=</span> <span class="fu">ElasticBoundary</span>(MuddySandyGravel, <span class="fl">4.8</span>u<span class="st">"dB/m/kHz"</span>)</span>
-<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticCoarseSand        <span class="op">=</span> <span class="fu">ElasticBoundary</span>(CoarseSand, <span class="fl">13.2</span>u<span class="st">"dB/m/kHz"</span>)</span>
-<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticGravellyMuddySand <span class="op">=</span> <span class="fu">ElasticBoundary</span>(GravellyMuddySand, <span class="fl">4.8</span>u<span class="st">"dB/m/kHz"</span>)</span>
-<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticMediumSand        <span class="op">=</span> <span class="fu">ElasticBoundary</span>(MediumSand, <span class="fl">13.2</span>u<span class="st">"dB/m/kHz"</span>)</span>
-<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticMuddyGravel       <span class="op">=</span> <span class="fu">ElasticBoundary</span>(MuddyGravel, <span class="fl">4.8</span>u<span class="st">"dB/m/kHz"</span>)</span>
-<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticFineSand          <span class="op">=</span> <span class="fu">ElasticBoundary</span>(FineSand, <span class="fl">13.2</span>u<span class="st">"dB/m/kHz"</span>)</span>
-<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticMuddySand         <span class="op">=</span> <span class="fu">ElasticBoundary</span>(MuddySand, <span class="fl">4.8</span>u<span class="st">"dB/m/kHz"</span>)</span>
-<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticVeryFineSand      <span class="op">=</span> <span class="fu">ElasticBoundary</span>(VeryFineSand, <span class="fl">13.2</span>u<span class="st">"dB/m/kHz"</span>)</span>
-<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticClayeySand        <span class="op">=</span> <span class="fu">ElasticBoundary</span>(ClayeySand, <span class="fl">4.8</span>u<span class="st">"dB/m/kHz"</span>)</span>
-<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticCoarseSilt        <span class="op">=</span> <span class="fu">ElasticBoundary</span>(CoarseSilt, <span class="fl">13.4</span>u<span class="st">"dB/m/kHz"</span>)</span>
-<span id="cb35-16"><a href="#cb35-16" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticSandySilt         <span class="op">=</span> <span class="fu">ElasticBoundary</span>(SandySilt, <span class="fl">13.4</span>u<span class="st">"dB/m/kHz"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb35"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co"># sea surface boundary conditions</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState0    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">0.8</span>)</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState1    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">2.6</span>)</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState2    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">4.4</span>)</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState3    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">6.9</span>)</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState4    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">9.8</span>)</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState5    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">12.6</span>)</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState6    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">19.3</span>)</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState7    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">26.5</span>)</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState8    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">30.6</span>)</span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SeaState9    <span class="op">=</span> <span class="fu">WindySurface</span>(<span class="fl">32.9</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb36"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># seabed fluid boundary conditions</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Rock              <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2557.50</span>, <span class="fl">3820.00</span>, <span class="fl">0.01374</span>)</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Pebbles           <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2557.50</span>, <span class="fl">2750.40</span>, <span class="fl">0.01374</span>)</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SandyGravel       <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2549.32</span>, <span class="fl">2073.50</span>, <span class="fl">0.01705</span>)</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> VeryCoarseSand    <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2455.20</span>, <span class="fl">1996.64</span>, <span class="fl">0.01667</span>)</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> MuddySandyGravel  <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2367.22</span>, <span class="fl">1952.48</span>, <span class="fl">0.0163</span>)</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> CoarseSand        <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2282.31</span>, <span class="fl">1910.46</span>, <span class="fl">0.01638</span>)</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> GravellyMuddySand <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">2200.47</span>, <span class="fl">1870.42</span>, <span class="fl">0.01645</span>)</span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> MediumSand        <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1887.44</span>, <span class="fl">1800.29</span>, <span class="fl">0.01624</span>)</span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> MuddyGravel       <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1652.15</span>, <span class="fl">1741.31</span>, <span class="fl">0.0161</span>)</span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> FineSand          <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1484.37</span>, <span class="fl">1691.95</span>, <span class="fl">0.01602</span>)</span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> MuddySand         <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1369.80</span>, <span class="fl">1650.24</span>, <span class="fl">0.01728</span>)</span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> VeryFineSand      <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1297.16</span>, <span class="fl">1614.79</span>, <span class="fl">0.01875</span>)</span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ClayeySand        <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1252.15</span>, <span class="fl">1583.62</span>, <span class="fl">0.02019</span>)</span>
+<span id="cb36-15"><a href="#cb36-15" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> CoarseSilt        <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1222.49</span>, <span class="fl">1555.35</span>, <span class="fl">0.02158</span>)</span>
+<span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SandySilt         <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1195.89</span>, <span class="fl">1527.85</span>, <span class="fl">0.01261</span>)</span>
+<span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> MediumSilt        <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1175.43</span>, <span class="fl">1510.43</span>, <span class="fl">0.00676</span>)</span>
+<span id="cb36-18"><a href="#cb36-18" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SandyMud          <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1175.43</span>, <span class="fl">1508.59</span>, <span class="fl">0.00386</span>)</span>
+<span id="cb36-19"><a href="#cb36-19" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> FineSilt          <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1174.40</span>, <span class="fl">1506.76</span>, <span class="fl">0.00306</span>)</span>
+<span id="cb36-20"><a href="#cb36-20" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SandyClay         <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1173.38</span>, <span class="fl">1504.93</span>, <span class="fl">0.00242</span>)</span>
+<span id="cb36-21"><a href="#cb36-21" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> VeryFineSilt      <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1173.38</span>, <span class="fl">1503.09</span>, <span class="fl">0.00194</span>)</span>
+<span id="cb36-22"><a href="#cb36-22" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> SiltyClay         <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1172.36</span>, <span class="fl">1501.11</span>, <span class="fl">0.00163</span>)</span>
+<span id="cb36-23"><a href="#cb36-23" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Clay              <span class="op">=</span> <span class="fu">FluidBoundary</span>(<span class="fl">1171.34</span>, <span class="fl">1497.44</span>, <span class="fl">0.00148</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb37"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># seabed elastic boundary conditions</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticRock              <span class="op">=</span> <span class="fu">ElasticBoundary</span>(Rock, <span class="fl">0.07</span>u<span class="st">"dB/m/kHz"</span>)</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticPebbles           <span class="op">=</span> <span class="fu">ElasticBoundary</span>(Pebbles, <span class="fl">0.07</span>u<span class="st">"dB/m/kHz"</span>)</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticSandyGravel       <span class="op">=</span> <span class="fu">ElasticBoundary</span>(SandyGravel, <span class="fl">13.2</span>u<span class="st">"dB/m/kHz"</span>)</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticVeryCoarseSand    <span class="op">=</span> <span class="fu">ElasticBoundary</span>(VeryCoarseSand, <span class="fl">13.2</span>u<span class="st">"dB/m/kHz"</span>)</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticMuddySandyGravel  <span class="op">=</span> <span class="fu">ElasticBoundary</span>(MuddySandyGravel, <span class="fl">4.8</span>u<span class="st">"dB/m/kHz"</span>)</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticCoarseSand        <span class="op">=</span> <span class="fu">ElasticBoundary</span>(CoarseSand, <span class="fl">13.2</span>u<span class="st">"dB/m/kHz"</span>)</span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticGravellyMuddySand <span class="op">=</span> <span class="fu">ElasticBoundary</span>(GravellyMuddySand, <span class="fl">4.8</span>u<span class="st">"dB/m/kHz"</span>)</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticMediumSand        <span class="op">=</span> <span class="fu">ElasticBoundary</span>(MediumSand, <span class="fl">13.2</span>u<span class="st">"dB/m/kHz"</span>)</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticMuddyGravel       <span class="op">=</span> <span class="fu">ElasticBoundary</span>(MuddyGravel, <span class="fl">4.8</span>u<span class="st">"dB/m/kHz"</span>)</span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticFineSand          <span class="op">=</span> <span class="fu">ElasticBoundary</span>(FineSand, <span class="fl">13.2</span>u<span class="st">"dB/m/kHz"</span>)</span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticMuddySand         <span class="op">=</span> <span class="fu">ElasticBoundary</span>(MuddySand, <span class="fl">4.8</span>u<span class="st">"dB/m/kHz"</span>)</span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticVeryFineSand      <span class="op">=</span> <span class="fu">ElasticBoundary</span>(VeryFineSand, <span class="fl">13.2</span>u<span class="st">"dB/m/kHz"</span>)</span>
+<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticClayeySand        <span class="op">=</span> <span class="fu">ElasticBoundary</span>(ClayeySand, <span class="fl">4.8</span>u<span class="st">"dB/m/kHz"</span>)</span>
+<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticCoarseSilt        <span class="op">=</span> <span class="fu">ElasticBoundary</span>(CoarseSilt, <span class="fl">13.4</span>u<span class="st">"dB/m/kHz"</span>)</span>
+<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> ElasticSandySilt         <span class="op">=</span> <span class="fu">ElasticBoundary</span>(SandySilt, <span class="fl">13.4</span>u<span class="st">"dB/m/kHz"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="scatterers" class="level2">
+<h2 class="anchored" data-anchor-id="scatterers">Scatterers</h2>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>Scatterer(shape; boundary=RigidBoundary)
+Scatterer(shape, boundary)</code></pre>
+<p>Create a scatterer with the given <code>shape</code> and acoustic <code>boundary</code> condition. A scatterer is an object in the water column, described by its geometry (an <a href="@ref"><code>AbstractShape</code></a>) and the acoustic property of its surface (an <code>AbstractAcousticBoundary</code>, e.g.&nbsp;<code>RigidBoundary</code> for a sound-hard object or <code>PressureReleaseBoundary</code> for a sound-soft object such as a bubble cloud). How the boundary condition is applied — including whether the object is treated as impenetrable — is determined by the propagation model.</p>
+<p>Propagation models that support scatterers are expected to apply the boundary condition under a local tangent-plane (Kirchhoff) approximation: the reflection coefficient of the boundary is applied using the local surface normal at each interaction point. This approximation is valid when the local radius of curvature of the scatterer is much larger than the acoustic wavelength.</p>
+<section id="examples-4" class="level4">
+<h4 class="anchored" data-anchor-id="examples-4">Examples</h4>
+<pre class="julia-repl"><code>julia&gt; Scatterer(Ellipse(500.0, -40.0, 20.0, 8.0))
+Scatterer(Ellipse(x=500.0, z=-40.0, a=20.0, b=8.0), RigidBoundary)
+
+julia&gt; Scatterer(Ellipse(500.0, -40.0, 20.0, 8.0), PressureReleaseBoundary)
+Scatterer(Ellipse(x=500.0, z=-40.0, a=20.0, b=8.0), PressureReleaseBoundary)</code></pre>
+</section>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb40"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>AbstractShape</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Superclass for all scatterer shapes.</p>
+<p>A shape describes the geometry of a closed object through a parametric map of its boundary over a unit parameter domain. The boundary of a 2-D shape is a curve parametrized by <code>u ∈ [0,1]</code>, and the boundary of a 3-D shape is a surface parametrized by <code>(u, v) ∈ [0,1]²</code>. A concrete shape must define:</p>
+<ul>
+<li><code>Base.ndims(shape)</code> — spatial dimension of the shape (2 or 3)</li>
+<li><code>boundary_point(shape, u...)</code> — parametric boundary position map</li>
+</ul>
+<p>Optionally, a shape may provide analytic <code>normal()</code> and <code>curvature()</code> methods; if absent, they are automatically derived from <code>boundary_point()</code> using automatic differentiation. A shape may also override the derived queries <code>distance()</code>, <code>boundary_projection()</code>, <code>intersect_ray()</code>, <code>is_inside()</code>, <code>boundary_points()</code>, <code>bounding_box()</code> and <code>location()</code> with analytic implementations for speed and accuracy.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>Ellipse(x, z, a, b; θ=0)
+Ellipse(; x, z, a, b, θ=0)</code></pre>
+<p>Create a 2-D elliptical shape in the x–z plane, centered at <code>(x, z)</code> (in meters), with semi-major axis <code>a</code> and semi-minor axis <code>b</code> (in meters), and with the major axis rotated by angle <code>θ</code> (in radians) counter-clockwise from the x-axis.</p>
+<section id="examples-5" class="level4">
+<h4 class="anchored" data-anchor-id="examples-5">Examples</h4>
+<pre class="julia-repl"><code>julia&gt; Ellipse(500.0, -40.0, 20.0, 8.0)
+Ellipse(x=500.0, z=-40.0, a=20.0, b=8.0)
+
+julia&gt; Ellipse(x=500, z=-40, a=20, b=8, θ=30u"°")
+Ellipse(x=500.0, z=-40.0, a=20.0, b=8.0, θ=0.5235987755982988)</code></pre>
+</section>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>ParametricCurve(f)</code></pre>
+<p>Wrap a function <code>f(u)</code> as a 2-D shape. The function must map a boundary parameter <code>u ∈ [0,1]</code> to a position on the boundary of the shape, tracing a closed curve counter-clockwise in the x–z plane (with <code>x</code> rightward and <code>z</code> upward) as <code>u</code> increases, so that automatically derived normals point outward. The position may be given in any form accepted by <code>xyz()</code> (e.g.&nbsp;an <code>(x, z)</code> tuple or an <code>XYZ</code> named tuple). The function must be differentiable if normals, curvatures or the generic derived queries are used.</p>
+<section id="examples-6" class="level4">
+<h4 class="anchored" data-anchor-id="examples-6">Examples</h4>
+<pre class="julia-repl"><code>julia&gt; circle = ParametricCurve(u -&gt; (10 * cospi(2u), -40 + 10 * sinpi(2u)));
+
+julia&gt; boundary_point(circle, 0.25)
+(x = 0.0, y = 0.0, z = -30.0)</code></pre>
+</section>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>ParametricSurface(f)</code></pre>
+<p>Wrap a function <code>f(u, v)</code> as a 3-D shape. The function must map boundary parameters <code>(u, v) ∈ [0,1]²</code> to a position on the boundary of the shape, covering the full closed surface with a right-handed parametrization (<code>∂p/∂u × ∂p/∂v</code> pointing outward), so that automatically derived normals point outward. The position may be given in any form accepted by <code>xyz()</code>. The function must be differentiable if normals are used.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>boundary_point(shape, u)
+boundary_point(shape, u, v)</code></pre>
+<p>Get the position on the boundary of <code>shape</code> at the given boundary parameters. The boundary of a 2-D shape is parametrized by a single parameter <code>u ∈ [0,1]</code>, and the boundary of a 3-D shape by two parameters <code>(u, v) ∈ [0,1]²</code>. The parametric map must trace the full closed boundary as the parameters sweep the unit domain, with <code>u = 0</code> and <code>u = 1</code> mapping to the same point. The position is returned as an <code>XYZ</code> named tuple with coordinates in meters.</p>
+<p>2-D shapes lie in the x–z plane (<code>y = 0</code>), with <code>z</code> negative downward. The boundary of a 2-D shape must be traversed counter-clockwise (with <code>x</code> rightward and <code>z</code> upward) as <code>u</code> increases, so that automatically derived normals point outward. Similarly, the parametrization of a 3-D shape must be right-handed (<code>∂p/∂u × ∂p/∂v</code> pointing outward).</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>normal(shape, u)
+normal(shape, u, v)</code></pre>
+<p>Get the unit outward normal to the boundary of <code>shape</code> at the given boundary parameters, as an <code>XYZ</code> named tuple. If a shape does not provide an analytic normal, it is derived from <code>boundary_point()</code> using automatic differentiation.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>curvature(shape, u)
+curvature(shape, u, v)</code></pre>
+<p>Get the signed curvature (in 1/m) of the boundary of a 2-D <code>shape</code> at boundary parameter <code>u</code>. The curvature is positive where the boundary curves toward the interior of the shape (convex), and negative where it curves away (concave). If a shape does not provide an analytic curvature, it is derived from <code>boundary_point()</code> using automatic differentiation.</p>
+<p>The return convention for the curvature of 3-D shapes is not yet settled, and <code>missing</code> is returned for 3-D shapes that do not provide a curvature.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>distance(p1, p2)</code></pre>
+<p>Compute distance between two positions.</p>
+<pre class="juliajulia"><code>distance(shape, pos)</code></pre>
+<p>Get the signed distance (in meters) from position <code>pos</code> to the boundary of <code>shape</code>. The distance is negative if <code>pos</code> is inside the shape, positive if outside, and zero on the boundary. The magnitude is the Euclidean distance to the nearest boundary point. A shape may return a conservative lower bound on the magnitude far away from the boundary, but the distance must be exact (with the correct sign and zero level set) near the boundary.</p>
+<p>For 2-D shapes, the distance is computed in the x–z plane, ignoring the <code>y</code> coordinate of <code>pos</code>.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>boundary_projection(shape, pos)</code></pre>
+<p>Project position <code>pos</code> onto the boundary of <code>shape</code>, i.e., find the boundary point nearest to <code>pos</code>. Returns a named tuple with fields:</p>
+<ul>
+<li><code>u</code>: boundary parameter(s) of the nearest boundary point</li>
+<li><code>point</code>: position of the nearest boundary point</li>
+<li><code>normal</code>: unit outward normal at that point</li>
+<li><code>curvature</code>: curvature at that point</li>
+<li><code>distance</code>: signed distance from <code>pos</code> to the boundary (negative inside)</li>
+</ul>
+<p>For 2-D shapes, the projection is computed in the x–z plane, ignoring the <code>y</code> coordinate of <code>pos</code>.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>intersect_ray(shape, origin, dir)</code></pre>
+<p>Find the nearest intersection of the ray <code>origin + t * dir</code> (for <code>t ≥ 0</code>) with the boundary of <code>shape</code>. Returns <code>nothing</code> if the ray does not intersect the boundary, and otherwise a named tuple with fields:</p>
+<ul>
+<li><code>t</code>: ray parameter at the intersection (distance along the ray in units of the length of <code>dir</code>)</li>
+<li><code>u</code>: boundary parameter(s) of the intersection point</li>
+<li><code>point</code>: position of the intersection point</li>
+<li><code>normal</code>: unit outward normal at the intersection point</li>
+<li><code>curvature</code>: curvature at the intersection point</li>
+</ul>
+<p>For 2-D shapes, the intersection is computed in the x–z plane, ignoring the <code>y</code> coordinates of <code>origin</code> and <code>dir</code>.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>is_inside(shape, pos)</code></pre>
+<p>Return <code>true</code> if position <code>pos</code> is strictly inside <code>shape</code>, and <code>false</code> otherwise. For 2-D shapes, the test is performed in the x–z plane, ignoring the <code>y</code> coordinate of <code>pos</code>.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>boundary_points(shape; n=128)</code></pre>
+<p>Sample points on the boundary of <code>shape</code>, e.g.&nbsp;for plotting. For 2-D shapes, <code>n+1</code> points tracing the closed boundary are returned (with the first and last point coinciding). For 3-D shapes, points sampled on an <code>(n+1) × (n+1)</code> grid over the parameter domain are returned.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>bounding_box(shape)</code></pre>
+<p>Get an axis-aligned bounding box of <code>shape</code>, as a named tuple <code>(min, max)</code> of positions. The generic implementation estimates the box from sampled boundary points, and may slightly underestimate the extent of the shape.</p>
+</div>
+</div>
+</div>
+<div class="callout callout-style-simple callout-tip no-icon">
+<div class="callout-body d-flex">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-body-container">
+<pre class="juliajulia"><code>has_scatterers(env)</code></pre>
+<p>Return <code>true</code> if the environment <code>env</code> has any scatterers in the water column, and <code>false</code> otherwise.</p>
 </div>
 </div>
 </div>
@@ -932,9 +1198,9 @@ MultilayerElasticBoundary(2 layers):
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb36"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticSource</span>(pos, frequency; spl<span class="op">=</span><span class="fl">0</span>)</span>
-<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticSource</span>(x, z, frequency; spl<span class="op">=</span><span class="fl">0</span>)</span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticSource</span>(x, y, z, frequency; spl<span class="op">=</span><span class="fl">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>AcousticSource(pos, frequency; spl=0)
+AcousticSource(x, z, frequency; spl=0)
+AcousticSource(x, y, z, frequency; spl=0)</code></pre>
 <p>An source at location <code>pos</code> with nominal <code>frequency</code> and source level <code>spl</code> (dB re 1 µPa @ 1 m). The source is assumed to be omnidirectional and well approximated by a point source. While the source may have some bandwidth, the nominal frequency is used to estimate propagation effects such as absorption, reflection coefficients, etc.</p>
 <p>If the location of the source is unknown, it may be specified as <code>nothing</code>. This is useful when the propagation model does not require the source location (e.g., data-driven models).</p>
 </div>
@@ -946,9 +1212,9 @@ MultilayerElasticBoundary(2 layers):
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb37"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticReceiver</span>(pos)</span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticReceiver</span>(x, z)</span>
-<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticReceiver</span>(x, y, z)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>AcousticReceiver(pos)
+AcousticReceiver(x, z)
+AcousticReceiver(x, y, z)</code></pre>
 <p>Receiver at location <code>pos</code>.</p>
 </div>
 </div>
@@ -959,7 +1225,7 @@ MultilayerElasticBoundary(2 layers):
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb38"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticReceiverGrid2D</span>(xrange, zrange)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>AcousticReceiverGrid2D(xrange, zrange)</code></pre>
 <p>A 2D grid of receivers with the specified location ranges.</p>
 </div>
 </div>
@@ -970,7 +1236,7 @@ MultilayerElasticBoundary(2 layers):
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb39"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">AcousticReceiverGrid3D</span>(xrange, yrange, zrange)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>AcousticReceiverGrid3D(xrange, yrange, zrange)</code></pre>
 <p>A 3D grid of receivers with the specified location ranges.</p>
 </div>
 </div>
@@ -981,9 +1247,12 @@ MultilayerElasticBoundary(2 layers):
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb40"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">location</span>(tx<span class="op">::</span><span class="dt">AbstractAcousticSource</span>)</span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="fu">location</span>(rx<span class="op">::</span><span class="dt">AbstractAcousticReceiver</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>location(tx::AbstractAcousticSource)
+location(rx::AbstractAcousticReceiver)</code></pre>
 <p>Get the location of the source or receiver.</p>
+<pre class="juliajulia"><code>location(shape::AbstractShape)
+location(s::Scatterer)</code></pre>
+<p>Get the location of the center of a shape or scatterer.</p>
 </div>
 </div>
 </div>
@@ -993,7 +1262,7 @@ MultilayerElasticBoundary(2 layers):
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb41"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">frequency</span>(tx<span class="op">::</span><span class="dt">AbstractAcousticSource</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>frequency(tx::AbstractAcousticSource)</code></pre>
 <p>Get the nominal frequency of an acoustic source.</p>
 </div>
 </div>
@@ -1004,7 +1273,7 @@ MultilayerElasticBoundary(2 layers):
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb42"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">spl</span>(tx<span class="op">::</span><span class="dt">AbstractAcousticSource</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>spl(tx::AbstractAcousticSource)</code></pre>
 <p>Get the source level of an acoustic source.</p>
 </div>
 </div>
@@ -1018,8 +1287,8 @@ MultilayerElasticBoundary(2 layers):
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb43"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">WhiteGaussianNoise</span>(σ)</span>
-<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="fu">WhiteGaussianNoise</span>(psd, fs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>WhiteGaussianNoise(σ)
+WhiteGaussianNoise(psd, fs)</code></pre>
 <p>Create a white Gaussian ambient noise model with variance <code>σ²</code> µPa² or with power spectral density <code>psd</code> µPa²/Hz and bandwidth <code>fs/2</code> Hz.</p>
 </div>
 </div>
@@ -1030,7 +1299,7 @@ MultilayerElasticBoundary(2 layers):
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb44"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">RedGaussianNoise</span>(σ)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>RedGaussianNoise(σ)</code></pre>
 <p>Create an ambient noise model with variance <code>σ²</code> µPa² and <code>1/f²</code> variation in power spectral density.</p>
 </div>
 </div>
@@ -1041,8 +1310,8 @@ MultilayerElasticBoundary(2 layers):
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<div class="sourceCode" id="cb45"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rand</span>([rng<span class="op">::</span><span class="dt">AbstractRNG</span>, ] noise<span class="op">::</span><span class="dt">AbstractNoiseModel</span>, nsamples; fs)</span>
-<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rand</span>([rng<span class="op">::</span><span class="dt">AbstractRNG</span>, ] noise<span class="op">::</span><span class="dt">AbstractNoiseModel</span>, nsamples, nchannels; fs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<pre class="juliajulia"><code>rand([rng::AbstractRNG, ] noise::AbstractNoiseModel, nsamples; fs)
+rand([rng::AbstractRNG, ] noise::AbstractNoiseModel, nsamples, nchannels; fs)</code></pre>
 <p>Generate random noise samples from the noise model <code>noise</code> with the specified size <code>nsamples</code> (can be a 2-tuple for multichannel noise). The noise is returned as a signal sampled at <code>fs</code>. The optional <code>rng</code> argument specifies the random number generator to use.</p>
 </div>
 </div>
@@ -1103,13 +1372,14 @@ MultilayerElasticBoundary(2 layers):
       e.clearSelection();
     }
     const getTextToCopy = function(trigger) {
-        const codeEl = trigger.previousElementSibling.cloneNode(true);
-        for (const childEl of codeEl.children) {
-          if (isCodeAnnotation(childEl)) {
-            childEl.remove();
-          }
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
         }
-        return codeEl.innerText;
+      }
+      return codeEl.innerText;
     }
     const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
       text: getTextToCopy

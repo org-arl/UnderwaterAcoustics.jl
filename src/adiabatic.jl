@@ -16,6 +16,10 @@ Adiabatic mode models are usually not reciprocal, i.e., exchanging a source and
 receiver changes the answer. This is because the bathymetry is assumed to have
 azimuthal symmetry around the source. In `reciprocal` mode, the adiabatic
 computation is modified to ensure reciprocity, but azimuthal symmetry is lost.
+
+If the underlying `model` is differentiable, `AdiabaticExt` supports
+forward-mode automatic differentiation (e.g. ForwardDiff). Reverse-mode
+automatic differentiation is currently not supported.
 """
 struct AdiabaticExt{T1,T2,T3} <: AbstractModePropagationModel
   env::T1
@@ -103,10 +107,12 @@ function acoustic_field(pm::AdiabaticExt, tx::AbstractAcousticSource, rxs::Abstr
   x0 = location(tx).x
   z0 = -value(pm.env.bathymetry, (x=x0, y=0.0, z=0.0))
   i0 = something(findfirst(≥(x0), xs), length(xs)+1)
-  fld = zeros(ComplexF64, size(rxs))
   tx_modes = _cached_arrivals(cache, z0, dz)
+  m₁ = tx_modes[findfirst(!isnothing, tx_modes)]
+  T = complex(promote_type(typeof(float(x0)), typeof(real(m₁.kᵣ)), typeof(real(m₁.ψ(location(tx).z)))))
+  fld = zeros(T, size(rxs))
   for m ∈ eachindex(tx_modes)
-    kri = zeros(ComplexF64, size(xs))
+    kri = zeros(T, size(xs))
     # compute kr-integral for all receivers on the right of the source
     x = x0
     for i ∈ i0:length(xs)
@@ -185,10 +191,10 @@ end
 
 _model(pm::AdiabaticExt{T1,T2,T3}) where {T1,T2,T3} = T3
 
-struct ModeCache{T}
-  zs::Vector{Float64}
+struct ModeCache{Tz,T}
+  zs::Vector{Tz}
   modes::Vector{Vector{T}}
-  ModeCache(T) = new{T}(Float64[], Vector{T}[])
+  ModeCache(Tz, T) = new{Tz,T}(Tz[], Vector{T}[])
 end
 
 function _cached_arrivals(cache, z, dz)
@@ -222,7 +228,8 @@ end
 function _precompute_arrivals(pm, tx, tx_depth, rx, min_depth, max_depth, dz)
   n = ceil(Int, (max_depth - min_depth) / 2dz) + 1
   arr = _compute_arrivals(pm, tx, -tx_depth, rx)
-  cache = ModeCache(eltype(arr))
+  Tz = promote_type(typeof(float(-tx_depth)), typeof(float(min_depth)), typeof(float(max_depth)))
+  cache = ModeCache(Tz, eltype(arr))
   _cache_arrivals(cache, -tx_depth, arr)
   for z ∈ range(-max_depth, -min_depth; length=n)
     i = searchsortedlast(cache.zs, z)

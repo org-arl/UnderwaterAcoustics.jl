@@ -41,6 +41,7 @@ website:
       - orca.qmd
       - text: <b>AcousticRayTracers.jl</b>
       - raysolver.qmd
+      - bellhopjl.qmd
     - text: "---"
     - section: <b>Notes</b>
       contents:

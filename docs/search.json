@@ -330,6 +330,39 @@
     ]
   },
   {
+    "objectID": "krakenjl.html",
+    "href": "krakenjl.html",
+    "title": "KrakenJL",
+    "section": "",
+    "text": "Model\nAcousticsToolbox.KrakenJL\n\n\nDescription\nNative Julia port of the Kraken and KrakenC normal mode models\n\n\nLanguage\nJulia\n\n\nAdvantages\nDifferentiable (forward mode), no file I/O, multithreaded, drop-in alternative to AcousticsToolbox.Kraken\n\n\nLimitations\n2D only, range-independent only\n\n\nDifferentiability\nForwardDiff\nKrakenJL is a native Julia port of the Kraken and KrakenC normal mode models, based on the OALIB Acoustics Toolbox 2024_12_25 release — the same sources the wrapped Fortran binaries are compiled from (full provenance and deviations are documented in the package’s PORTING_NOTES.md). It implements both the KrakenC complex eigenvalue solver (default) and the Kraken real solver, fluid/elastic/multilayer-elastic seabeds, Richardson mesh extrapolation, perturbational attenuation and group speeds, and performs the coherent/incoherent mode summation natively (no env/mod/shd file I/O). Mode finding and field evaluation are multithreaded (threads keyword argument), with results identical to the serial computation. Since the port is pure Julia, it is compatible with automatic differentiation (AD) tools such as ForwardDiff.\nA good overview of the Kraken model can be found at:",
+    "crumbs": [
+      "<b>Propagation models</b>",
+      "KrakenJL"
+    ]
+  },
+  {
+    "objectID": "krakenjl.html#examples",
+    "href": "krakenjl.html#examples",
+    "title": "KrakenJL",
+    "section": "Examples",
+    "text": "Examples\n\nRange-independent scenario\nHere’s an example showing results for the PEKERIS test problem from the Kraken technical report:\n\nusing UnderwaterAcoustics\nusing AcousticsToolbox\nusing Plots\n\nenv = UnderwaterEnvironment(\n  bathymetry = 5000,\n  soundspeed = 1500,\n  density = 1000,\n  seabed = FluidBoundary(2000, 2000)\n)\npm = KrakenJL(env)\n\ntx = AcousticSource(0, -500, 10)\nrx = AcousticReceiver(200000, -2500)\nmodes = arrivals(pm, tx, rx)[1:7]     # first 7 modes\n\n7 element Vector{ModeArrival}:\n  mode 1: kᵣ = 0.041883 - 0.0im rad/m, v = 1499.84 m/s, vₚ = 1500.16 m/s\n  mode 2: kᵣ = 0.04187 - 0.0im rad/m, v = 1499.36 m/s, vₚ = 1500.66 m/s\n  mode 3: kᵣ = 0.041847 - 0.0im rad/m, v = 1498.56 m/s, vₚ = 1501.48 m/s\n  mode 4: kᵣ = 0.041815 - 0.0im rad/m, v = 1497.45 m/s, vₚ = 1502.63 m/s\n  mode 5: kᵣ = 0.041773 - 0.0im rad/m, v = 1496.01 m/s, vₚ = 1504.12 m/s\n  mode 6: kᵣ = 0.041723 - 0.0im rad/m, v = 1494.24 m/s, vₚ = 1505.94 m/s\n  mode 7: kᵣ = 0.041663 - 0.0im rad/m, v = 1492.15 m/s, vₚ = 1508.10 m/s\n\n\n\n# plot the modes\nplot(modes)\n\n\n\n\n\nrxs = AcousticReceiverGrid2D(200000:10:220000, -2500)\nx = transmission_loss(pm, tx, rxs)\n\nplot(200:0.01:220, x; ylims=(70,110), yflip=true, legend=false,\n  xlabel=\"Range (km)\", ylabel=\"Transmission loss (dB)\")\n\n\n\n\n\n\nRange-dependent scenario with multilayered seabed\nWhile the Kraken model is range-independent by itself, it can be made range-dependent by using AdiabaticExt as shown below:\n\nusing UnderwaterAcoustics\nusing Plots\n\nenv = UnderwaterEnvironment(\n  bathymetry = SampledField([200, 150, 200]; x=[0, 2000, 5000]),\n  soundspeed = 1500,\n  density = 1000,\n  seabed = MultilayerElasticBoundary([\n    (40, 1374, 1520, 0, dBperλ(0.1124), 0),           # 40m thick fluid sediment\n    (Inf, 2200, 1730, 800, dBperλ(0.5), dBperλ(0.5))  # hard half-space substrate\n  ])\n)\n\n# use an adiabatic extension to the KrakenJL for range-dependence\npm = AdiabaticExt(KrakenJL, env)\n\ntx = AcousticSource(0, -50, 250)\nrx = AcousticReceiver(7000, -25)\nrxs = AcousticReceiverGrid2D(10:10:7000, -200:-1)\nx = transmission_loss(pm, tx, rxs)\n\nplot(rxs, x; crange=50)\nplot!(env)\n\n\n\n\n\n\nDifferentiability\nSince KrakenJL is a pure Julia model, we can differentiate through it. For example, we can compute the sensitivity of the transmission loss to the water depth, seabed sound speed and frequency:\n\nusing ForwardDiff\n\nfunction ℳ(x)\n  D, cb, f = x\n  env = UnderwaterEnvironment(\n    bathymetry = D,\n    soundspeed = 1500,\n    density = 1000,\n    seabed = FluidBoundary(2000, cb)\n  )\n  pm = KrakenJL(env)\n  transmission_loss(pm, AcousticSource(0, -500, f), AcousticReceiver(200000, -2500))\nend\n\nForwardDiff.gradient(ℳ, [5000.0, 2000.0, 10.0])\n\n3-element Vector{Float64}:\n   -2.7961233409223345\n    0.15771604095385153\n -692.3278510911277",
+    "crumbs": [
+      "<b>Propagation models</b>",
+      "KrakenJL"
+    ]
+  },
+  {
+    "objectID": "krakenjl.html#notes",
+    "href": "krakenjl.html#notes",
+    "title": "KrakenJL",
+    "section": "Notes",
+    "text": "Notes\nThe KrakenJL propagation model requires that the transmitter is located at \\((x=0, y=0)\\) and all receivers are located in the right half-plane (i.e., \\(x&gt;0\\) and \\(y=0\\)). This limitation can be worked around by wrapping the model with Reframe2D, which automatically transforms 2D scenarios specified in world coordinates into the coordinate system required by the model (see the quickstart guide for an example).\nLike the Fortran wrapper, the port implements the subset of Kraken features reachable through the UnderwaterAcoustics.jl API. It does NOT support:\n\nN2-linear, analytic or quadratic interpolation for sound speed\nArbitrary (tabulated) reflection coefficients\nTwersky scattering\nBroadband mode files, coupled modes and 3D field computation\n\nGroup velocities follow the behavior of the Fortran models: the KrakenC solver (complex_solver=true, default) computes them, but the values are incorrect for multilayer seabeds with elastic sediment layers (reported as missing); the Kraken real solver (complex_solver=false) does not compute them and reports zeros.\nLicensing: the KrakenJL solver is GPL-3.0-or-later (a derivative work of Kraken), unlike the rest of AcousticsToolbox.jl (MIT) — see the package’s licensing notes for details.",
+    "crumbs": [
+      "<b>Propagation models</b>",
+      "KrakenJL"
+    ]
+  },
+  {
     "objectID": "replay.html",
     "href": "replay.html",
     "title": "Channel replay",

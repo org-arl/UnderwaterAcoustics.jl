@@ -55,7 +55,7 @@ Here's an example showing results for the PEKERIS test problem from the Kraken t
 #| echo: false
 #| output: false
 using Plots
-default(size=(600, 400))
+default(size=(600, 400), dpi=96)
 ```
 
 ```{julia}

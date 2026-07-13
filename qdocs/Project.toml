@@ -16,7 +16,7 @@ UnderwaterAcoustics = "0efb1f7a-1ce7-46d2-9f48-546a4c8fbb99"
 
 [sources]
 UnderwaterAcoustics = { path = ".." }
-AcousticRayTracers = { url = "https://github.com/org-arl/AcousticRayTracers.jl", rev = "feat-scatterers" }
+AcousticRayTracers = { url = "https://github.com/org-arl/AcousticRayTracers.jl", rev = "main" }
 AcousticsToolbox = { url = "https://github.com/org-arl/AcousticsToolbox.jl", rev = "main" }
 
 [compat]

@@ -39,6 +39,7 @@ website:
       - bellhop.qmd
       - bellhopjl.qmd
       - kraken.qmd
+      - krakenjl.qmd
       - orca.qmd
       - text: <b>AcousticRayTracers.jl</b>
       - raysolver.qmd

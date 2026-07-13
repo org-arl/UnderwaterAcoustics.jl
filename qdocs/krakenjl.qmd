@@ -1,0 +1,170 @@
+---
+title: "KrakenJL"
+engine: julia
+---
+
+{{< include jdoc.snippet >}}
+
+| <span> | <span> |
+|---|---|
+| **Model** | `AcousticsToolbox.KrakenJL` |
+| **Description** | Native Julia port of the [Kraken and KrakenC normal mode models](https://oalib-acoustics.org/models-and-software/normal-modes/) |
+| **Language** | Julia |
+| **Advantages** | Differentiable (forward mode), no file I/O, multithreaded, drop-in alternative to `AcousticsToolbox.Kraken` |
+| **Limitations** | 2D only, range-independent only |
+| **Differentiability** | `ForwardDiff` |
+
+: {tbl-colwidths="[25,75]"}
+
+```{julia}
+#| echo: false
+#| output: asis
+import AcousticsToolbox
+jdoc(AcousticsToolbox, :KrakenJL)
+```
+
+`KrakenJL` is a native Julia port of the Kraken and KrakenC normal mode models,
+based on the OALIB Acoustics Toolbox 2024_12_25 release — the same sources the
+wrapped Fortran binaries are compiled from (full provenance and deviations are
+documented in the package's
+[`PORTING_NOTES.md`](https://github.com/org-arl/AcousticsToolbox.jl/blob/master/src/krakenjl/PORTING_NOTES.md)).
+It implements both the KrakenC complex eigenvalue solver (default) and the
+Kraken real solver, fluid/elastic/multilayer-elastic seabeds, Richardson mesh
+extrapolation, perturbational attenuation and group speeds, and performs the
+coherent/incoherent mode summation natively (no env/mod/shd file I/O). Mode
+finding and field evaluation are multithreaded (`threads` keyword argument),
+with results identical to the serial computation. Since the port is pure
+Julia, it is compatible with automatic differentiation (AD) tools such as
+`ForwardDiff`.
+
+A good overview of the Kraken model can be found at:
+
+- M. B. Porter, "The KRAKEN normal mode program", Technical report NRL/MR/5120-92-6920, Naval Research Laboratory, 1992 [(original report pdf)](https://apps.dtic.mil/sti/tr/pdf/ADA252409.pdf) [(updated draft pdf)](https://oalib-acoustics.org/website_resources/Modes/kraken.pdf).
+
+::: {.callout-tip}
+The theory of modal models is summarized in a brief note "[On modal models](modes.qmd)". It provides an overview of key concepts and relevant mathematical formulations.
+:::
+
+## Examples
+
+### Range-independent scenario
+
+Here's an example showing results for the PEKERIS test problem from the Kraken technical report:
+
+```{julia}
+#| echo: false
+#| output: false
+using Plots
+default(size=(600, 400))
+```
+
+```{julia}
+using UnderwaterAcoustics
+using AcousticsToolbox
+using Plots
+
+env = UnderwaterEnvironment(
+  bathymetry = 5000,
+  soundspeed = 1500,
+  density = 1000,
+  seabed = FluidBoundary(2000, 2000)
+)
+pm = KrakenJL(env)
+
+tx = AcousticSource(0, -500, 10)
+rx = AcousticReceiver(200000, -2500)
+modes = arrivals(pm, tx, rx)[1:7]     # first 7 modes
+```
+```{julia}
+# plot the modes
+plot(modes)
+```
+```{julia}
+rxs = AcousticReceiverGrid2D(200000:10:220000, -2500)
+x = transmission_loss(pm, tx, rxs)
+
+plot(200:0.01:220, x; ylims=(70,110), yflip=true, legend=false,
+  xlabel="Range (km)", ylabel="Transmission loss (dB)")
+```
+
+### Range-dependent scenario with multilayered seabed
+
+While the Kraken model is range-independent by itself, it can be made range-dependent by using `AdiabaticExt` as shown below:
+
+```{julia}
+using UnderwaterAcoustics
+using Plots
+
+env = UnderwaterEnvironment(
+  bathymetry = SampledField([200, 150, 200]; x=[0, 2000, 5000]),
+  soundspeed = 1500,
+  density = 1000,
+  seabed = MultilayerElasticBoundary([
+    (40, 1374, 1520, 0, dBperλ(0.1124), 0),           # 40m thick fluid sediment
+    (Inf, 2200, 1730, 800, dBperλ(0.5), dBperλ(0.5))  # hard half-space substrate
+  ])
+)
+
+# use an adiabatic extension to the KrakenJL for range-dependence
+pm = AdiabaticExt(KrakenJL, env)
+
+tx = AcousticSource(0, -50, 250)
+rx = AcousticReceiver(7000, -25)
+rxs = AcousticReceiverGrid2D(10:10:7000, -200:-1)
+x = transmission_loss(pm, tx, rxs)
+
+plot(rxs, x; crange=50)
+plot!(env)
+```
+
+### Differentiability
+
+Since `KrakenJL` is a pure Julia model, we can differentiate through it. For
+example, we can compute the sensitivity of the transmission loss to the water
+depth, seabed sound speed and frequency:
+
+```{julia}
+using ForwardDiff
+
+function ℳ(x)
+  D, cb, f = x
+  env = UnderwaterEnvironment(
+    bathymetry = D,
+    soundspeed = 1500,
+    density = 1000,
+    seabed = FluidBoundary(2000, cb)
+  )
+  pm = KrakenJL(env)
+  transmission_loss(pm, AcousticSource(0, -500, f), AcousticReceiver(200000, -2500))
+end
+
+ForwardDiff.gradient(ℳ, [5000.0, 2000.0, 10.0])
+```
+
+## Notes
+
+The `KrakenJL` propagation model requires that the transmitter is located at
+$(x=0, y=0)$ and all receivers are located in the right half-plane (i.e., $x>0$
+and $y=0$). This limitation can be worked around by wrapping the model with
+[`Reframe2D`](api.qmd), which automatically transforms 2D scenarios specified
+in world coordinates into the coordinate system required by the model (see the
+[quickstart guide](quickstart.qmd#scenarios-in-world-coordinates) for an
+example).
+
+Like the Fortran wrapper, the port implements the subset of Kraken features
+reachable through the `UnderwaterAcoustics.jl` API. It does NOT support:
+
+- N2-linear, analytic or quadratic interpolation for sound speed
+- Arbitrary (tabulated) reflection coefficients
+- Twersky scattering
+- Broadband mode files, coupled modes and 3D field computation
+
+Group velocities follow the behavior of the Fortran models: the KrakenC solver
+(`complex_solver=true`, default) computes them, but the values are incorrect
+for multilayer seabeds with elastic sediment layers (reported as `missing`);
+the Kraken real solver (`complex_solver=false`) does not compute them and
+reports zeros.
+
+**Licensing:** the `KrakenJL` solver is GPL-3.0-or-later (a derivative work of
+Kraken), unlike the rest of `AcousticsToolbox.jl` (MIT) — see the package's
+[licensing notes](https://github.com/org-arl/AcousticsToolbox.jl#licensing) for details.

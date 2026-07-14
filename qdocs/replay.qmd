@@ -16,10 +16,11 @@ The idea of channel replay was popularized in the underwater domain by the [Wate
 
 ### Loading a replay channel
 
-To do channel replay using `UnderwaterAcoustics.jl`, we build a `AbstractAcousticChannel` from the measured TVIR using the `BasebandReplayChannel()` constructor. It can either take in a TVIR as a matrix or load a TVIR from file (e.g. `red.mat`):
+To do channel replay using `UnderwaterAcoustics.jl`, we build a `AbstractAcousticChannel` from the measured TVIR using the `BasebandReplayChannel()` constructor. It can either take in a TVIR as a matrix or load a TVIR from file (e.g. `red.mat`). Loading from a `.mat` file requires the `MAT` package to be loaded:
 
 ```{julia}
 using UnderwaterAcoustics
+using MAT
 using Plots
 
 ch = BasebandReplayChannel("red.mat")

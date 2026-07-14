@@ -1,4 +1,3 @@
-import MAT: matread
 import SignalAnalysis: duration, nchannels, SampledSignal, samples, signal
 import SignalAnalysis: framerate, nframes, resample, isanalytic, analytic, padded
 
@@ -57,35 +56,18 @@ it is used to corrupt the received signals.
 
 Supported formats:
 - `.mat` (MATLAB) file in underwater acoustic channel repository (UACR) format.
-  See https://github.com/uwa-channels/ for details.
+  See https://github.com/uwa-channels/ for details. Loading `.mat` files
+  requires the `MAT` package to be loaded (`using MAT`).
 """
 function BasebandReplayChannel(filename::AbstractString; upsample=false, rxs=:, noise=nothing)
-  # TODO: support UACR noise models
-  if endswith(filename, ".mat")
-    data = matread(filename)
-    all(["version", "h_hat", "theta_hat", "params"] .∈ Ref(keys(data))) || error("Bad channel file format")
-    data["version"] == 1.0 || @warn "Unsupported channel file version"
-    h = reverse(data["h_hat"]; dims=1)
-    M = size(h, 2)
-    rxs === (:) && (rxs = 1:M)
-    ndims(rxs) == 0 && (rxs = [rxs])
-    h = h[:,rxs,:]
-    θ = data["theta_hat"]
-    size(θ, 1) == M || error("Invalid phase estimates size")
-    θ = transpose(θ[rxs,:])
-    fs = data["params"]["fs_delay"]
-    fc = data["params"]["fc"]
-    if upsample && fs != data["params"]["fs_time"]
-      step = 1
-      h = resample(h, fs / data["params"]["fs_time"]; dims=3)
-    else
-      step = round(Int, fs / data["params"]["fs_time"])
-    end
-    return BasebandReplayChannel(h, θ, fs, fc, step; noise)
-  else
-    error("Unsupported file format")
-  end
+  endswith(filename, ".mat") || error("Unsupported file format")
+  applicable(_load_mat_replay_channel, filename, upsample, rxs, noise) ||
+    error("Loading .mat replay channels requires the MAT package; run `using MAT` first")
+  _load_mat_replay_channel(filename, upsample, rxs, noise)
 end
+
+# implemented in MATExt
+function _load_mat_replay_channel end
 
 """
     transmit(ch::BasebandReplayChannel, x; rxs=:, abstime=false, noisy=true, fs=nothing, start=nothing)

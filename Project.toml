@@ -12,7 +12,6 @@ ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 InteractiveUtils = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
-MAT = "23992714-dd62-5051-b70f-ba57cb901cac"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SignalAnalysis = "df1fea92-c066-49dd-8b36-eace3378ea47"
@@ -20,10 +19,12 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [weakdeps]
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
+MAT = "23992714-dd62-5051-b70f-ba57cb901cac"
 RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 
 [extensions]
 ChainRulesExt = "ChainRulesCore"
+MATExt = "MAT"
 PlotsExt = "RecipesBase"
 
 [compat]

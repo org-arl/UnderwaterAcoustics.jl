@@ -1,11 +1,10 @@
 name = "UnderwaterAcoustics"
 uuid = "0efb1f7a-1ce7-46d2-9f48-546a4c8fbb99"
 authors = ["Mandar Chitre <mandar@nus.edu.sg>"]
-version = "0.8.0"
+version = "0.8.1"
 
 [deps]
 Accessors = "7d9f7c33-5ae7-4f3b-8dc6-eff91059b697"
-Colors = "5ae59095-9a9b-59fe-a467-6f913c188581"
 DSP = "717857b8-e6f2-59f4-9121-6e50c889abd2"
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
@@ -19,13 +18,14 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [weakdeps]
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
+Colors = "5ae59095-9a9b-59fe-a467-6f913c188581"
 MAT = "23992714-dd62-5051-b70f-ba57cb901cac"
 RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 
 [extensions]
 ChainRulesExt = "ChainRulesCore"
 MATExt = "MAT"
-PlotsExt = "RecipesBase"
+PlotsExt = ["RecipesBase", "Colors"]
 
 [compat]
 Accessors = "0.1"
@@ -41,6 +41,6 @@ MAT = "0.10.7"
 Printf = "1"
 Random = "1"
 RecipesBase = "1.3"
-SignalAnalysis = "0.4,0.5,0.6,0.7,0.8,0.9,0.10"
+SignalAnalysis = "0.4,0.5,0.6,0.7,0.8,0.9,0.10,0.11"
 Unitful = "1.22"
 julia = "1.9"

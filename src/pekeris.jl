@@ -1,5 +1,4 @@
 import SignalAnalysis: signal, db2pow, tukey
-import NonlinearSolve: IntervalNonlinearProblem, solve
 import DSP: nextfastfft
 import FFTW: ifft
 
@@ -243,10 +242,7 @@ function arrivals(pm::PekerisModeSolver, tx::AbstractAcousticSource)
       m = _mode(0, ω, 0.0, k₁, pm.c, pm.ρ, pm.seabed.c, pm.seabed.ρ, pm.h, log_a)
       return Vector{typeof(m)}(undef, 0)
     end
-    # plain lock/unlock (no closure or try/finally) keeps this differentiable
-    lock(pm.lock)
-    γ = get(pm.cache, ω, nothing)
-    unlock(pm.lock)
+    γ = _mode_cache_get(pm, ω)
     if γ === nothing
       dk² = k₁^2 - k₂^2
       ngrid = pm.ngrid > 0 ? pm.ngrid : 2 * ceil(Int, pm.h * k₁ / π) + 1
@@ -254,12 +250,8 @@ function arrivals(pm::PekerisModeSolver, tx::AbstractAcousticSource)
       cost = map(γ -> _arrivals_cost(γ, (pm, dk²)), γgrid)
       ndx = findall(i -> sign(cost[i+1]) * sign(cost[i]) < 0, 1:length(γgrid)-1)
       0 < pm.nmodes < length(ndx) && (ndx = ndx[1:pm.nmodes])
-      γ = [solve(IntervalNonlinearProblem{false}(_arrivals_cost, (γgrid[i], γgrid[i+1]), (pm, dk²))).u for i ∈ ndx]
-      if ω isa Real && γ isa Vector{Float64}
-        lock(pm.lock)
-        pm.cache[ω] = γ
-        unlock(pm.lock)
-      end
+      γ = [_solve_mode_γ(γgrid[i], γgrid[i+1], pm, dk²) for i ∈ ndx]
+      _mode_cache_put!(pm, ω, γ)
     end
     return _mode.(1:length(γ), ω, γ, k₁, pm.c, pm.ρ, pm.seabed.c, pm.seabed.ρ, pm.h, log_a)
   end
@@ -419,3 +411,58 @@ function _mode(m, ω, γ, k, c, ρ, cb, ρb, D, log_a)
 end
 
 _arrivals_cost(γ, (pm, dk²)) = pm.seabed.ρ * γ * cos(γ * pm.h) + pm.ρ * sqrt(dk² - γ^2) * sin(γ * pm.h)
+
+# analytic ∂/∂γ of _arrivals_cost
+function _arrivals_cost′(γ, (pm, dk²))
+  pm.seabed.ρ * (cos(γ * pm.h) - γ * pm.h * sin(γ * pm.h)) +
+    pm.ρ * (pm.h * sqrt(dk² - γ^2) * cos(γ * pm.h) - γ / sqrt(dk² - γ^2) * sin(γ * pm.h))
+end
+
+# cache bookkeeping kept out of the AD path; marked non-differentiable in ChainRulesExt
+# (plain lock/unlock, no closure or try/finally, keeps this ForwardDiff-friendly)
+function _mode_cache_get(pm, ω)
+  lock(pm.lock)
+  γ = get(pm.cache, ω, nothing)
+  unlock(pm.lock)
+  γ
+end
+
+function _mode_cache_put!(pm, ω, γ)
+  if ω isa Real && γ isa Vector{Float64}
+    lock(pm.lock)
+    pm.cache[ω] = γ
+    unlock(pm.lock)
+  end
+  nothing
+end
+
+# find root of f in bracket (lo, hi); assumes f changes sign over the bracket
+function _bisect(f, lo::Float64, hi::Float64)
+  flo = f(lo)
+  flo == 0 && return lo
+  s = sign(flo)
+  for _ ∈ 1:64
+    mid = 0.5 * (lo + hi)
+    (mid == lo || mid == hi) && break
+    fmid = f(mid)
+    fmid == 0 && return mid
+    if sign(fmid) == s
+      lo = mid
+    else
+      hi = mid
+    end
+  end
+  0.5 * (lo + hi)
+end
+
+# solve _arrivals_cost(γ) = 0 in (γlo, γhi) on plain values, then apply one
+# Newton step with the original (possibly AD-tracked) parameters so that
+# derivatives propagate per the implicit function theorem
+function _solve_mode_γ(γlo, γhi, pm, dk²)
+  ρb = _undual(pm.seabed.ρ)
+  ρ = _undual(pm.ρ)
+  h = _undual(pm.h)
+  d = _undual(dk²)
+  γ₀ = _bisect(γ -> ρb * γ * cos(γ * h) + ρ * sqrt(d - γ^2) * sin(γ * h), _undual(γlo), _undual(γhi))
+  γ₀ - _arrivals_cost(γ₀, (pm, dk²)) / _arrivals_cost′(γ₀, (pm, dk²))
+end

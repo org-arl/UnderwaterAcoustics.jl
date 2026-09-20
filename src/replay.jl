@@ -4,8 +4,8 @@ import Interpolations: interpolate, BSpline, Cubic, Line, OnGrid, scale, extrapo
 
 export BasebandReplayChannel
 
-# Sampled data (h, θ, φ) is stored as T1 = Float32. Scalars (fs, fc,
-# doppler) are Float64 because they set the time and frequency grids.
+# fs, fc and doppler are Float64: they set the time and frequency grids, where
+# a relative error accumulates over the length of the signal.
 struct BasebandReplayChannel{T1,T2} <: AbstractChannelModel
   h::Array{Complex{T1},3}   # channel impulse responses (delay × rx × time)
   θ::Matrix{T1}             # theta_hat phase estimates (time × rx), or 0×0 if unused
@@ -18,12 +18,21 @@ struct BasebandReplayChannel{T1,T2} <: AbstractChannelModel
   function BasebandReplayChannel(h, θ::AbstractMatrix, φ::AbstractMatrix, fs::Number, fc::Number, step::Int=1, doppler::Real=1.0; noise=nothing)
     fs = in_units(u"Hz", fs)
     fc = in_units(u"Hz", fc)
-    h = ComplexF32.(h)
-    θ = Float32.(θ)
-    φ = Float32.(φ)
-    new{Float32,typeof(noise)}(h, θ, φ, Float64(fs), Float64(fc), step, Float64(doppler), noise)
+    T1 = float(real(eltype(h)))
+    new{T1,typeof(noise)}(Complex{T1}.(h), T1.(θ), T1.(φ), Float64(fs), Float64(fc), step, Float64(doppler), noise)
   end
 end
+
+"""
+    Float32(ch::BasebandReplayChannel)
+    Float64(ch::BasebandReplayChannel)
+
+Convert the impulse responses and phase estimates of a replay channel to the
+given precision. `Float32(ch)` halves the memory used by a channel loaded from
+a file.
+"""
+(::Type{T})(ch::BasebandReplayChannel) where {T<:AbstractFloat} =
+  BasebandReplayChannel(Complex{T}.(ch.h), ch.θ, ch.φ, ch.fs, ch.fc, ch.step, ch.doppler; noise=ch.noise)
 
 function Base.show(io::IO, ch::BasebandReplayChannel)
   print(io, "BasebandReplayChannel($(size(ch.h,2)) × $(round(size(ch.h,3)/ch.fs*ch.step; digits=1)) s, $(ch.fc) Hz, $(ch.fs) Sa/s)")

@@ -350,13 +350,17 @@ end
 end
 
 @testitem "replay storage types" setup=[ReplaySetup] begin
-  # sampled data is stored as Float32 and scalars as Float64, and fs must not
-  # pass through Float32 on the way (24000.1 would become 24000.099609375)
+  # sampled data keeps the precision it is given; scalars are always Float64 and
+  # must not pass through Float32 (24000.1 would become 24000.099609375)
   ch = BasebandReplayChannel(make_h(TAPS), zeros(T * STEP, M), 24000.1, 12000.3, STEP)
-  @test ch.h isa Array{ComplexF32,3}
-  @test ch.θ isa Matrix{Float32}
-  @test ch.φ isa Matrix{Float32}
+  @test ch.h isa Array{ComplexF64,3}
+  @test ch.θ isa Matrix{Float64}
   @test ch.fs === 24000.1
   @test ch.fc === 12000.3
   @test ch.doppler === 1.0
+  ch32 = Float32(ch)
+  @test ch32.h isa Array{ComplexF32,3}
+  @test ch32.θ isa Matrix{Float32}
+  @test ch32.fs === 24000.1
+  @test BasebandReplayChannel(ComplexF32.(make_h(TAPS)), FS_DELAY, FC, STEP).h isa Array{ComplexF32,3}
 end

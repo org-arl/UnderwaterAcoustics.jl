@@ -1,18 +1,12 @@
 """
-Generate reference outputs for test/test_replay.jl from the Python
-implementation of UACR channel replay.
-
-The channel is deterministic and closed-form, so the Julia test rebuilds the
-same `h_hat`/`phi_hat`/`theta_hat` bit-for-bit and writes its own .mat to a
-temporary directory. Only the reference *output* is committed, as plain text
-(y_<mode>.txt), so there are no binary fixtures in the repo.
+Generate the reference outputs y_<mode>.txt for test/test_replay.jl, using the
+Python UACR replay implementation at a pinned commit (downloaded into tmp/).
 
 Run from the repository root:
 
     python test/data/gen_references.py
 
-The script downloads the reference implementation at a pinned commit, so the
-outputs are reproducible. Requires numpy, scipy, h5py and hdf5storage.
+Requires numpy, scipy, h5py and hdf5storage.
 """
 
 import os
@@ -23,7 +17,6 @@ import numpy as np
 import h5py
 import hdf5storage
 
-# pinned so regenerating gives the same reference outputs
 REF_REPO = "uwa-channels/python"
 REF_COMMIT = "cdb29f8098566db2d44a0d499a9319800d4c1bbe"
 REF_PATH = "src/uwa_channels/replay.py"
@@ -35,11 +28,9 @@ TMP = os.path.normpath(os.path.join(HERE, "..", "..", "tmp"))
 # must match the constants in test_replay.jl
 FS_IN, FC, FS_DELAY = 96_000.0, 12_000.0, 24_000.0
 
-# (name, step, snapshots, mode, Doppler scale in Hz)
-#   the step=1 cases keep the Doppler low so the channel is physically
-#   plausible; the tv case uses a much larger Doppler so that the impulse
-#   response varies appreciably over the probe and exercises the interpolation
-#   of h along the time axis
+# (name, step, snapshots, mode, Doppler in Hz); must match cases in test_replay.jl.
+# tv's 80 Hz makes the impulse response vary over the probe, exercising the
+# interpolation of h along the time axis
 CASES = [
     ("none",  1, 240, None,        3.0),
     ("theta", 1, 240, "theta_hat", 3.0),
@@ -49,7 +40,6 @@ CASES = [
 
 
 def load_reference():
-    """Download the pinned reference implementation and import it."""
     os.makedirs(TMP, exist_ok=True)
     path = os.path.join(TMP, "_replay_ref.py")
     if not os.path.exists(path):
@@ -62,24 +52,24 @@ def load_reference():
 
 
 def make_h(L, M, T, step, fd_scale):
-    """Closed-form time-varying impulse response, [delay, rx, time]."""
+    """Must match ref_h in test_replay.jl."""
     i = np.arange(L)[:, None, None]
     j = np.arange(M)[None, :, None]
     k = np.arange(T)[None, None, :]
-    g = 0.6**i * np.exp(1j * np.pi * (i + 3 * j) / 7)   # decaying taps
-    fd = fd_scale * np.sin(1.7 * i + 0.9 * j)           # Doppler per tap
+    g = 0.6**i * np.exp(1j * np.pi * (i + 3 * j) / 7)
+    fd = fd_scale * np.sin(1.7 * i + 0.9 * j)
     return g * np.exp(2j * np.pi * fd * k * step / FS_DELAY)
 
 
 def make_phase(M, nphase):
-    """Closed-form phase vector, [rx, time], sampled at FS_DELAY."""
+    """Must match ref_phase in test_replay.jl."""
     q = np.arange(nphase)[None, :]
     m = np.arange(M)[:, None]
     return 0.4 * np.sin(2 * np.pi * 1.3 * q / FS_DELAY + 0.7 * m) + 1.5 * q / FS_DELAY
 
 
 def make_probe(fs, D=0.008, f0=9_000.0, f1=15_000.0, tau=0.002):
-    """Real passband chirp, band-limited around FC."""
+    """Must match ref_probe in test_replay.jl."""
     n = np.arange(int(round(D * fs)))
     t = n / fs
     x = np.cos(2 * np.pi * (f0 * t + 0.5 * (f1 - f0) / D * t * t))

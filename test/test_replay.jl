@@ -4,13 +4,11 @@ using TestItems
   using SignalAnalysis
   using StableRNGs
 
-  # number of input samples per delay-rate sample for the params below
   const FS_IN, FC, FS_DELAY, STEP = 96_000.0, 12_000.0, 24_000.0, 20
   const RATIO = FS_IN / FS_DELAY
-  const L, M, T = 150, 1, 100        # delay taps, receivers, time snapshots
+  const L, M, T = 150, 1, 100
   const TAPS = [(30, 1.0), (90, 0.7)]
 
-  # (L, M, T) impulse-response cube with constant-in-time taps
   function make_h(taps)
     h = zeros(ComplexF64, L, M, T)
     for (idx, g) in taps
@@ -19,18 +17,16 @@ using TestItems
     h
   end
 
-  # time-varying impulse response: taps whose gains drift across snapshots
   function make_h_tv(taps)
     h = zeros(ComplexF64, L, M, T)
     for (idx, g) in taps
       for t in 1:T
-        h[idx, :, t] .= g * (1 + 0.3 * sin(2π * t / T))   # smooth time variation
+        h[idx, :, t] .= g * (1 + 0.3 * sin(2π * t / T))
       end
     end
     h
   end
 
-  # BPSK-style probe, upsampled and modulated to the carrier. Seeded with a
   # StableRNG so the probe is identical across Julia versions and platforms.
   function make_probe(seed=42)
     rng = StableRNG(seed)
@@ -40,7 +36,6 @@ using TestItems
     bb .* cos.(2π .* FC .* (0:length(bb)-1) ./ FS_IN)
   end
 
-  # matched-filter magnitude vs lag on a received signal
   function arrival_mag(y_m, probe)
     n = length(y_m)
     yv = y_m .* exp.(-im .* 2π .* FC .* (0:n-1) ./ FS_IN)
@@ -57,7 +52,6 @@ using TestItems
     mag
   end
 
-  # index of the second strongest arrival, excluding a window around the first
   function second_arrival(mag, p1)
     w = round(Int, 0.0003 * FS_IN)
     m2 = copy(mag)
@@ -67,7 +61,6 @@ using TestItems
 end
 
 @testitem "replay physics" setup=[ReplaySetup] begin
-  # two echoes a known number of taps apart must arrive that far apart
   probe = make_probe()
   ch = BasebandReplayChannel(make_h(TAPS), FS_DELAY, FC, STEP)
   y = collect(transmit(ch, signal(probe, FS_IN); start=1, noisy=false))
@@ -79,9 +72,7 @@ end
 end
 
 @testitem "replay phi=0 identity" setup=[ReplaySetup] begin
-  # a zero-phase phi channel must reduce to plain convolution. The phi branch
-  # still runs the drift interpolator (on a zero drift), so agreement is to
-  # interpolation round-off rather than to machine precision.
+  # the phi branch still runs the drift interpolator, so agreement is to round-off, not exact
   h = make_h(TAPS)
   x = signal(make_probe(), FS_IN)
   ch_none = BasebandReplayChannel(h, FS_DELAY, FC, STEP)
@@ -94,10 +85,9 @@ end
 end
 
 @testitem "replay constant phase" setup=[ReplaySetup] begin
-  # a known constant phase φ0 must be recovered from the phi_hat output.
-  # tolerance of 0.05 rad accounts for the sub-sample delay drift the phase
-  # itself induces (Δτ = φ0/2πfc ≈ 0.22 samples), which biases the estimate by
-  # ~φ0·⟨f⟩/fc ≈ 0.02 rad for this probe — a test-design artifact, not a bug.
+  # the phase also shifts the delay by φ0/2πfc ≈ 0.22 samples at FS_DELAY, which
+  # biases the estimate by φ0·⟨f⟩/fc ≈ 0.02 rad, ⟨f⟩ being the probe's mean
+  # baseband frequency; hence the 0.05 rad tolerance
   φ0 = 0.7
   h = make_h(TAPS)
   x = analytic(signal(make_probe(), FS_IN))
@@ -111,8 +101,6 @@ end
 end
 
 @testitem "replay theta=0 identity" setup=[ReplaySetup] begin
-  # a zero-phase theta channel must equal plain convolution exactly: theta is a
-  # pure phase multiply with no interpolation, so cis(0) == 1 is exact
   h = make_h(TAPS)
   x = signal(make_probe(), FS_IN)
   ch_none = BasebandReplayChannel(h, FS_DELAY, FC, STEP)
@@ -124,9 +112,6 @@ end
 end
 
 @testitem "replay theta phase" setup=[ReplaySetup] begin
-  # theta is phase-only (no delay drift), so a known constant phase is recovered
-  # essentially exactly — far tighter than the phi case, which carries a
-  # sub-sample drift bias. The contrast is the point of having both.
   θ0 = 0.7
   h = make_h(TAPS)
   x = analytic(signal(make_probe(), FS_IN))
@@ -139,13 +124,11 @@ end
 end
 
 @testitem "replay time-varying h" setup=[ReplaySetup] begin
-  # a channel whose IR varies across snapshots exercises the _interp_ir cubic
-  # spline path, which constant-in-time channels never meaningfully trigger
+  # exercises _interp_ir, which constant-in-time channels don't meaningfully test
   probe = make_probe()
   ch = BasebandReplayChannel(make_h_tv(TAPS), FS_DELAY, FC, STEP)
   y = collect(transmit(ch, signal(probe, FS_IN); start=1, noisy=false))
   @test all(isfinite, y)
-  # the two echoes must still land at the correct separation despite the drift
   mag = arrival_mag(y[:, 1], probe)
   p1 = argmax(mag) - 1
   p2 = second_arrival(mag, p1)
@@ -153,13 +136,12 @@ end
 end
 
 @testitem "replay multi-receiver phases" setup=[ReplaySetup] begin
-  # M=3 receivers each with a DIFFERENT constant phi must each recover their own
-  # phase — catches per-receiver column-indexing bugs invisible with M=1
+  # a different phase per receiver catches column-indexing bugs that M=1 cannot
   Lm, Mm, Tm = 150, 3, 100
   h = zeros(ComplexF64, Lm, Mm, Tm)
   for (idx, g) in TAPS; h[idx, :, :] .= g; end
   φ0s = [0.3, 0.7, 1.1]
-  φ = repeat(reshape(φ0s, 1, Mm), Tm * STEP, 1)   # (time × rx), per-rx phase
+  φ = repeat(reshape(φ0s, 1, Mm), Tm * STEP, 1)
   x = analytic(signal(make_probe(), FS_IN))
   ch_none = BasebandReplayChannel(h, FS_DELAY, FC, STEP)
   ch_phi = BasebandReplayChannel(h, Matrix{Float64}(undef, 0, 0), φ, FS_DELAY, FC, STEP)
@@ -172,10 +154,6 @@ end
 end
 
 @testitem "replay receiver subset" setup=[ReplaySetup] begin
-  # selecting a subset of receivers must return exactly those receivers'
-  # signals. The output no longer depends on how many receivers were selected
-  # (the per-transmit power normalisation was removed to match the reference),
-  # so the subset must match the corresponding column of the full transmit.
   Lm, Mm, Tm = 150, 3, 100
   h = zeros(ComplexF64, Lm, Mm, Tm)
   for (idx, g) in TAPS; h[idx, :, :] .= g; end
@@ -189,12 +167,9 @@ end
 end
 
 @testitem "replay from file" setup=[ReplaySetup] begin
-  # round-trip a channel through the real .mat loader (phi mode), exercising the
-  # file reader (format checks, phi selection, duration validation, delay-axis
-  # reversal) that the in-memory constructors bypass
   using MAT: matwrite
   Lf, Mf, Tf = 150, 2, 100
-  h_file = zeros(ComplexF64, Lf, Mf, Tf)              # [delay, rx, time], UACR layout
+  h_file = zeros(ComplexF64, Lf, Mf, Tf)
   for (idx, g) in TAPS; h_file[idx, :, :] .= g; end
   phi_file = zeros(Float64, Mf, Tf * STEP)            # [rx, time], length = T*step (spec)
 
@@ -207,14 +182,11 @@ end
   ))
 
   ch_file = BasebandReplayChannel(tmp)
-  @test size(ch_file.h) == (Lf, Mf, Tf)               # loaded with correct shape
-  @test size(ch_file.φ, 2) > 0                        # phi mode selected
-  @test size(ch_file.θ, 2) == 0                       # theta correctly absent
+  @test size(ch_file.h) == (Lf, Mf, Tf)
+  @test size(ch_file.φ, 2) > 0
+  @test size(ch_file.θ, 2) == 0
 
-  # the loaded channel must transmit identically to a direct-constructor channel
-  # built from the same data. The loader reverses the delay axis on read, so the
-  # direct constructor is given the reversed array to match. Phi is zero here,
-  # so both reduce to plain convolution.
+  # the loader reverses the delay axis, so the direct channel gets the reversed array
   ch_direct = BasebandReplayChannel(reverse(h_file; dims=1), FS_DELAY, FC, STEP)
   x = signal(make_probe(), FS_IN)
   y_file = collect(transmit(ch_file, x; start=1, noisy=false))
@@ -225,26 +197,23 @@ end
 end
 
 @testitem "replay vs python reference" setup=[ReplaySetup] begin
-  # Cross-check the full replayed signal against reference outputs from the
-  # Python implementation (github.com/uwa-channels/python). The channel is
-  # deterministic and closed-form, so it is rebuilt here bit-for-bit and written
-  # to a temporary .mat; only the reference output is committed, as plain text.
-  # Regenerate with test/data/gen_references.py, which downloads the reference
-  # implementation at a pinned commit.
+  # Compares against stored outputs of the Python reference
+  # (github.com/uwa-channels/python). The channel is closed-form and rebuilt
+  # here; only the outputs are committed. Regenerate them with
+  # test/data/gen_references.py.
   #
   # The residual (~2.6e-3 relative, amplitude ratio ~0.9988, the same in every
   # mode) comes from the two resampling steps: DSP.jl's resample and scipy's
   # resample_poly use different anti-aliasing filters, whose gains across the
   # probe band differ by ~0.05-0.07% per step. Given identical input, the
-  # channel stage itself matches the reference to ~1e-7, apart from spline end
-  # effects at the first snapshot (≤ 6e-4, tv case). The tolerances below
-  # allow for that residual.
+  # channel steps match the reference to float precision, apart from spline end
+  # effects (≤ 6e-4, tv case). The tolerances below allow for that residual.
   using MAT: matwrite
 
   datadir = joinpath(@__DIR__, "data")
   NL, NM = 16, 2
 
-  # closed-form impulse response, [delay, rx, time]; must match gen_references.py
+  # must match make_h in gen_references.py
   function ref_h(nl, nm, nt, step, fd_scale)
     h = zeros(ComplexF64, nl, nm, nt)
     for i ∈ 0:nl-1, j ∈ 0:nm-1, k ∈ 0:nt-1
@@ -255,7 +224,7 @@ end
     h
   end
 
-  # closed-form phase vector, [rx, time] at FS_DELAY; must match gen_references.py
+  # must match make_phase in gen_references.py
   function ref_phase(nm, nphase)
     p = zeros(Float64, nm, nphase)
     for m ∈ 0:nm-1, q ∈ 0:nphase-1
@@ -264,7 +233,7 @@ end
     p
   end
 
-  # the probe used to generate the references
+  # must match make_probe in gen_references.py
   function ref_probe(fs; D=0.008, f0=9000.0, f1=15000.0, tau=0.002)
     n = 0:round(Int, D * fs)-1
     t = n ./ fs
@@ -277,7 +246,6 @@ end
     x .* w
   end
 
-  # read a reference output (whitespace-separated, '#' comment lines)
   function read_ref(path)
     rows = Vector{Vector{Float64}}()
     for line ∈ eachline(path)
@@ -321,37 +289,27 @@ end
 end
 
 @testitem "replay bounds checking" setup=[ReplaySetup] begin
-  # the usable signal length is shorter than the raw channel duration by
-  # roughly the impulse response length, and an explicitly supplied start
-  # must lie within the range the channel can accommodate
   h = make_h(TAPS)
   ch = BasebandReplayChannel(h, FS_DELAY, FC, STEP)
-
-  # a signal short enough to replay, for the start-index cases
   x = signal(make_probe(), FS_IN)
 
-  # T - Treq is the largest valid start for this signal
+  # mirrors the Treq computation in transmit()
   Treq = ceil(Int, (round(Int, nframes(x) * FS_DELAY / FS_IN) + L - 1) / STEP) + 1
   maxstart = T - Treq
-  @test maxstart ≥ 1                                    # sanity: probe fits
+  @test maxstart ≥ 1
 
-  # start below range
   @test_throws ErrorException transmit(ch, x; start=0, noisy=false)
-  # start above range
   @test_throws ErrorException transmit(ch, x; start=maxstart+1, noisy=false)
-  # a valid start still works
   @test size(collect(transmit(ch, x; start=maxstart, noisy=false)), 2) == M
 
-  # a signal too long to replay: fills the whole channel duration, which the
-  # old duration-only check allowed but the convolution cannot accommodate
+  # fills the raw channel duration, leaving no room for the impulse response tail
   nlong = round(Int, T * STEP * FS_IN / FS_DELAY)
   xlong = signal(zeros(nlong), FS_IN)
   @test_throws ErrorException transmit(ch, xlong; noisy=false)
 end
 
 @testitem "replay storage types" setup=[ReplaySetup] begin
-  # sampled data keeps the precision it is given; scalars are always Float64 and
-  # must not pass through Float32 (24000.1 would become 24000.099609375)
+  # 24000.1 isn't exact in Float32, so this catches fs passing through Float32
   ch = BasebandReplayChannel(make_h(TAPS), zeros(T * STEP, M), 24000.1, 12000.3, STEP)
   @test ch.h isa Array{ComplexF64,3}
   @test ch.θ isa Matrix{Float64}

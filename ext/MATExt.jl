@@ -10,8 +10,7 @@ function UnderwaterAcoustics._load_mat_replay_channel(filename, upsample, rxs, n
   data = matread(filename)
   all(["version", "h_hat", "params"] .∈ Ref(keys(data))) || error("Bad channel file format")
   data["version"] >= 1.0 || @warn "Unsupported channel file version"
-  # the file stores h_hat in forward-delay order; the convolution consumes
-  # taps in reverse (see _apply_tvir!), so flip the delay axis on load.
+  # the file stores taps in forward-delay order; _apply_tvir! expects them reversed
   h = reverse(data["h_hat"]; dims=1)
   M = size(h, 2)
   rxs === (:) && (rxs = 1:M)
@@ -39,7 +38,6 @@ function UnderwaterAcoustics._load_mat_replay_channel(filename, upsample, rxs, n
     h = UnderwaterAcoustics._interp_ir(h, step, (size(h, 3) - 1) * step + 1)
     step = 1
   end
-  # spec: size(phase, 2)/fs_delay == size(h_hat, 3)/fs_time  (phase spans the IR duration)
   let nphase = size(φ, 1) > 0 ? size(φ, 1) : size(θ, 1)
     if nphase > 0
       dur_phase = nphase / fs

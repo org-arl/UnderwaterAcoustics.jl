@@ -4,17 +4,16 @@ import Interpolations: interpolate, BSpline, Cubic, Line, OnGrid, scale, extrapo
 
 export BasebandReplayChannel
 
-# fs, fc and doppler are Float64: they set the time and frequency grids, where
-# a relative error accumulates over the length of the signal.
+# fs, fc and doppler stay Float64 even when T1 is Float32, since errors in them accumulate over time
 struct BasebandReplayChannel{T1,T2} <: AbstractChannelModel
   h::Array{Complex{T1},3}   # channel impulse responses (delay × rx × time)
   θ::Matrix{T1}             # theta_hat phase estimates (time × rx), or 0×0 if unused
   φ::Matrix{T1}             # phi_hat phase estimates (time × rx), or 0×0 if unused
-  fs::Float64               # sampling frequency (Sa/s)
+  fs::Float64               # delay-axis sampling rate, fs_delay (Sa/s)
   fc::Float64               # carrier frequency (Hz)
   step::Int                 # step size for h time axis (fs ÷ step IRs/s)
   doppler::Float64          # passband resampling factor (f_resamp)
-  noise::T2                 # noise model
+  noise::T2
   function BasebandReplayChannel(h, θ::AbstractMatrix, φ::AbstractMatrix, fs::Number, fc::Number, step::Int=1, doppler::Real=1.0; noise=nothing)
     fs = in_units(u"Hz", fs)
     fc = in_units(u"Hz", fc)
@@ -48,12 +47,11 @@ phase estimates `θ` (theta_hat, phase tracking only) or `φ` (phi_hat, delay
 tracking). `fs` is the sampling frequency in Sa/s, `fc` is the carrier frequency
 in Hz, and `step` is the decimation rate for the time axis of `h`. The effective
 sampling frequency of the impulse responses is `fs ÷ step` impulse responses per
-second. `doppler` is a time-invariant passband resampling factor.
+second. `doppler` is a time-invariant passband resampling factor. The impulse
+responses and phase estimates are stored at the precision of `h`.
 
-Channels are normally loaded from a UACR file (see below), which populates `θ`,
-`φ` and `doppler` from the file. The constructors above are mainly useful for
-synthetic channels: pass an empty `Matrix{Float64}(undef, 0, 0)` for whichever
-of `θ` or `φ` is not used. If both are given, `φ` takes precedence.
+To use `φ` without `θ`, pass `zeros(0, 0)` for `θ`. If both are given, `φ`
+takes precedence.
 
 An additive noise model may be optionally specified as `noise`. If specified,
 it is used to corrupt the received signals.
@@ -110,8 +108,8 @@ specified (or all) receivers.
 `fs` specifies the sampling rate of the input signal. The output signal is
 sampled at the same rate. If `fs` is not specified but `x` is a `SampledSignal`,
 the sampling rate of `x` is used; otherwise an error is raised. If the channel
-specifies a passband resampling factor (`doppler`), the output is resampled by that factor to
-reproduce the nominal Doppler offset.
+has a passband resampling factor (`doppler`), the output is also resampled by
+that factor to reproduce the nominal Doppler offset.
 
 If `abstime` is `true`, the returned signals begin at the start of transmission.
 Otherwise, the result is relative to the earliest arrival time of the signal
@@ -137,22 +135,19 @@ function transmit(ch::BasebandReplayChannel, x; txs=:, rxs=:, abstime=false, noi
   fs < 2 * ch.fc && error("Signal sampling rate ($fs Hz) is too low for carrier frequency ($(ch.fc) Hz)")
   input_was_analytic = isanalytic(x)
   x = analytic(signal(samples(x), fs))
-  # convert to baseband and downsample
   x̄ = samples(resample(x .* cispi.(-2 * ch.fc * (0:nframes(x)-1) ./ fs), ch.fs/fs))
-  # choose a random start time if not specified
   Treq = ceil(Int, (nframes(x̄) + L - 1) / ch.step) + 1
   Treq < T || error("Signal duration ($(round(duration(x); digits=3)) s) exceeds maximum replayable duration ($(floor(maxtime; digits=3)) s)")
   start = something(start, rand(1:T-Treq))
   1 ≤ start ≤ T - Treq || error("Invalid start index ($start ∉ 1:$(T-Treq))")
-  # apply the channel
   ȳ = similar(x̄, nframes(x̄) + L - 1, length(rxs))
+  # only the spline in _interp_ir needs the pad; step == 1 must use the exact window
   pad = ch.step == 1 ? 0 : 2
   lo = max(1, start - pad)
   hi = min(T, start + Treq + pad)
   h = @view ch.h[:,rxs,lo:hi]
   _apply_tvir!(ȳ, x̄, ch.step == 1 ? h : _interp_ir(h, ch.step, nframes(ȳ), (start - lo) * ch.step))
   if size(ch.φ, 2) > 0
-    # phi_hat: apply phase then re-interpolate at time-shifted grid to insert delay drift
     i = (start - 1) * ch.step + 1
     φ_seg = @view(ch.φ[i:i+nframes(ȳ)-1, rxs])
     ȳ .*= cis.(φ_seg)
@@ -163,18 +158,15 @@ function transmit(ch::BasebandReplayChannel, x; txs=:, rxs=:, abstime=false, noi
       ȳ[:, j] .= itp.(t .+ drift)
     end
   elseif size(ch.θ, 2) > 0
-    # theta_hat: phase only, no delay interpolation
+    # theta_hat: phase only; the delay drift is already in h
     i = (start - 1) * ch.step + 1
     ȳ .*= cis.(@view(ch.θ[i:i+nframes(ȳ)-1, rxs]))
   end
-  # resample to original sampling rate and upconvert to passband
   y = resample(ȳ, fs/ch.fs; dims=1)
   y .*= cispi.(2 * ch.fc * (0:nframes(y)-1) ./ fs)
-  # resample in passband to reproduce the nominal Doppler offset, if needed
   isone(ch.doppler) || (y = resample(y, ch.doppler; dims=1))
-  input_was_analytic || (y = real(y) .* √2) # SignalAnalysis.analytic() is energy-preserving (divides by √2)
+  input_was_analytic || (y = real(y) .* √2) # undo analytic()'s 1/√2 scaling
   y = signal(y, fs)
-  # add noise
   if noisy && ch.noise !== nothing
     if input_was_analytic
       y .+= analytic(rand(ch.noise, size(y); fs))
@@ -185,8 +177,6 @@ function transmit(ch::BasebandReplayChannel, x; txs=:, rxs=:, abstime=false, noi
   y
 end
 
-# helpers
-
 function _apply_tvir!(y, x, h)
   L = size(h, 1)
   x = padded(x, L - 1)
@@ -196,13 +186,10 @@ function _apply_tvir!(y, x, h)
   y
 end
 
-# Interpolate the impulse response along its time axis from the snapshot rate
-# (fs_delay/step) up to the delay rate, using a cubic spline with zero fill
-# outside the sampled range.
 function _interp_ir(h, step, n, offset=0)
   L, M, T = size(h)
   out = similar(h, L, M, n)
-  ts = range(0.0, step=float(step), length=T)     # snapshot times, in delay samples
+  ts = range(0.0, step=float(step), length=T)
   for m ∈ 1:M, l ∈ 1:L
     itp = extrapolate(scale(interpolate(@view(h[l, m, :]), BSpline(Cubic(Line(OnGrid())))), ts), 0.0)
     for i ∈ 1:n

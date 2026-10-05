@@ -10,22 +10,22 @@ engine: julia
 #| output: false
 using Plots
 default(size=(600, 400))
-using UnderwaterAcoustics
-uacr_download("red_1")  # so that the download log does not show up below
+using UnderwaterAcoustics, MAT
+BasebandReplayChannel("uacr://red_1")  # hides the download log
 ```
 
 The idea of channel replay was popularized in the underwater domain by the [Watermark benchmark](https://ieeexplore.ieee.org/document/7932436). The essential idea is to extract estimates of time-varying impulse response (TVIR) from measurements at sea, and to convolve it with a new signals to estimate what would have been received had that signal been transmitted during the measurement.
 
 ### Loading a replay channel
 
-To do channel replay using `UnderwaterAcoustics.jl`, we build a `AbstractAcousticChannel` from the measured TVIR using the `BasebandReplayChannel()` constructor. It can either take in a TVIR as a matrix or load a TVIR from file. Channels measured at sea are available from the [underwater acoustic channel repository](https://uwa-channels.github.io/) (UACR), and can be downloaded with `uacr_download()`, which returns the path to the downloaded file. Each file is downloaded only once, and reused thereafter. Loading from a `.mat` file requires the `MAT` package to be loaded:
+To do channel replay using `UnderwaterAcoustics.jl`, we build a `AbstractAcousticChannel` from the measured TVIR using the `BasebandReplayChannel()` constructor. It can either take in a TVIR as a matrix or load a TVIR from a file or URL, e.g. `uacr://red_1` for the [UACR](https://uwa-channels.github.io/). Loading from a `.mat` file requires the `MAT` package to be loaded:
 
 ```{julia}
 using UnderwaterAcoustics
 using MAT
 using Plots
 
-ch = BasebandReplayChannel(uacr_download("red_1"))
+ch = BasebandReplayChannel("uacr://red_1")
 ```
 
 This channel has 3 receiving hydrophones and can replay up to 47.7 seconds of signal through the measured TVIR. The signal must fit within the frequency band that was used to probe the channel (for the `red` channel it is 25 ± 4.8 kHz).
@@ -68,7 +68,7 @@ plot(
 We can also simulate channels with noise. For example, if we wanted white Gaussian noise with standard deviation `σ = 0.1`, we can specify that when loading the channel:
 
 ```{julia}
-ch = BasebandReplayChannel(uacr_download("red_1"); noise=WhiteGaussianNoise(0.1))
+ch = BasebandReplayChannel("uacr://red_1"; noise=WhiteGaussianNoise(0.1))
 y = transmit(ch, x; start=1)
 
 plot(

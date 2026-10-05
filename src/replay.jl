@@ -70,7 +70,8 @@ end
 """
     BasebandReplayChannel(filename; upsample=false, rxs=:, noise=nothing)
 
-Load a baseband replay channel from a file.
+Load a baseband replay channel from a file or URL, e.g. `uacr://red_1` for a
+channel in the underwater acoustic channel repository (UACR).
 
 If `upsample` is `true`, the impulse responses are upsampled to the delay axis
 sampling rate. This makes applying the channel faster but requires more memory.
@@ -86,10 +87,10 @@ Supported formats:
   requires the `MAT` package to be loaded (`using MAT`).
 """
 function BasebandReplayChannel(filename::AbstractString; upsample=false, rxs=:, noise=nothing)
-  endswith(filename, ".mat") || error("Unsupported file format")
+  endswith(_filepath(filename), ".mat") || error("Unsupported file format")
   applicable(_load_mat_replay_channel, filename, upsample, rxs, noise) ||
     error("Loading .mat replay channels requires the MAT package; run `using MAT` first")
-  _load_mat_replay_channel(filename, upsample, rxs, noise)
+  _load_mat_replay_channel(_localfile(filename), upsample, rxs, noise)
 end
 
 # implemented in MATExt

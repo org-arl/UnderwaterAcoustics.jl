@@ -49,7 +49,6 @@ jdoc(UnderwaterAcoustics, :impulse_response)
 #| output: asis
 jdoc(UnderwaterAcoustics, :channel)
 jdoc(UnderwaterAcoustics, :BasebandReplayChannel)
-jdoc(UnderwaterAcoustics, :uacr_download)
 jdoc(UnderwaterAcoustics, :transmit)
 ```
 

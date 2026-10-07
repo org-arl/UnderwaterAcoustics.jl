@@ -14,5 +14,6 @@ include("pekeris.jl")
 include("adiabatic.jl")
 include("reframe.jl")
 include("replay.jl")
+include("download.jl")
 
 end # module

@@ -10,16 +10,22 @@ function _url(filename)
   _UACR_URL * (endswith(name, ".mat") ? name : name * ".mat")
 end
 
-function _filepath(filename)
+function _filepath(filename, cache=nothing)
   url = _url(filename)
   _isurl(url) || return filename
   parts = split(replace(url, r"^[^:]*://" => "", r"[?#].*" => ""), '/'; keepempty=false)
-  joinpath(homedir(), ".cache", "uwa-channels", (replace(p, r"^\.\.?$" => "_", r"[^A-Za-z0-9._-]" => "_") for p ∈ parts)...)
+  joinpath(something(cache, _cachedir()), (replace(p, r"^\.\.?$" => "_", r"[^A-Za-z0-9._-]" => "_") for p ∈ parts)...)
 end
 
-function _localfile(filename)
+function _cachedir()
+  Sys.iswindows() && return joinpath(get(ENV, "LOCALAPPDATA", homedir()), "UnderwaterAcoustics.jl", "cache")
+  xdg = get(ENV, "XDG_CACHE_HOME", "")
+  joinpath(isempty(xdg) ? joinpath(homedir(), ".cache") : xdg, "UnderwaterAcoustics.jl")
+end
+
+function _localfile(filename, cache=nothing)
   url = _url(filename)
-  path = _filepath(filename)
+  path = _filepath(filename, cache)
   if _isurl(url) && !isfile(path)
     mkpath(dirname(path))
     @info "Downloading $url to $path"

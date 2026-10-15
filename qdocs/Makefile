@@ -7,7 +7,7 @@ preview: red.mat
 	quarto preview --output-dir ../docs
 
 red.mat:
-	cp ~/Data/ChannelModeling/UACR_Public/red/red.mat .
+	curl -L -o red.mat https://zenodo.org/records/21287414/files/red_1.mat
 
 clean:
 	rm -f red.mat .gitignore *.html

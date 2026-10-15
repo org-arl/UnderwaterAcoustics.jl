@@ -2,17 +2,23 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.8.26">
+<meta name="generator" content="quarto-1.10.18">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
 <title>Propagation &amp; channel modeling – UnderwaterAcoustics.jl</title>
 <style>
-code{white-space: pre-wrap;}
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
 span.smallcaps{font-variant: small-caps;}
-div.columns{display: flex; gap: min(4vw, 1.5em);}
-div.column{flex: auto; overflow-x: auto;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
@@ -67,15 +73,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <meta name="quarto:offset" content="./">
 <script src="site_libs/quarto-html/quarto.js" type="module"></script>
 <script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
 <script src="site_libs/quarto-html/popper.min.js"></script>
 <script src="site_libs/quarto-html/tippy.umd.min.js"></script>
 <script src="site_libs/quarto-html/anchor.min.js"></script>
 <link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-587c61ba64f3a5504c4d52d930310e48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-c0d8b526fa222858bf56437ad6d5e615.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-f84607303771c80386bd6d3edccc808a.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -666,17 +671,19 @@ julia&gt; transmission_loss(pm, tx, rx)</code></pre>
 <i class="callout-icon no-icon"></i>
 </div>
 <div class="callout-body-container">
-<pre class="juliajulia"><code>BasebandReplayChannel(h, θ, fs, fc, step=1; noise=nothing)
+<pre class="juliajulia"><code>BasebandReplayChannel(h, θ, φ, fs, fc, step=1, doppler=1.0; noise=nothing)
+BasebandReplayChannel(h, θ, fs, fc, step=1; noise=nothing)
 BasebandReplayChannel(h, fs, fc, step=1; noise=nothing)</code></pre>
-<p>Construct a baseband replay channel with impulse responses <code>h</code> and phase estimates <code>θ</code>. The phase estimates are optional. <code>fs</code> is the sampling frequency in Sa/s, <code>fc</code> is the carrier frequency in Hz, and <code>step</code> is the decimation rate for the time axis of <code>h</code>. The effective sampling frequency of the impulse responses is <code>fs ÷ step</code> impulse responses per second.</p>
+<p>Construct a baseband replay channel with impulse responses <code>h</code> and optional phase estimates <code>θ</code> (theta<em>hat, phase tracking only) or <code>φ</code> (phi</em>hat, delay tracking). <code>fs</code> is the sampling frequency in Sa/s, <code>fc</code> is the carrier frequency in Hz, and <code>step</code> is the decimation rate for the time axis of <code>h</code>. The effective sampling frequency of the impulse responses is <code>fs ÷ step</code> impulse responses per second. <code>doppler</code> is a time-invariant passband resampling factor. The impulse responses and phase estimates are stored at the precision of <code>h</code>.</p>
+<p>To use <code>φ</code> without <code>θ</code>, pass <code>zeros(0, 0)</code> for <code>θ</code>. If both are given, <code>φ</code> takes precedence.</p>
 <p>An additive noise model may be optionally specified as <code>noise</code>. If specified, it is used to corrupt the received signals.</p>
-<pre class="juliajulia"><code>BasebandReplayChannel(filename; upsample=false, rxs=:, noise=nothing)</code></pre>
-<p>Load a baseband replay channel from a file.</p>
+<pre class="juliajulia"><code>BasebandReplayChannel(filename; upsample=false, rxs=:, noise=nothing, cache=nothing)</code></pre>
+<p>Load a baseband replay channel from a file or URL, e.g.&nbsp;<code>uacr://red_1</code> for <code>red_1.mat</code> in version 1.0 of the underwater acoustic channel repository (UACR). Downloads are cached in <code>cache</code>, which defaults to <code>$XDG_CACHE_HOME/UnderwaterAcoustics.jl</code> or <code>~/.cache/UnderwaterAcoustics.jl</code> on Linux and macOS, and to <code>%LOCALAPPDATA%\UnderwaterAcoustics.jl\cache</code> on Windows.</p>
 <p>If <code>upsample</code> is <code>true</code>, the impulse responses are upsampled to the delay axis sampling rate. This makes applying the channel faster but requires more memory. <code>rxs</code> controls which receivers to load from the file. By default, all receivers are loaded.</p>
 <p>An additive noise model may be optionally specified as <code>noise</code>. If specified, it is used to corrupt the received signals.</p>
 <p>Supported formats:</p>
 <ul>
-<li><code>.mat</code> (MATLAB) file in underwater acoustic channel repository (UACR) format. See https://github.com/uwa-channels/ for details.</li>
+<li><code>.mat</code> (MATLAB) file in underwater acoustic channel repository (UACR) format. See https://github.com/uwa-channels/ for details. Loading <code>.mat</code> files requires the <code>MAT</code> package to be loaded (<code>using MAT</code>).</li>
 </ul>
 </div>
 </div>
@@ -691,9 +698,9 @@ BasebandReplayChannel(h, fs, fc, step=1; noise=nothing)</code></pre>
 <p>Simulate the transmission of passband signal <code>x</code> through the channel model <code>ch</code>. If <code>txs</code> is specified, it specifies the indices of the sources active in the simulation. The number of sources must match the number of channels in the input signal. If <code>rxs</code> is specified, it specifies the indices of the receivers active in the simulation. Returns the received signal at the specified (or all) receivers.</p>
 <p><code>fs</code> specifies the sampling rate of the input signal. The output signal is sampled at the same rate. If <code>fs</code> is not specified but <code>x</code> is a <code>SampledSignal</code>, the sampling rate of <code>x</code> is used. Otherwise, the signal is assumed to be sampled at the channel’s sampling rate.</p>
 <p>If <code>abstime</code> is <code>true</code>, the returned signals begin at the start of transmission. Otherwise, the result is relative to the earliest arrival time of the signal at any receiver. If <code>noisy</code> is <code>true</code> and the channel has a noise model associated with it, the received signal is corrupted by additive noise.</p>
-<pre class="juliajulia"><code>transmit(ch::BasebandReplayChannel, x; rxs=:, abstime=false, noisy=true, fs=nothing, start=nothing)</code></pre>
+<pre class="juliajulia"><code>transmit(ch::BasebandReplayChannel, x; txs=:, rxs=:, abstime=false, noisy=true, fs=nothing, start=nothing)</code></pre>
 <p>Simulate the transmission of passband signal <code>x</code> through the channel model <code>ch</code>. If <code>txs</code> is specified, it specifies the indices of the sources active in the simulation. The number of sources must match the number of channels in the input signal. If <code>rxs</code> is specified, it specifies the indices of the receivers active in the simulation. Returns the received signal at the specified (or all) receivers.</p>
-<p><code>fs</code> specifies the sampling rate of the input signal. The output signal is sampled at the same rate. If <code>fs</code> is not specified but <code>x</code> is a <code>SampledSignal</code>, the sampling rate of <code>x</code> is used. Otherwise, the signal is assumed to be sampled at the channel’s sampling rate.</p>
+<p><code>fs</code> specifies the sampling rate of the input signal. The output signal is sampled at the same rate. If <code>fs</code> is not specified but <code>x</code> is a <code>SampledSignal</code>, the sampling rate of <code>x</code> is used; otherwise an error is raised. If the channel has a passband resampling factor (<code>doppler</code>), the output is also resampled by that factor to reproduce the nominal Doppler offset.</p>
 <p>If <code>abstime</code> is <code>true</code>, the returned signals begin at the start of transmission. Otherwise, the result is relative to the earliest arrival time of the signal at any receiver. If <code>noisy</code> is <code>true</code> and the channel has a noise model associated with it, the received signal is corrupted by additive noise.</p>
 <p>If <code>start</code> is specified, it specifies the starting time index in the replay channel. If not specified, a random start time is chosen.</p>
 </div>

@@ -33,7 +33,7 @@ using UnderwaterAcoustics, MAT
 ch = BasebandReplayChannel("red.mat")
 ```
 
-This channel has 3 receiving hydrophones and can replay up to 47.7 seconds of signal through the measured TVIR. The signal must fit within the frequency band that was used to probe the channel (for the `red` channel it is 25 ± 4.8 kHz).
+This channel has 3 receiving hydrophones and can replay up to 47.8 seconds of signal through the measured TVIR. The signal must fit within the frequency band that was used to probe the channel (for the `red` channel it is 25 ± 4.8 kHz).
 
 We can visualize the TVIR for the first hydrophone by plotting it:
 

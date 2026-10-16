@@ -1,5 +1,7 @@
 import Random: AbstractRNG
-import SignalAnalysis: RedGaussian, signal, db2amp
+import SignalAnalysis: RedGaussian, signal, db2amp, samples, framerate
+import DSP: conv
+import FFTW: ifft, fftshift
 import Interpolations: interpolate, extrapolate, Gridded, Flat, Throw, Interpolations
 import Interpolations: linear_interpolation, cubic_spline_interpolation
 
@@ -15,6 +17,7 @@ export ElasticCoarseSilt, ElasticSandySilt
 export SeaState0, SeaState1, SeaState2, SeaState3, SeaState4, SeaState5
 export SeaState6, SeaState7, SeaState8, SeaState9, WhiteGaussianNoise, Linear
 export RedGaussianNoise, WindySurface, SampledField, ElasticBoundary, CubicSpline
+export PinkGaussianNoise
 
 ################################################################################
 # boundary conditions
@@ -479,6 +482,43 @@ function Base.rand(rng::AbstractRNG, noise::RedGaussianNoise, nsamples::Integer,
     x[:,i] .= rand(rng, dist)
   end
   signal(x, fs)
+end
+
+"""
+    PinkGaussianNoise(σ)
+
+Create a pink ambient noise model, as in the underwater acoustic channel
+repository (UACR): Gaussian noise with variance `σ²` µPa², independent across
+receivers, whose spectrum falls by 17 dB per decade.
+"""
+struct PinkGaussianNoise{T<:AbstractFloat} <: AbstractNoiseModel
+  σ::T
+  function PinkGaussianNoise(σ)
+    σ = in_units(u"µPa", σ)
+    new{typeof(σ)}(σ)
+  end
+end
+
+function Base.rand(rng::AbstractRNG, noise::PinkGaussianNoise, nsamples::Integer; fs)
+  x = rand(rng, noise, nsamples, 1; fs)
+  signal(vec(samples(x)), framerate(x))
+end
+
+function Base.rand(rng::AbstractRNG, noise::PinkGaussianNoise, nsamples::Integer, nch::Integer; fs)
+  fs = in_units(u"Hz", fs)
+  T = typeof(noise.σ)
+  h = T.(_pink_noise_filter())
+  L = length(h)
+  w = conv(randn(rng, T, nsamples + L - 1, nch), reshape(h, :, 1))
+  signal(noise.σ .* w[L:L+nsamples-1,:], fs)
+end
+
+# the UACR code's filter; its frequency grid only scales the response, which the
+# normalization removes, so the filter does not depend on fs
+function _pink_noise_filter()
+  H = (1:4096) .^ (-1.7 / 2)
+  h = real(fftshift(ifft(vcat(H, reverse(H[2:end])))))
+  h ./ sqrt(sum(abs2, h))
 end
 
 ################################################################################

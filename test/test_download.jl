@@ -47,6 +47,14 @@ end
   @test ch.h == BasebandReplayChannel(src).h
 end
 
+@testitem "download-replay-noise" setup=[DownloadSetup] begin
+  using MAT: matwrite
+  src = joinpath(mktempdir(), "noise.mat")
+  matwrite(src, Dict("version" => 1.0, "Fs" => 1000.0, "alpha" => 2.0, "beta" => ones(1, 1, 2)))
+  noise = @test_logs (:info, r"Downloading") ReplayNoise(fileurl(src); cache=mktempdir())
+  @test noise.β == ReplayNoise(src).β
+end
+
 @testitem "download-progress" begin
   io = IOBuffer()
   progress = UnderwaterAcoustics._download_progress(io)

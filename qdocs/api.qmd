@@ -169,5 +169,7 @@ jdoc(UnderwaterAcoustics, :spl)
 #| output: asis
 jdoc(UnderwaterAcoustics, :WhiteGaussianNoise)
 jdoc(UnderwaterAcoustics, :RedGaussianNoise)
+jdoc(UnderwaterAcoustics, :PinkGaussianNoise)
+jdoc(UnderwaterAcoustics, :ReplayNoise)
 jdoc(UnderwaterAcoustics, :rand; filt=contains("AbstractNoiseModel"))
 ```

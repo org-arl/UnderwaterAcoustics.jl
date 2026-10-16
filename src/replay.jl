@@ -1,8 +1,10 @@
 import SignalAnalysis: duration, nchannels, SampledSignal, samples, signal
 import SignalAnalysis: framerate, nframes, resample, isanalytic, analytic, padded
 import Interpolations: interpolate, BSpline, Cubic, Line, OnGrid, scale, extrapolate
+import Random: AbstractRNG, randexp
+import LinearAlgebra: mul!
 
-export BasebandReplayChannel
+export BasebandReplayChannel, ReplayNoise
 
 # fs, fc and doppler stay Float64 even when T1 is Float32, since errors in them accumulate over time
 struct BasebandReplayChannel{T1,T2} <: AbstractChannelModel
@@ -173,10 +175,11 @@ function transmit(ch::BasebandReplayChannel, x; txs=:, rxs=:, abstime=false, noi
   input_was_analytic || (y = real(y) .* √2) # undo analytic()'s 1/√2 scaling
   y = signal(y, fs)
   if noisy && ch.noise !== nothing
+    noise = _select_receivers(ch.noise, rxs, M)
     if input_was_analytic
-      y .+= analytic(rand(ch.noise, size(y); fs))
+      y .+= analytic(rand(noise, size(y); fs))
     else
-      y .+= rand(ch.noise, size(y); fs)
+      y .+= rand(noise, size(y); fs)
     end
   end
   y
@@ -202,4 +205,91 @@ function _interp_ir(h, step, n, offset=0)
     end
   end
   out
+end
+
+"""
+    ReplayNoise(filename; rxs=:, σ=1, cache=nothing)
+    ReplayNoise(β, fs, α=2.0; rxs=:, σ=1)
+
+Create an ambient noise model from an underwater acoustic channel repository
+(UACR) noise file or URL (e.g. `uacr://red_noise`, cached as for
+`BasebandReplayChannel`), or from mixing coefficients `β` (receiver × receiver ×
+lag) at `fs` Sa/s with stability index `α` (2 for Gaussian noise, down to 0.1 for
+impulsive noise). `rxs` selects the receivers to generate; a model passed to
+`BasebandReplayChannel(filename; rxs, noise)` is restricted to the same receivers.
+UACR noise is normalized, so `σ` (µPa) sets its level.
+"""
+struct ReplayNoise{T} <: AbstractNoiseModel
+  β::Array{T,3}
+  fs::Float64
+  α::Float64
+  rxs::Vector{Int}
+  function ReplayNoise(β::AbstractArray{<:Real,3}, fs::Number, α::Real=2.0; rxs=:, σ::Number=1)
+    M = size(β, 1)
+    size(β, 2) == M || error("Mixing coefficients must be square in the receiver dimensions")
+    0.1 ≤ α ≤ 2 || error("Stability index must be in [0.1, 2] (got $α)")  # as in the UACR MATLAB code
+    rxs = collect(Int, rxs === (:) ? (1:M) : vcat(rxs))
+    all(∈(1:M), rxs) && allunique(rxs) || error("Invalid receiver indices ($rxs)")
+    T = float(eltype(β))
+    new{T}(T.(in_units(u"µPa", σ) .* β), Float64(in_units(u"Hz", fs)), Float64(α), rxs)
+  end
+end
+
+function ReplayNoise(filename::AbstractString; rxs=:, σ::Number=1, cache=nothing)
+  endswith(_filepath(filename, cache), ".mat") || error("Unsupported file format")
+  applicable(_load_mat_replay_noise, filename, rxs, σ) ||
+    error("Loading .mat noise models requires the MAT package; run `using MAT` first")
+  _load_mat_replay_noise(_localfile(filename, cache), rxs, σ)
+end
+
+# implemented in MATExt
+function _load_mat_replay_noise end
+
+_select_receivers(noise, rxs, M) = noise
+
+function _select_receivers(noise::ReplayNoise, rxs, M)
+  length(noise.rxs) == M || error("Noise model generates $(length(noise.rxs)) receivers, but the channel has $M")
+  ReplayNoise(noise.β, noise.fs, noise.α; rxs=noise.rxs[rxs])
+end
+
+function Base.show(io::IO, noise::ReplayNoise)
+  print(io, "ReplayNoise($(length(noise.rxs)) × $(size(noise.β, 3)) taps, α = $(noise.α), $(noise.fs) Sa/s)")
+end
+
+function Base.rand(rng::AbstractRNG, noise::ReplayNoise, nsamples::Integer, nch::Integer; fs)
+  nch == length(noise.rxs) || error("Noise model generates $(length(noise.rxs)) receivers, but $nch requested")
+  fs = in_units(u"Hz", fs)
+  signal(_mix_noise(rng, noise, nsamples, fs), fs)
+end
+
+function Base.rand(rng::AbstractRNG, noise::ReplayNoise, nsamples::Integer; fs)
+  x = rand(rng, noise, nsamples, 1; fs)
+  signal(vec(samples(x)), framerate(x))
+end
+
+function _mix_noise(rng, noise::ReplayNoise{T}, nsamples, fs) where T
+  M, _, nlags = size(noise.β)
+  K = ceil(Int, nsamples * noise.fs / fs)
+  # the innovations run forward in time, as in the UACR code; the UACR spec runs them backward
+  η = noise.α == 2 ? randn(rng, T, K + nlags, M) : _sαsrand(rng, T, K + nlags, M, noise.α)
+  β = noise.β[noise.rxs,:,:]
+  w = zeros(T, K, length(noise.rxs))
+  for k ∈ 1:nlags
+    @views mul!(w, η[k:k+K-1,:], transpose(β[:,:,k]), true, true)
+  end
+  fs == noise.fs || (w = resample(w, fs / noise.fs; dims=1))
+  y = T.(@view w[1:nsamples,:])
+  all(isfinite, y) || error("Noise with α = $(noise.α) overflows $T")
+  y
+end
+
+# symmetric α-stable variates with scale 1/√2, so that α = 2 gives the standard normal (Chambers,
+# Mallows & Stuck, JASA 1976); computed in Float64, since Float32 rounds -π/2 past the pole of cos
+function _sαsrand(rng, ::Type{T}, n, m, α) where T
+  x = Array{T}(undef, n, m)
+  for i ∈ eachindex(x)
+    u = π * (rand(rng) - 0.5)
+    x[i] = sin(α * u) / cos(u)^(1/α) * (cos(u - α * u) / randexp(rng))^((1-α)/α) / √2
+  end
+  x
 end

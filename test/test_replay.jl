@@ -27,6 +27,15 @@ using TestItems
     h
   end
 
+  # asymmetric in (i,j), so that a transposed beta changes the covariance
+  function make_beta(m, nlags)
+    β = zeros(Float64, m, m, nlags)
+    for i ∈ 1:m, j ∈ 1:m, k ∈ 1:nlags
+      β[i,j,k] = cos(1.3i + 0.7j + 0.5k) / k
+    end
+    β
+  end
+
   # StableRNG so the probe is identical across Julia versions and platforms.
   function make_probe(seed=42)
     rng = StableRNG(seed)
@@ -306,6 +315,161 @@ end
   nlong = round(Int, T * STEP * FS_IN / FS_DELAY)
   xlong = signal(zeros(nlong), FS_IN)
   @test_throws ErrorException transmit(ch, xlong; noisy=false)
+end
+
+@testitem "replay noise statistics" setup=[ReplaySetup] begin
+  using Statistics: cov
+  Mn, nlags, fs = 3, 4, 48_000.0
+  β = make_beta(Mn, nlags)
+  x = samples(rand(StableRNG(11), ReplayNoise(β, fs), 200_000, Mn; fs))
+  @test cov(x) ≈ sum(β[:,:,k] * transpose(β[:,:,k]) for k ∈ 1:nlags) rtol=0.05
+  # the lag-1 covariance pins the direction of time, which the zero-lag one cannot
+  R1 = transpose(x[1:end-1,:]) * x[2:end,:] ./ (size(x, 1) - 1)
+  @test R1 ≈ sum(β[:,:,k+1] * transpose(β[:,:,k]) for k ∈ 1:nlags-1) rtol=0.05
+end
+
+@testitem "replay noise receivers" setup=[ReplaySetup] begin
+  Mn, fs = 4, 48_000.0
+  β = make_beta(Mn, 3)
+  x_all = samples(rand(StableRNG(3), ReplayNoise(β, fs), 500, Mn; fs))
+  x_sub = samples(rand(StableRNG(3), ReplayNoise(β, fs; rxs=[3,1]), 500, 2; fs))
+  @test x_sub ≈ x_all[:,[3,1]]
+  @test samples(rand(StableRNG(3), ReplayNoise(β, fs; σ=0.5), 500, Mn; fs)) ≈ 0.5 .* x_all
+  @test ndims(samples(rand(ReplayNoise(β, fs; rxs=2), 500; fs))) == 1
+  @test_throws ErrorException rand(ReplayNoise(β, fs), 500, 2; fs)
+  @test_throws ErrorException ReplayNoise(β, fs; rxs=[1,1])
+  @test_throws ErrorException ReplayNoise(β, fs; rxs=[Mn+1])
+  @test_throws ErrorException ReplayNoise(β, fs, 2.5)
+  @test_throws ErrorException ReplayNoise(β, fs, 0.05)
+  @test_throws ErrorException ReplayNoise(zeros(2, 3, 4), fs)
+end
+
+@testitem "replay noise resampling" setup=[ReplaySetup] begin
+  β = make_beta(2, 3)
+  noise = ReplayNoise(β, 48_000.0)
+  for fs ∈ (24_000.0, 48_000.0, 96_000.0)
+    x = rand(StableRNG(5), noise, 1000, 2; fs)
+    @test size(x) == (1000, 2)
+    @test framerate(x) == fs
+    @test all(isfinite, samples(x))
+  end
+  # lag-1 autocorrelation is 0.48 at the measured rate, 0.83 at 96 kHz and 0.26 at 24 kHz
+  r1(x) = sum(x[1:end-1] .* x[2:end]) / sum(abs2, x)
+  @test r1(samples(rand(StableRNG(5), noise, 100_000, 2; fs=96_000.0))[:,1]) > 0.7
+  @test r1(samples(rand(StableRNG(5), noise, 100_000, 2; fs=24_000.0))[:,1]) < 0.35
+  @test eltype(samples(rand(StableRNG(5), ReplayNoise(Float32.(β), 48_000.0), 1000, 2; fs=96_000.0))) === Float32
+end
+
+@testitem "replay noise impulsive" setup=[ReplaySetup] begin
+  using Statistics: mean
+  fs = 48_000.0
+  β = zeros(2, 2, 1)
+  β[1,1,1] = β[2,2,1] = 1.0
+  x = samples(rand(StableRNG(9), ReplayNoise(β, fs, 1.5), 100_000, 2; fs))
+  # identity mixing gives SαS noise with scale 1/√2, whose characteristic function is
+  # exp(-|t/√2|^α); the estimate has std < 0.002
+  for t ∈ (1.0, 2.0)
+    @test mean(cos.(t .* x)) ≈ exp(-abs(t / √2)^1.5) atol=0.01
+  end
+  # with Float32 draws, these 5M would include u = -π/2
+  @test all(isfinite, UnderwaterAcoustics._sαsrand(StableRNG(1), Float32, 5_000_000, 1, 1.5))
+  # α = 0.1 variates overflow Float32 but not Float64
+  @test_throws ErrorException rand(StableRNG(1), ReplayNoise(ones(Float32, 1, 1, 1), fs, 0.1), 100_000; fs)
+  @test all(isfinite, samples(rand(StableRNG(1), ReplayNoise(ones(1, 1, 1), fs, 0.1), 100_000; fs)))
+end
+
+@testitem "replay noise from file" setup=[ReplaySetup] begin
+  using MAT: matwrite
+  β = make_beta(3, 4)
+  fs = 48_000.0
+  dir = mktempdir()
+  tmp = joinpath(dir, "noise.mat")
+  matwrite(tmp, Dict("version" => 1.0, "Fs" => fs, "alpha" => 1.5, "beta" => β))
+  noise = ReplayNoise(tmp)
+  @test noise.β == β
+  @test noise.fs == fs
+  @test noise.α == 1.5
+  @test noise.rxs == 1:3
+  @test ReplayNoise(tmp; rxs=[2]).rxs == [2]
+  @test ReplayNoise(tmp; σ=2u"µPa").β == 2 .* β
+  bad = joinpath(dir, "bad.mat")
+  matwrite(bad, Dict("version" => 1.0, "Fs" => fs))
+  @test_throws ErrorException ReplayNoise(bad)
+  @test_throws ErrorException ReplayNoise("noise.txt")
+end
+
+@testitem "replay noise in channel" setup=[ReplaySetup] begin
+  using Statistics: mean
+  # the noise is at twice the signal rate, so transmit() resamples it
+  ch = BasebandReplayChannel(make_h(TAPS), FS_DELAY, FC, STEP; noise=ReplayNoise(make_beta(M, 3), 2 * FS_IN))
+  x = signal(make_probe(), FS_IN)
+  y_clean = collect(transmit(ch, x; start=1, noisy=false))
+  y_noisy = collect(transmit(ch, x; start=1))
+  @test size(y_noisy) == size(y_clean)
+  @test y_noisy != y_clean
+  @test all(isfinite, y_noisy)
+
+  # noise powers 1, 100 and 10⁴ identify the receivers
+  Mm = 3
+  h = zeros(ComplexF64, L, Mm, T)
+  for (idx, g) in TAPS; h[idx, :, :] .= g; end
+  β = zeros(Mm, Mm, 1)
+  for i ∈ 1:Mm; β[i,i,1] = 10.0^(i-1); end
+  ch3 = BasebandReplayChannel(h, FS_DELAY, FC, STEP; noise=ReplayNoise(β, FS_IN))
+  n2 = collect(transmit(ch3, x; rxs=[2], start=1)) .- collect(transmit(ch3, x; rxs=[2], start=1, noisy=false))
+  @test 50 < mean(abs2, n2) < 200
+  ch4 = BasebandReplayChannel(h, FS_DELAY, FC, STEP; noise=ReplayNoise(make_beta(4, 3), FS_IN))
+  @test_throws ErrorException transmit(ch4, x; start=1)
+end
+
+@testitem "replay noise with channel file" setup=[ReplaySetup] begin
+  using MAT: matwrite
+  using Statistics: mean
+  Mf, fs = 3, 48_000.0
+  h_file = zeros(ComplexF64, L, Mf, T)
+  for (idx, g) in TAPS; h_file[idx, :, :] .= g; end
+  tmp = joinpath(mktempdir(), "channel.mat")
+  matwrite(tmp, Dict(
+    "version" => 1.0,
+    "h_hat" => h_file,
+    "params" => Dict("fs_delay" => FS_DELAY, "fs_time" => FS_DELAY / STEP, "fc" => FC),
+  ))
+  # noise powers 1, 100 and 10⁴ identify the receivers; analytic input covers transmit()'s analytic branch
+  βd = zeros(Mf, Mf, 1)
+  for i ∈ 1:Mf; βd[i,i,1] = 10.0^(i-1); end
+  ch = BasebandReplayChannel(tmp; rxs=[3,1], noise=ReplayNoise(βd, FS_IN))
+  x = analytic(signal(make_probe(), FS_IN))
+  n = collect(transmit(ch, x; start=1)) .- collect(transmit(ch, x; start=1, noisy=false))
+  @test 5e3 < mean(abs2, n[:,1]) < 2e4
+  @test 0.5 < mean(abs2, n[:,2]) < 2
+  n1 = collect(transmit(ch, x; rxs=[2], start=1)) .- collect(transmit(ch, x; rxs=[2], start=1, noisy=false))
+  @test 0.5 < mean(abs2, n1) < 2
+  β = make_beta(Mf, 3)
+  @test BasebandReplayChannel(tmp; rxs=[3,1], noise=ReplayNoise(β, fs; rxs=[3,1])).noise.rxs == [3,1]
+  @test_throws ErrorException BasebandReplayChannel(tmp; rxs=[3,1], noise=ReplayNoise(β, fs; rxs=[1,2]))
+  @test_throws ErrorException BasebandReplayChannel(tmp; noise=ReplayNoise(make_beta(2, 3), fs))
+end
+
+@testitem "replay pink noise" setup=[ReplaySetup] begin
+  using Statistics: mean, var, cov, cor
+  fs = 48_000.0
+  @test sum(abs2, UnderwaterAcoustics._pink_noise_filter()) ≈ 1
+  x = samples(rand(StableRNG(13), PinkGaussianNoise(1.0), 500_000, 4; fs))
+  # power at low frequencies leaves few independent samples: variances 0.92-1.12, correlations up to 0.02
+  @test mean(var(x; dims=1)) ≈ 1 rtol=0.1
+  @test maximum(abs(cor(x)[i,j]) for i ∈ 1:4, j ∈ 1:4 if i != j) < 0.1
+  p = welch_pgram(x[:,1], 8192; fs, window=hanning)
+  f, P = freq(p), power(p)
+  m = (f .>= 100) .& (f .<= 10_000)
+  lf, lp = log10.(f[m]), 10 .* log10.(P[m])
+  @test cov(lf, lp) / var(lf) ≈ -17 rtol=0.15  # measured -16.95
+  y = samples(rand(StableRNG(13), PinkGaussianNoise(2.0), 1000, 2; fs))
+  @test y ≈ 2 .* samples(rand(StableRNG(13), PinkGaussianNoise(1.0), 1000, 2; fs))
+  # short draws keep the full variance (0.99 measured), where a "same" convolution gives 0.80
+  z = samples(rand(StableRNG(14), PinkGaussianNoise(1.0), 1000, 2000; fs))
+  @test 0.9 < mean(abs2, z) < 1.1
+  @test ndims(samples(rand(PinkGaussianNoise(1.0), 1000; fs))) == 1
+  @test eltype(samples(rand(PinkGaussianNoise(1f0), 1000, 2; fs))) === Float32
 end
 
 @testitem "replay storage types" setup=[ReplaySetup] begin

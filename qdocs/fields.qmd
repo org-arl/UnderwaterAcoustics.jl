@@ -139,6 +139,15 @@ let q = SampledField([0.0 1.0; 1.0 2.0]; x=[0.0, 20.0], y=[0.0, 20.0])
   plot(q)
 end
 ```
+Position-dependent fields can be plotted against range using `plot(q, xmin, xmax)` or `plot(q, xrange)`, at a cross-range `y` and depth `z` given as keywords (default `0`):
+```{julia}
+ssp = SampledField([1500 1510 1520; 1530 1540 1550]; x=[0, 1000], z=[-100, -50, 0])
+plot(ssp, 0, 1000; z=-50)
+```
+They can also be plotted as an x-z heatmap using `plot(q, xrange, zrange)`, at a cross-range `y` (default `0`). Only the extents of `xrange` and `zrange` are used, so they may be given in either order or as tuples, and `npts` points (default `1000`) are sampled along each axis:
+```{julia}
+plot(ssp, (0, 1000), (-100, 0))
+```
 
 ### Custom fields
 

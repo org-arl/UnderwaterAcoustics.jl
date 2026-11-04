@@ -12,13 +12,16 @@ struct BasebandReplayChannel{T1,T2} <: AbstractChannelModel
   fs::Float64               # delay-axis sampling rate, fs_delay (Sa/s)
   fc::Float64               # carrier frequency (Hz)
   step::Int                 # step size for h time axis (fs ÷ step IRs/s)
-  doppler::Float64          # passband resampling factor (f_resamp)
+  doppler::Vector{Float64}  # passband resampling factor per receiver (f_resamp)
   noise::T2
-  function BasebandReplayChannel(h, θ::AbstractMatrix, φ::AbstractMatrix, fs::Number, fc::Number, step::Int=1, doppler::Real=1.0; noise=nothing)
+  function BasebandReplayChannel(h, θ::AbstractMatrix, φ::AbstractMatrix, fs::Number, fc::Number, step::Int=1, doppler::Union{Real,AbstractVector{<:Real}}=1.0; noise=nothing)
     fs = in_units(u"Hz", fs)
     fc = in_units(u"Hz", fc)
     T1 = float(real(eltype(h)))
-    new{T1,typeof(noise)}(Complex{T1}.(h), T1.(θ), T1.(φ), Float64(fs), Float64(fc), step, Float64(doppler), noise)
+    doppler = doppler isa Real ? fill(Float64(doppler), size(h, 2)) : Float64.(doppler)
+    length(doppler) == size(h, 2) || error("doppler must be a scalar or have one factor per receiver")
+    all(d -> isfinite(d) && d > 0, doppler) || error("doppler must be positive and finite")
+    new{T1,typeof(noise)}(Complex{T1}.(h), T1.(θ), T1.(φ), Float64(fs), Float64(fc), step, doppler, noise)
   end
 end
 
@@ -47,8 +50,9 @@ phase estimates `θ` (theta_hat, phase tracking only) or `φ` (phi_hat, delay
 tracking). `fs` is the sampling frequency in Sa/s, `fc` is the carrier frequency
 in Hz, and `step` is the decimation rate for the time axis of `h`. The effective
 sampling frequency of the impulse responses is `fs ÷ step` impulse responses per
-second. `doppler` is a time-invariant passband resampling factor. The impulse
-responses and phase estimates are stored at the precision of `h`.
+second. `doppler` is a time-invariant passband resampling factor, or one factor
+per receiver. The impulse responses and phase estimates are stored at the
+precision of `h`.
 
 To use `φ` without `θ`, pass `zeros(0, 0)` for `θ`. If both are given, `φ`
 takes precedence.
@@ -114,7 +118,8 @@ specified (or all) receivers.
 sampled at the same rate. If `fs` is not specified but `x` is a `SampledSignal`,
 the sampling rate of `x` is used; otherwise an error is raised. If the channel
 has a passband resampling factor (`doppler`), the output is also resampled by
-that factor to reproduce the nominal Doppler offset.
+that factor to reproduce the nominal Doppler offset. With one factor per
+receiver, the shorter outputs are zero-padded to the longest.
 
 If `abstime` is `true`, the returned signals begin at the start of transmission.
 Otherwise, the result is relative to the earliest arrival time of the signal
@@ -169,7 +174,14 @@ function transmit(ch::BasebandReplayChannel, x; txs=:, rxs=:, abstime=false, noi
   end
   y = resample(ȳ, fs/ch.fs; dims=1)
   y .*= cispi.(2 * ch.fc * (0:nframes(y)-1) ./ fs)
-  isone(ch.doppler) || (y = resample(y, ch.doppler; dims=1))
+  d = ch.doppler[rxs]
+  if !all(isone, d)
+    cols = [isone(d[j]) ? y[:,j] : resample(y[:,j], d[j]) for j ∈ eachindex(d)]
+    y = zeros(eltype(y), maximum(length, cols), length(cols))
+    for (j, c) ∈ enumerate(cols)
+      y[1:length(c), j] .= c
+    end
+  end
   input_was_analytic || (y = real(y) .* √2) # undo analytic()'s 1/√2 scaling
   y = signal(y, fs)
   if noisy && ch.noise !== nothing

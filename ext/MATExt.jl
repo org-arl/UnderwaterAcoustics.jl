@@ -30,7 +30,9 @@ function UnderwaterAcoustics._load_mat_replay_channel(filename, upsample, rxs, n
   fs = data["params"]["fs_delay"]
   fs_time = data["params"]["fs_time"]
   fc = data["params"]["fc"]
-  doppler = haskey(data, "f_resamp") ? only(data["f_resamp"]) : 1.0
+  doppler = haskey(data, "f_resamp") ? vec(collect(data["f_resamp"])) : [1.0]
+  length(doppler) ∈ (1, M) || error("Invalid f_resamp size")
+  doppler = length(doppler) == 1 ? only(doppler) : doppler[rxs]
   ratio = fs / fs_time
   step = round(Int, ratio)
   isapprox(ratio, step; rtol=1e-9) || error("fs_delay/fs_time must be an integer ratio (got $ratio)")

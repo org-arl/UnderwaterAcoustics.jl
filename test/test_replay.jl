@@ -315,10 +315,37 @@ end
   @test ch.θ isa Matrix{Float64}
   @test ch.fs === 24000.1
   @test ch.fc === 12000.3
-  @test ch.doppler === 1.0
+  @test ch.doppler == [1.0]
   ch32 = Float32(ch)
   @test ch32.h isa Array{ComplexF32,3}
   @test ch32.θ isa Matrix{Float32}
   @test ch32.fs === 24000.1
   @test BasebandReplayChannel(ComplexF32.(make_h(TAPS)), FS_DELAY, FC, STEP).h isa Array{ComplexF32,3}
+end
+
+@testitem "replay per-receiver doppler" setup=[ReplaySetup] begin
+  using MAT: matwrite
+  Mm = 3
+  h = zeros(ComplexF64, L, Mm, T)
+  for (idx, g) in TAPS; h[idx, :, :] .= g; end
+  d = [1.0, 1.001, 0.999]
+  none = Matrix{Float64}(undef, 0, 0)
+  x = signal(make_probe(), FS_IN)
+  y = collect(transmit(BasebandReplayChannel(h, none, none, FS_DELAY, FC, STEP, d), x; start=1, noisy=false))
+  for m ∈ 1:Mm
+    ym = vec(collect(transmit(BasebandReplayChannel(h[:,m:m,:], none, none, FS_DELAY, FC, STEP, d[m]), x; start=1, noisy=false)))
+    @test y[1:length(ym), m] ≈ ym
+    @test all(iszero, y[length(ym)+1:end, m])
+  end
+  @test_throws ErrorException BasebandReplayChannel(h, none, none, FS_DELAY, FC, STEP, [1.0, 1.001])
+  @test_throws ErrorException BasebandReplayChannel(h, none, none, FS_DELAY, FC, STEP, [1.0, -1.0, 1.0])
+  @test_throws ErrorException BasebandReplayChannel(h, none, none, FS_DELAY, FC, STEP, NaN)
+  tmp = joinpath(mktempdir(), "channel.mat")
+  params = Dict("fs_delay" => FS_DELAY, "fs_time" => FS_DELAY / STEP, "fc" => FC)
+  for (f, expected) ∈ ((permutedims(d), d[[3,1]]), (0.999, [0.999, 0.999]))
+    matwrite(tmp, Dict("version" => 1.0, "h_hat" => h, "f_resamp" => f, "params" => params))
+    @test BasebandReplayChannel(tmp; rxs=[3,1]).doppler == expected
+  end
+  matwrite(tmp, Dict("version" => 1.0, "h_hat" => h, "f_resamp" => [1.0, 1.001], "params" => params))
+  @test_throws ErrorException BasebandReplayChannel(tmp)
 end

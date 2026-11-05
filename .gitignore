@@ -28,6 +28,7 @@ TODO
 qdocs/.quarto
 qdocs/_site
 qdocs/red.mat
+qdocs/red_noise.mat
 qdocs/.gitignore
 qdocs/_freeze
 UnderwaterAcoustics.code-workspace

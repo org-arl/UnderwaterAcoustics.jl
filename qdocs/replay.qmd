@@ -92,3 +92,28 @@ plot(
   layout=(2,1)
 )
 ```
+
+The UACR also provides measured ambient noise for each channel, e.g. `uacr://red_noise` for the `red` channel. `ReplayNoise()` loads it as a noise model that reproduces the measured spatial and spectral correlation across the hydrophones, and its impulsiveness if the noise was found to be non-Gaussian. The noise in the file is normalized, so `σ` sets its level:
+
+```{julia}
+#| eval: false
+ch = BasebandReplayChannel("uacr://red_1"; noise=ReplayNoise("uacr://red_noise"; σ=0.1))
+```
+
+```{julia}
+#| echo: false
+#| output: false
+ch = BasebandReplayChannel("red.mat"; noise=ReplayNoise("red_noise.mat"; σ=0.1))
+```
+
+```{julia}
+y = transmit(ch, x; start=1)
+
+plot(
+  plot(x; xlims=(0,5)),
+  plot(y[:,2]; xlims=(0,5));
+  layout=(2,1)
+)
+```
+
+If a channel has no noise file, `PinkGaussianNoise(σ)` gives the generic UACR noise: independent Gaussian noise on each hydrophone with a spectrum that falls by 17 dB per decade.

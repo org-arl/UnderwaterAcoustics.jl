@@ -5,7 +5,7 @@ import MAT: matread
 import SignalAnalysis: resample
 import UnderwaterAcoustics: BasebandReplayChannel, ReplayNoise
 
-function UnderwaterAcoustics._load_mat_replay_channel(filename, upsample, rxs, noise)
+function UnderwaterAcoustics._load_mat_replay_channel(filename, upsample, rxs, noise, drift)
   data = matread(filename)
   all(["version", "h_hat", "params"] .∈ Ref(keys(data))) || error("Bad channel file format")
   data["version"] >= 1.0 || @warn "Unsupported channel file version"
@@ -22,7 +22,7 @@ function UnderwaterAcoustics._load_mat_replay_channel(filename, upsample, rxs, n
   end
   θ = Matrix{Float64}(undef, 0, 0)
   φ = Matrix{Float64}(undef, 0, 0)
-  if haskey(data, "phi_hat")
+  if drift && haskey(data, "phi_hat")
     φ_data = data["phi_hat"]
     size(φ_data, 1) == M || error("Invalid phi_hat size")
     φ = transpose(φ_data[rxs,:])

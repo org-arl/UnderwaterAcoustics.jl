@@ -513,3 +513,25 @@ end
   matwrite(tmp, Dict("version" => 1.0, "h_hat" => h, "f_resamp" => [1.0, 1.001], "params" => params))
   @test_throws ErrorException BasebandReplayChannel(tmp)
 end
+
+@testitem "replay without drift" setup=[ReplaySetup] begin
+  using MAT: matwrite
+  h = zeros(ComplexF64, L, 2, T)
+  for (idx, g) in TAPS; h[idx, :, :] .= g; end
+  x = signal(make_probe(), FS_IN)
+  y = collect(transmit(BasebandReplayChannel(reverse(h; dims=1), FS_DELAY, FC, STEP), x; start=1, noisy=false))
+  tmp = joinpath(mktempdir(), "channel.mat")
+  params = Dict("fs_delay" => FS_DELAY, "fs_time" => FS_DELAY / STEP, "fc" => FC)
+  for key ∈ ("phi_hat", "theta_hat")
+    matwrite(tmp, Dict("version" => 1.0, "h_hat" => h, key => fill(0.7, 2, T * STEP), "f_resamp" => 1.001, "params" => params))
+    ch = BasebandReplayChannel(tmp)
+    @test size(key == "phi_hat" ? ch.φ : ch.θ) == (T * STEP, 2)
+    @test ch.doppler == [1.001, 1.001]
+    ch = BasebandReplayChannel(tmp; drift=false)
+    @test isempty(ch.φ)
+    @test size(ch.θ) == (key == "theta_hat" ? (T * STEP, 2) : (0, 0))
+    @test ch.doppler == [1.001, 1.001]
+  end
+  matwrite(tmp, Dict("version" => 1.0, "h_hat" => h, "phi_hat" => fill(0.7, 2, T * STEP), "params" => params))
+  @test collect(transmit(BasebandReplayChannel(tmp; drift=false), x; start=1, noisy=false)) ≈ y
+end

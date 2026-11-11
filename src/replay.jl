@@ -74,7 +74,7 @@ function BasebandReplayChannel(h, fs::Number, fc::Number, step::Int=1; noise=not
 end
 
 """
-    BasebandReplayChannel(filename; upsample=false, rxs=:, noise=nothing, cache=nothing)
+    BasebandReplayChannel(filename; upsample=false, rxs=:, noise=nothing, cache=nothing, drift=true)
 
 Load a baseband replay channel from a file or URL, e.g. `uacr://red_1` for
 `red_1.mat` in version 1.0 of the underwater acoustic channel repository
@@ -86,7 +86,8 @@ cached in `cache`, which defaults to `\$XDG_CACHE_HOME/UnderwaterAcoustics.jl` o
 If `upsample` is `true`, the impulse responses are upsampled to the delay axis
 sampling rate. This makes applying the channel faster but requires more memory.
 `rxs` controls which receivers to load from the file. By default, all receivers
-are loaded.
+are loaded. If `drift` is `false`, the tap drift in `phi_hat` is skipped;
+`theta_hat` and `f_resamp` are still applied.
 
 An additive noise model may be optionally specified as `noise`. If specified,
 it is used to corrupt the received signals.
@@ -96,11 +97,11 @@ Supported formats:
   See https://github.com/uwa-channels/ for details. Loading `.mat` files
   requires the `MAT` package to be loaded (`using MAT`).
 """
-function BasebandReplayChannel(filename::AbstractString; upsample=false, rxs=:, noise=nothing, cache=nothing)
+function BasebandReplayChannel(filename::AbstractString; upsample=false, rxs=:, noise=nothing, cache=nothing, drift=true)
   endswith(_filepath(filename, cache), ".mat") || error("Unsupported file format")
-  applicable(_load_mat_replay_channel, filename, upsample, rxs, noise) ||
+  applicable(_load_mat_replay_channel, filename, upsample, rxs, noise, drift) ||
     error("Loading .mat replay channels requires the MAT package; run `using MAT` first")
-  _load_mat_replay_channel(_localfile(filename, cache), upsample, rxs, noise)
+  _load_mat_replay_channel(_localfile(filename, cache), upsample, rxs, noise, drift)
 end
 
 # implemented in MATExt

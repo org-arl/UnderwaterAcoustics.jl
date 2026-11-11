@@ -35,6 +35,8 @@ ch = BasebandReplayChannel("red.mat")
 
 This channel has 3 receiving hydrophones and can replay up to 47.8 seconds of signal through the measured TVIR. The signal must fit within the frequency band that was used to probe the channel (for the `red` channel it is 25 ± 4.8 kHz).
 
+If the file has the measured drift of the channel taps (`phi_hat`), it is applied during replay. To replay without it, load the channel with `drift=false`, e.g. `BasebandReplayChannel("uacr://red_1"; drift=false)`.
+
 We can visualize the TVIR for the first hydrophone by plotting it:
 
 ```{julia}

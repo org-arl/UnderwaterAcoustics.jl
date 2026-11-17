@@ -181,7 +181,7 @@ end
   xguide --> "x (m)"
   @series begin
     seriestype := :path
-    [value(fld, x) for x ∈ xr], xr
+    xr, [value(fld, (x, 0.0)) for x ∈ xr]
   end
 end
 
@@ -192,7 +192,7 @@ end
   xguide --> "x (m)"
   @series begin
     seriestype := :path
-    [value(fld, x) for x ∈ xr], xr
+    xr, [value(fld, (x, 0.0)) for x ∈ xr]
   end
 end
 
@@ -206,7 +206,7 @@ end
   colorbar --> true
   @series begin
     seriestype := :heatmap
-    xr, yr, [fld(x, y) for x ∈ xr, y ∈ yr]
+    xr, yr, [fld(x, y) for y ∈ yr, x ∈ xr]
   end
 end
 
@@ -220,7 +220,19 @@ end
   colorbar --> true
   @series begin
     seriestype := :heatmap
-    xr, zr, [fld(x, z) for x ∈ xr, z ∈ zr]
+    xr, zr, [fld(x, z) for z ∈ zr, x ∈ xr]
+  end
+end
+
+@recipe function plot(fld::PositionDependent, xrange::AbstractVector, zrange::AbstractVector)
+  ticks --> :native
+  legend --> false
+  xguide --> "x (m)"
+  yguide --> "z (m)"
+  colorbar --> true
+  @series begin
+    seriestype := :heatmap
+    xrange, zrange, [value(fld, (x, z)) for z ∈ zrange, x ∈ xrange]
   end
 end
 
